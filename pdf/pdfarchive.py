@@ -130,19 +130,35 @@ class PdfArchive(object):
         iterations = pdfparam.iterations
         max_iterations = pdfparam.max_iterations
         scf_converged = pdfparam.scf_converged
-        
-        self._db.insert(table_name,
-                        {'pdf_id':self._pdf_id,
-                         'comment':comment,
-                         'num_of_atoms':num_of_atoms,
-                         'num_of_AOs':num_of_AOs,
-                         'num_of_MOs':num_of_MOs,
-                         'method':method,
-                         'guess':guess,
-                         'xc_functional':xc_functional,
-                         'iterations':iterations,
-                         'max_iterations':max_iterations,
-                         'scf_converged':scf_converged})
+
+        where_str = 'pdf_id = "%s"' % (self._pdf_id)
+        check_record = self._db.select(table_name, where=where_str)
+        if check_record:
+            self._db.update(table_name,
+                            contents={'comment':comment,
+                                      'num_of_atoms':num_of_atoms,
+                                      'num_of_AOs':num_of_AOs,
+                                      'num_of_MOs':num_of_MOs,
+                                      'method':method,
+                                      'guess':guess,
+                                      'xc_functional':xc_functional,
+                                      'iterations':iterations,
+                                      'max_iterations':max_iterations,
+                                      'scf_converged':scf_converged},
+                            where=where_str)
+        else:
+            self._db.insert(table_name,
+                            {'pdf_id':self._pdf_id,
+                             'comment':comment,
+                             'num_of_atoms':num_of_atoms,
+                             'num_of_AOs':num_of_AOs,
+                             'num_of_MOs':num_of_MOs,
+                             'method':method,
+                             'guess':guess,
+                             'xc_functional':xc_functional,
+                             'iterations':iterations,
+                             'max_iterations':max_iterations,
+                             'scf_converged':scf_converged})
 
     def _set_pdfparam_coordinates(self, pdfparam):
         assert(isinstance(pdfparam, PdfParam))
@@ -161,14 +177,27 @@ class PdfArchive(object):
             xyz = atom.xyz
             charge = atom.charge
             label = atom.name
-            self._db.insert(table_name,
-                            {'atom_id':atom_id,
-                             'symbol':symbol,
-                             'x':xyz.x,
-                             'y':xyz.y,
-                             'z':xyz.z,
-                             'charge':charge,
-                             'label':label})
+
+            where_str = 'atom_id = "%s"' % (atom_id)
+            check_record = self._db.select(table_name, where=where_str)
+            if check_record:
+                self._db.update(table_name,
+                                contents = {'symbol':symbol,
+                                            'x':xyz.x,
+                                            'y':xyz.y,
+                                            'z':xyz.z,
+                                            'charge':charge,
+                                            'label':label},
+                                where=where_str)
+            else:
+                self._db.insert(table_name,
+                                {'atom_id':atom_id,
+                                 'symbol':symbol,
+                                 'x':xyz.x,
+                                 'y':xyz.y,
+                                 'z':xyz.z,
+                                 'charge':charge,
+                                 'label':label})
 
     def _set_pdfparam_basisset(self, pdfparam):
         """
@@ -238,9 +267,16 @@ class PdfArchive(object):
         TEs = pdfparam.TEs
         if TEs is not None:
             for iteration, energy in TEs.items():
-                self._db.insert(table_name,
-                                {'iteration':iteration,
-                                 'energy':energy})
+                where_str = 'iteration = %d' % (iteration)
+                check_record = self._db.select(table_name, where=where_str)
+                if check_record:
+                    self._db.update(table_name,
+                                    contents={'energy':energy},
+                                    where=where_str)
+                else:
+                    self._db.insert(table_name,
+                                    {'iteration':iteration,
+                                     'energy':energy})
 
     # -------
     def _get_pdf_id(self):
