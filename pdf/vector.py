@@ -3,6 +3,7 @@
 
 import os
 import struct
+import logging
 
 import bridge
 
@@ -10,6 +11,7 @@ class Vector(bridge.Vector):
     """
     """
     def __init__(self, obj = []):
+        self._logger = logging.getLogger(__name__)
         bridge.Vector.__init__(self, obj)
 
     def is_loadable(self, file_path, is_little_endian = True):
@@ -27,7 +29,7 @@ class Vector(bridge.Vector):
         return answer
 
     def load(self, file_path, is_little_endian = True):
-        if (os.path.isfile(file_path) == True):
+        if os.path.isfile(file_path):
             data = open(file_path, "rb").read()
             # read header
             header_struct = self.__get_header_struct(is_little_endian)
@@ -46,6 +48,8 @@ class Vector(bridge.Vector):
                 value = struct.unpack(body_struct, data[start: start + size_of_double])
                 self[i] = float(value[0])
                 start += size_of_double
+        else:
+            self._logger.error("file not found: %s" % (file_path))
 
     def save(self, file_path, is_little_endian = True):
         size = self._num_of_size

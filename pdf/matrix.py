@@ -3,6 +3,7 @@
 
 import os
 import struct
+import logging
 
 import bridge
 
@@ -10,25 +11,27 @@ class Matrix(bridge.Matrix):
     """
     """
     def __init__(self, *args, **kwargs):
+        self._logger = logging.getLogger(__name__)
         bridge.Matrix.__init__(self, *args, **kwargs)
 
     def is_loadable(self, file_path, is_little_endian = True):
-        fin = open(file_path, "rb")
-        header_struct = self.__get_header_struct(is_little_endian)
-        size_of_header = struct.calcsize(header_struct)
-        data = fin.read(size_of_header)
-        fin.close()
-        header = struct.unpack(header_struct, data[0: size_of_header])
-        matrix_type = header[0]
-        row = header[1]  
-        col = header[2]
-        if (matrix_type == 0):
-            return True
-        else:
-            return False
+        answer = False
+        if os.path.isfile(file_path):
+            fin = open(file_path, "rb")
+            header_struct = self.__get_header_struct(is_little_endian)
+            size_of_header = struct.calcsize(header_struct)
+            data = fin.read(size_of_header)
+            fin.close()
+            header = struct.unpack(header_struct, data[0: size_of_header])
+            matrix_type = header[0]
+            row = header[1]  
+            col = header[2]
+            if (matrix_type == 0):
+                answer = True
+        return answer
         
     def load(self, file_path, is_little_endian = True):
-        if (os.path.exists(file_path) == True):
+        if os.path.exists(file_path):
             fin = open(file_path, "rb")
             # read header
             header_struct = self.__get_header_struct(is_little_endian)
@@ -50,8 +53,8 @@ class Matrix(bridge.Matrix):
                     self.set(r, c, value[0])
             fin.close()
         else:
-            print("file not found: %s" % (file_path))
-
+            self._logger.error("file not found: %s" % (file_path))
+            
     def save(self, file_path, is_little_endian = True):
         row = self.get_num_of_rows()
         col = self.get_num_of_cols()
@@ -79,25 +82,27 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
     """
     """
     def __init__(self, *args, **kwargs):
+        self._logger = logging.getLogger(__name__)
         bridge.SymmetricMatrix.__init__(self, *args, **kwargs)
 
     def is_loadable(self, file_path, is_little_endian = True):
-        fin = open(file_path, "rb")
-        header_struct = self.__get_header_struct(is_little_endian)
-        size_of_header = struct.calcsize(header_struct);
-        data = fin.read(size_of_header)
-        fin.close()
-        header = struct.unpack(header_struct, data[0: size_of_header])
-        matrix_type = header[0]
-        row = header[1]  
-        col = header[2]
-        if (matrix_type == 2):
-            return True
-        else:
-            return False
+        answer = False
+        if os.path.file(file_path):
+            fin = open(file_path, "rb")
+            header_struct = self.__get_header_struct(is_little_endian)
+            size_of_header = struct.calcsize(header_struct);
+            data = fin.read(size_of_header)
+            fin.close()
+            header = struct.unpack(header_struct, data[0: size_of_header])
+            matrix_type = header[0]
+            row = header[1]  
+            col = header[2]
+            if (matrix_type == 2):
+                answer = True
+        return answer
 
     def load(self, file_path, is_little_endian = True):
-        if (os.path.exists(file_path) == True):
+        if os.path.file(file_path):
             fin = open(file_path, "rb")
             # read header
             header_struct = self.__get_header_struct(is_little_endian)
@@ -122,7 +127,7 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
                     self.set(r, c, value[0])
             fin.close()
         else:
-            print("file not found: %s" % (file_path))
+            self._logger.error("file not found: %s" % (file_path))
             
     def save(self, file_path, is_little_endian = True):
         dim = self.get_num_of_rows()
