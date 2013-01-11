@@ -622,7 +622,7 @@ class PdfArchive(object):
         answer = False
         if isinstance(val1, float) and isinstance(val2, float):
             v = math.fabs(val1 - val2)
-            answer = (v < pdfcommon.epsilon)
+            answer = (v < pdfcommon.error)
         else:
             answer = (val1 == val2)
 
@@ -630,7 +630,7 @@ class PdfArchive(object):
             self._logger.debug('test: %s; %s == %s' % (
                     str(msg), str(val1), str(val2)))
         else:
-            self._logger.warning('test: %s; %s != %s' % (
+            self._logger.error('test: %s; %s != %s' % (
                     str(msg), str(val1), str(val2)))
 
         return answer
