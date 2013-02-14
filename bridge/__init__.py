@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from common import mpac2py
+from common import *
 from utils import *
 
 from vector import *

@@ -22,7 +22,9 @@ class PdfArchive(object):
         """
         オブジェクトを作成する
         """
+        nullHandler = bridge.NullHandler()
         self._logger = logging.getLogger(__name__)
+        self._logger.addHandler(nullHandler)
 
         self._pdf_id = 'NONE'
         self._db = bridge.DbManager(db_path)
@@ -439,10 +441,8 @@ class PdfArchive(object):
         return answer
 
     def _check(self, val1, val2, msg):
-        assert(type(val1) == type(val2))
-        
         answer = False
-        if isinstance(val1, float) == True:
+        if isinstance(val1, float) and isinstance(val2, float):
             v = math.fabs(val1 - val2)
             answer = (v < pdfcommon.epsilon)
         else:

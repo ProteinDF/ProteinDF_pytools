@@ -34,6 +34,8 @@ def main():
     verbose = args.verbose
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.WARNING)
 
     path1 = args.FILE1[0]
     path2 = args.FILE2[0]
@@ -45,7 +47,7 @@ def main():
         logging.debug('ProteinDF results are OK.')
         sys.exit(0)
     else:
-        logging.warning('ProteinDF results are not consistent.')
+        logging.error('ProteinDF results are not consistent.')
         sys.exit(1)
     
 if __name__ == '__main__':

@@ -1,11 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
 try:
     import msgpack
 except:
     import msgpack_pure as msgpack
 
+
+class NullHandler(logging.Handler):
+    """
+    for logging
+    h = NullHandler()
+    logging.getLogger("foo").addHandler(h)
+    """
+    def emit(self, record):
+        pass
     
 def mpac2py(path):
     """
