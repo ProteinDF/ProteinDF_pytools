@@ -6,7 +6,7 @@ import hashlib
 import pickle
 
 import bridge
-from orbinfo import BasisSet
+from basisset import BasisSet
 
 class PdfParam(object):
     """
@@ -173,6 +173,33 @@ class PdfParam(object):
 
     molecule = property(_get_molecule, _set_moleucule)
 
+    # basisset
+    def set_basisset(self, atom_label, basisset):
+        assert(isinstance(atom_label, str))
+        assert(isinstance(basisset, BasisSet))
+        if not self._data.has_key('basisset'):
+            self._data.setdefault('basisset', {})
+        self._data['basisset'][atom_label] = basisset
+
+    def get_basisset_atomlabels(self):
+        """
+        原子(ラベル)名のリストを返す
+        """
+        self._data.setdefault('basisset', {})
+        for i in self._data['basisset'].keys():
+            yield i
+
+    def get_basisset(self, atom_label):
+        """
+        原子(ラベル)名のBasisSetがあれば、それを返す
+        """
+        assert(isinstance(atom_label, types.StringType))
+        answer = BasisSet()
+        if self._data.has_key('basisset'):
+            answer = self._data['basisset'].get(atom_label, BasisSet())
+        return answer
+        
+        
     # TEs
     def _get_TEs(self):
         return self._data.get('TEs', None)
@@ -203,7 +230,7 @@ class PdfParam(object):
         for atom_label, basisset_state in rhs['basis_sets'].items():
             basisset = BasisSet()
             basisset.__setstate__(basisset_state)
-            self._basissets[atom_label] = basisset
+            self.set_basisset(atom_label, basisset)
             
         # coordinates
         index = 0

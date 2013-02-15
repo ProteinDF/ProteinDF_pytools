@@ -16,6 +16,7 @@ setup(name='pdfutils',
         'scripts/pdf-archive.py',
         'scripts/pdf-report.py',
         'scripts/pdf-test.py',
+        'scripts/pdf-info-orb.py',
         'scripts/module_inspect.py',
         'scripts/db2txt.py'
         ]

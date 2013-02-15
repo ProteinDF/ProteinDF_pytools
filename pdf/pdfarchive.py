@@ -9,6 +9,7 @@ import math
 import bridge
 from pdfparam import PdfParam
 import pdfcommon
+from basisset import *
 
 class PdfArchive(object):
     """
@@ -39,6 +40,7 @@ class PdfArchive(object):
             pdf_id = pdfparam.digest()
             self._set_pdfparam_conditions(pdfparam)
             self._set_pdfparam_coordinates(pdfparam)
+            self._set_pdfparam_basisset(pdfparam)
             self._set_pdfparram_total_energies(pdfparam)
             
     # private ------------------------------------------------------------------
@@ -168,6 +170,62 @@ class PdfArchive(object):
                              'charge':charge,
                              'label':label})
 
+    def _set_pdfparam_basisset(self, pdfparam):
+        """
+        BasisSet情報を格納する
+        """
+        assert(isinstance(pdfparam, PdfParam))
+        table_name = 'basis'
+        if not self._db.has_table(table_name):
+            self._db.create_table(table_name,
+                                  ['atom_label',
+                                   'name'],
+                                  ['atom_label'])
+        table_name = 'basisset_CGTO'
+        if not self._db.has_table(table_name):
+            self._db.create_table(table_name,
+                                  ['name',
+                                   'CGTO_ID',
+                                   'shell_type',
+                                   'scale_factor'],
+                                  ['name', 'CGTO_ID'])
+        table_name = 'basisset_PGTO'
+        if not self._db.has_table(table_name):
+            self._db.create_table(table_name,
+                                  ['name',
+                                   'CGTO_ID',
+                                   'PGTO_ID',
+                                   'coef',
+                                   'exp'],
+                                  ['name', 'CGTO_ID', 'PGTO_ID'])
+        
+        for atom_label in pdfparam.get_basisset_atomlabels():
+            basisset = pdfparam.get_basisset(atom_label)
+            name = basisset.name
+            self._db.insert('basis',
+                            {'atom_label': atom_label,
+                             'name': name})
+            
+            for cgto_id, cgto in enumerate(basisset):
+                shell_type = cgto.shell_type
+                scale_factor = cgto.scale_factor
+                self._db.insert('basisset_CGTO',
+                                {'name': name,
+                                 'CGTO_ID': cgto_id,
+                                 'shell_type': shell_type,
+                                 'scale_factor': scale_factor
+                                 })
+                for pgto_id, pgto in enumerate(cgto):
+                    coef = pgto.coef
+                    exp = pgto.exp
+                    self._db.insert('basisset_PGTO',
+                                    {'name': name,
+                                     'CGTO_ID': cgto_id,
+                                     'PGTO_ID': pgto_id,
+                                     'coef': coef,
+                                     'exp': exp
+                                     })
+            
     def _set_pdfparram_total_energies(self, pdfparam):
         assert(isinstance(pdfparam, PdfParam))
         table_name = 'total_energies'
@@ -229,6 +287,90 @@ class PdfArchive(object):
         return value
     
     # 出力 ----------
+    def get_molecule(self):
+        """
+        AtomGroupを返す
+        """
+        mol = bridge.AtomGroup()
+        table_name = 'coordinates'
+        if self._db.has_table(table_name):
+            atoms = self._db.select(table_name,
+                                    fields=['atom_id',
+                                            'symbol',
+                                            'x',
+                                            'y',
+                                            'z',
+                                            'charge',
+                                            'label'])
+            num_of_atoms = len(atoms)
+            for atom in atoms:
+                atom_id = atom['atom_id']
+                symbol = atom['symbol']
+                x = atom['x']
+                y = atom['y']
+                z = atom['z']
+                charge = atom['charge']
+                label = atom['label']
+                a = bridge.Atom(symbol = symbol,
+                                position = bridge.Position([x, y, z]),
+                                charge = charge,
+                                name = label)
+                mol.set_atom(atom_id, a)
+        return mol
+                
+    def get_basisset_name(self, atom_label):
+        """
+        原子名(atom_label)に対応する名前を返す
+        """
+        atom_label = str(atom_label)
+        name = ""
+        table_name = 'basis'
+        if self._db.has_table(table_name):
+            results = self._db.select(table_name,
+                                      fields=['name'],
+                                      where={'atom_label': atom_label})
+            if len(results) > 0:
+                name = results[0]['name']
+        return name
+
+    def get_basisset(self, name):
+        """
+        与えられた名前の基底関数情報(Basisオブジェクト)を返す
+        """
+        name = str(name)
+        basisset = BasisSet();
+        cgto_table_name = 'basisset_CGTO'
+        pgto_table_name = 'basisset_PGTO'
+        if self._db.has_table(cgto_table_name):
+            cgto_entries = self._db.select(cgto_table_name,
+                                           fields=['CGTO_ID',
+                                                   'shell_type',
+                                                   'scale_factor'],
+                                           where={'name': name})
+            num_of_CGTOs = len(cgto_entries)
+            #print("num_of_CGTOs = %d" % (num_of_CGTOs))
+            basisset = BasisSet(name, num_of_CGTOs)
+            for cgto_entry in cgto_entries:
+                CGTO_ID = cgto_entry['CGTO_ID']
+                assert(CGTO_ID < num_of_CGTOs)
+                shell_type = cgto_entry['shell_type']
+                scale_factor = cgto_entry['scale_factor']
+                pgto_entries = self._db.select(pgto_table_name,
+                                               fields=['PGTO_ID',
+                                                       'coef',
+                                                       'exp'],
+                                               where={'name': name,
+                                                      'CGTO_ID': CGTO_ID})
+                num_of_PGTOs = len(pgto_entries)
+                basisset[CGTO_ID] = ContractedGTO(shell_type, num_of_PGTOs)
+                for pgto_entry in pgto_entries:
+                    PGTO_ID = int(pgto_entry['PGTO_ID'])
+                    assert(PGTO_ID < num_of_PGTOs)
+                    coef = pgto_entry['coef']
+                    exp = pgto_entry['exp']
+                    basisset[CGTO_ID][PGTO_ID] = PrimitiveGTO(exp, coef)
+        return basisset
+                    
     def get_HOMO_level(self, runtype):
         """
         HOMOのレベルを返す

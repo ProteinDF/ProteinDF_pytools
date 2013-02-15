@@ -8,6 +8,7 @@ from pdfarchive import *
 from pdfparam import *
 from pdfgraph import *
 
+from basisset import *
 from orbinfo import *
 from vector import *
 from matrix import *
