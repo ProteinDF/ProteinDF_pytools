@@ -88,13 +88,10 @@ def plot_convergence_energy_level(entry,
     """
     EnergyLevelのヒストリ
     """
-    graph = pdf.GraphEnergyLevelHistory()
-
+    itr = entry.iterations
     HOMO_level = entry.get_HOMO_level('ALPHA') # TODO
-    #sys.stderr.write('HOMO=%d\n' % HOMO_level)
 
     data_path = output_dir + '/eigvals_hist.dat'
-    graph_path = output_dir + '/eigvals_hist.png'
     dat = open(data_path, 'w')
     for itr in range(1, entry.iterations +1):
         eigvals = entry.get_energylevel('ALPHA', itr) # TODO
@@ -104,6 +101,38 @@ def plot_convergence_energy_level(entry,
                 dat.write('%d, %d, % 16.10f\n' % (itr, level, e))
     dat.close()
     
+    graphH_path = output_dir + '/eigvals_hist.png'
+    graphH = pdf.DfEnergyLevelHistoryGraphH()
+    graphH.set_HOMO_level(HOMO_level) # option base 0
+    graphH.load_data(data_path)
+    graphH.save(graphH_path)
+
+    # lastのグラフを作成する
+    graphV_path = output_dir + '/eigvals_last.png'
+    graphV = pdf.DfEnergyLevelHistoryGraphV()
+    graphV.set_HOMO_level(HOMO_level) # option base 0
+    graphV.load_data(data_path)
+    graphV.select_iterations([itr])
+    graphV.save(graphV_path)
+    
+    
+def plot_energy_level(entry, output_path):
+    graph = EnergyLevelSingle()
+
+    HOMO_level = entry.get_HOMO_level('ALPHA') # TODO
+
+    data_path = output_dir + '/eigvals_last.dat'
+    graph_path = output_dir + '/eigvals_last.png'
+
+    dat = open(data_path, 'w')
+    last_it = entry.iterations
+    eigvals = entry.get_energylevel('ALPHA', itr) # TODO
+    if eigvals:
+        for level, e in enumerate(eigvals):
+            e *= 27.2116
+            dat.write('%d, %d, % 16.10f\n' % (itr, level, e))
+    dat.close()
+    
     graph = pdf.DfEigValsHistGraph()
     graph.set_HOMO_level(HOMO_level) # option base 0
     graph.load_data(data_path)
@@ -111,38 +140,15 @@ def plot_convergence_energy_level(entry,
 
     
 
-def get_eigenvalues(iterations):
-    eigval_vtr_path = 'fl_Work/eigenvalues.rks%d.vtr' % (iterations) # TODO
-    v = pdf.Vector()
-    if v.is_loadable(eigval_vtr_path):
-        v.load(eigval_vtr_path)
-    else:
-        logging.warning('cannot load: %s\n' % (eigval_vtr_path))
-    return v
+#def get_eigenvalues(iterations):
+#    eigval_vtr_path = 'fl_Work/eigenvalues.rks%d.vtr' % (iterations) # TODO
+#    v = pdf.Vector()
+#    if v.is_loadable(eigval_vtr_path):
+#        v.load(eigval_vtr_path)
+#    else:
+#        logging.warning('cannot load: %s\n' % (eigval_vtr_path))
+#    return v
     
-def plot_energy_level(entry, output_path):
-    #graph = pdfex.GraphEnergyLevelSingle(size=(8, 4))
-    #graph.set_xrange(-20.0, 5.0)
-    #graph.set_yrange(- 0.0, 2.0)
-    #graph.set_xlabel('energy level / eV')
-    #HOMO_level = pdfdata.get_HOMO_level()
-    #itr = pdfdata.num_of_iterations -1
-    #eigvals = get_eigenvalues(itr)
-    #eigvals *= 27.2116
-    #graph.plot_energy_levels(levels = eigvals,
-    #                         homo_level = HOMO_level -1)
-    #
-    #graph.prepare()
-
-    graph = EnergyLevelChart()
-
-    iterations = range(1, pdfdata.get_num_of_iterations() +1)
-    for itr in iterations:
-        eigenvalues = pdfdata.get_eigenvalues(itr)
-        graph.set_data(itr, eigenvalues)
-        
-    graph.file_out(output_path)
-
 def plot_convergence_check0(pdfdata, output_path):
     graph = pdfex.GraphConvergenceCheck()
 

@@ -126,19 +126,27 @@ class DfTotalEnergyHistGraph(DfGraph):
         self._ax.plot(self._x, self._y, 'bo-')
 
         self._ax.legend(('total energy', ))
-    
-class DfEigValsHistGraph(DfGraph):
+
+        
+class DfEnergyLevelHistoryGraphH(DfGraph):
+    """
+    エネルギー準位を水平線で描画します
+    """
     def __init__(self):
         DfGraph.__init__(self)
-        self.title = 'eigenvalues history'
+        self.title = 'Energy Level'
         self.xlabel = 'iteration'
         self.ylabel = 'energy / eV'
         self.is_draw_grid = True
+        self.xmin = None
+        self.xmax = None
         self.ymin = -20.0
         self.ymax =   5.0
 
         self._HOMO_level = -1
-
+        self._max_itr = 0
+        self._select_iterations = []
+        
     def set_HOMO_level(self, level):
         self._HOMO_level = int(level)
         
@@ -149,28 +157,83 @@ class DfEigValsHistGraph(DfGraph):
         
         self._data = []
         for line in lines:
-            tmp = line.strip().split(',')
-            self._data.append([float(tmp[0]), float(tmp[1]), float(tmp[2])])
-    
+            (itr, level, value) = line.strip().split(',')
+            itr = int(itr)
+            self._max_itr = max(self._max_itr, itr)
+            self._data.append([itr, float(level), float(value)])
+
+    def select_iterations(self, iterations):
+        self._select_iterations = set(iterations)
+            
     def _draw_data(self):
+        itr_vs_list = []
+        if len(self._select_iterations) == 0:
+            itr_vs_list = range(self._max_itr +1)
+        else:
+            itr_vs_list = [ 0 for x in range(self._max_itr +1) ]
+            for order, itr in enumerate(self._select_iterations):
+                itr_vs_list[itr] = order +1
+                
         for d in self._data:
             itr = d[0]
             level = d[1]
             value = d[2]
 
-            if (self.ymin < value) and (value < self.ymax):
-                width = 0.8
-                height = 0.01
-                c = 'k'
-                if level == self._HOMO_level:
-                    width = 1.0
-                    height = 0.01
-                    c = 'r'
-                left = itr - width / 2.0
-                bottom = value - height / 2.0
+            order = itr_vs_list[itr]
+            if order == 0:
+                continue
+            
+            self._draw_data_line(order, value, (level == self._HOMO_level))
 
-                self._ax.bar(left, height, width, bottom,
-                             edgecolor=c, color=c)
+    def _draw_data_line(self, order, value, is_HOMO):
+        if (self.ymin < value) and (value < self.ymax):
+            width = 0.8
+            height = 0.01
+            c = 'k'
+            if is_HOMO:
+                width = 1.0
+                height = 0.01
+                c = 'r'
+
+            left = order - width / 2.0
+            bottom = value - height / 2.0
+
+            self._ax.bar(left, height, width, bottom,
+                         edgecolor=c, color=c)
+
+
+class DfEnergyLevelHistoryGraphV(DfEnergyLevelHistoryGraphH):
+    """
+    エネルギー準位を垂直線で描画します。
+    """
+    def __init__(self):
+        DfEnergyLevelHistoryGraphH.__init__(self)
+        self.title = 'Energy Level'
+        self.xlabel = 'energy / eV'
+        self.ylabel = 'iteration'
+        self.is_draw_grid = True
+        self.xmin = -20.0
+        self.xmax =   5.0
+        self.ymin = None
+        self.ymax = None
+        
+        self._HOMO_level = -1
+
+    def _draw_data_line(self, order, value, is_HOMO):
+        if (self.xmin < value) and (value < self.xmax):
+            width = 0.01
+            height = 0.8
+            c = 'k'
+            if is_HOMO:
+                width = 0.01
+                height = 1.0
+                c = 'r'
+
+            bottom = order - height / 2.0
+            left = value - width / 2.0
+
+            self._ax.bar(left, height, width, bottom,
+                         edgecolor=c, color=c)
 
 # ******************************************************************************
 
