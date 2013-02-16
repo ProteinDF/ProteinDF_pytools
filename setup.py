@@ -9,7 +9,7 @@ setup(name='pdfutils',
       author='Toshiyuki HIRANO',
       author_email='t-hirano@iis.u-tokyo.ac.jp',
       url='http://satolab.iis.u-tokyo.ac.jp/',
-      packages=['bridge', 'pdf'],
+      packages=['pdf'],
       scripts=[
         'scripts/mpac2yml.py',
         'scripts/yml2mpac.py',
@@ -21,3 +21,4 @@ setup(name='pdfutils',
         'scripts/db2txt.py'
         ]
       )
+
