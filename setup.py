@@ -14,11 +14,11 @@ setup(name='pdfutils',
         'scripts/mpac2yml.py',
         'scripts/yml2mpac.py',
         'scripts/pdf-archive.py',
+        'scripts/pdf-info-orb.py',
         'scripts/pdf-report.py',
         'scripts/pdf-test.py',
-        'scripts/pdf-info-orb.py',
-        'scripts/module_inspect.py',
-        'scripts/db2txt.py'
+        'scripts/pdf-test-eri.py',
+        'scripts/gaueri2mpac.py',
         ]
       )
 
