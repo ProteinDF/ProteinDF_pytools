@@ -18,7 +18,7 @@ setup(name='pdfutils',
         'scripts/pdf-report.py',
         'scripts/pdf-test.py',
         'scripts/pdf-test-eri.py',
-        'scripts/gaueri2mpac.py',
+        'scripts/g0xeri2mpac.py',
         ]
       )
 
