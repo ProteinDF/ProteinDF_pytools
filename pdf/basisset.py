@@ -234,11 +234,11 @@ class BasisSet(list):
         for shell_type in ContractedGTO.get_supported_shell_types():
             self.extend(CGTOs[shell_type])
 
-    def getstate(self):
+    def get_raw_data(self):
         return self.__getstate__()
 
-    def setstate(self, odict):
-        self.__setstate__(odict)
+    #def setstate(self, odict):
+    #    self.__setstate__(odict)
             
     def __str__(self):
         self.sort()

@@ -31,7 +31,7 @@ class Matrix(bridge.Matrix):
         return answer
         
     def load(self, file_path, is_little_endian = True):
-        if os.path.exists(file_path):
+        if os.path.isfile(file_path):
             fin = open(file_path, "rb")
             # read header
             header_struct = self.__get_header_struct(is_little_endian)
@@ -87,7 +87,7 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
 
     def is_loadable(self, file_path, is_little_endian = True):
         answer = False
-        if os.path.file(file_path):
+        if os.path.isfile(file_path):
             fin = open(file_path, "rb")
             header_struct = self.__get_header_struct(is_little_endian)
             size_of_header = struct.calcsize(header_struct);
@@ -102,7 +102,7 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
         return answer
 
     def load(self, file_path, is_little_endian = True):
-        if os.path.file(file_path):
+        if os.path.isfile(file_path):
             fin = open(file_path, "rb")
             # read header
             header_struct = self.__get_header_struct(is_little_endian)
@@ -116,7 +116,6 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
             assert(matrix_type == 2)
             assert(row == col)
             self.resize(dim)
-            self.get_num_of_rows()
 
             # body
             body_struct = self.__get_body_struct(is_little_endian)

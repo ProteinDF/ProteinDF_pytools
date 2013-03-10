@@ -23,11 +23,17 @@ def main():
                         nargs='+',
                         type=int,
                         help='orbital index (start=0)')
-    parser.add_argument('-d', '--db',
-                        nargs=1,
-                        action='store',
-                        default='pdfresults.db',
-                        help='ProteinDF results file')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-d', '--db',
+                       nargs='?',
+                       action='store',
+                       const='pdfresults.db',
+                       help='ProteinDF results file')
+    group.add_argument('-p', '--param',
+                       nargs='?',
+                       action='store',
+                       const='pdfparam.mpac',
+                       help='ProteinDF parameter file')
     parser.add_argument("-v", "--verbose",
                         action="store_true",
                         default=False)
@@ -41,15 +47,21 @@ def main():
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
     orb_index = args.orb_index
-    
-    entry = pdf.PdfArchive(args.db)
-    orb_info = pdf.OrbInfo(entry)
 
+    orb_info = None
+    if args.db:
+        entry = pdf.PdfArchive(args.db)
+        orb_info = pdf.OrbInfo(entry)
+    elif args.param:
+        pdfparam = pdf.load_pdfparam(args.param)
+        orb_info = pdf.OrbInfo(pdfparam)
+    
     num_of_orbitals = orb_info.get_num_of_orbitals()
     for i in orb_index:
         if i < num_of_orbitals:
-            print('%dth: %d %s %s' % (i,
-                                      orb_info.get_atom_id(i),
+            atom = orb_info.get_atom(i)
+            print('%dth: %s, shell(%s;%s)' % (i,
+                                      str(atom),
                                       orb_info.get_shell_type(i),
                                       orb_info.get_basis_type(i)))
     

@@ -191,14 +191,13 @@ class PdfParam(object):
 
     def get_basisset(self, atom_label):
         """
-        原子(ラベル)名のBasisSetがあれば、それを返す
+        原子(ラベル)名のBasisSetがあれば、そのBasisSetオブジェクトを返す
         """
         assert(isinstance(atom_label, types.StringType))
         answer = BasisSet()
         if self._data.has_key('basisset'):
             answer = self._data['basisset'].get(atom_label, BasisSet())
         return answer
-        
         
     # TEs
     def _get_TEs(self):
