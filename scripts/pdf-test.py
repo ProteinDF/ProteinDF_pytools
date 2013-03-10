@@ -6,6 +6,7 @@ compare ProteinDF results
 """
 
 import sys
+import os.path
 import argparse
 import logging
 try:
@@ -32,6 +33,7 @@ def main():
     args = parser.parse_args()
 
     verbose = args.verbose
+    logging.basicConfig()
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
     else:
@@ -40,9 +42,14 @@ def main():
     path1 = args.FILE1[0]
     path2 = args.FILE2[0]
 
+    if not os.path.isfile(path1):
+        sys.exit('file not found: %s' % (path1))
+    if not os.path.isfile(path2):
+        sys.exit('file not found: %s' % (path2))
+
     data1 = pdf.PdfArchive(path1)
     data2 = pdf.PdfArchive(path2)
-
+    
     if data1 == data2:
         logging.debug('ProteinDF results are OK.')
         sys.exit(0)
