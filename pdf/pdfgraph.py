@@ -4,12 +4,13 @@
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import types
 
 class DfGraph(object):
     def __init__(self):
         self._fig = plt.figure()
         self._ax = self._fig.add_subplot(111)
-        
+
     # ==========================================================================
     # property
     # ==========================================================================
@@ -76,7 +77,33 @@ class DfGraph(object):
             self._ymax = None
         return self._ymax
     ymax = property(_get_ymax, _set_ymax)
+
+    def _set_aspect(self, value):
+        self._aspect = value
+    def _get_aspect(self):
+        if not '_aspect' in self.__dict__:
+            self._aspect = None
+        return self._aspect
+    aspect = property(_get_aspect, _set_aspect)
     
+    def _set_xticks(self, ticks):
+        assert(isinstance(ticks, types.ListType))
+        self._xticks = ticks
+    def _get_xticks(self):
+        if not '_xticks' in self.__dict__:
+            self._xticks = None
+        return self._xticks
+    xticks = property(_get_xticks, _set_xticks)
+        
+    def _set_yticks(self, ticks):
+        assert(isinstance(ticks, types.ListType))
+        self._yticks = ticks
+    def _get_yticks(self):
+        if not '_yticks' in self.__dict__:
+            self._yticks = None
+        return self._yticks
+    yticks = property(_get_yticks, _set_yticks)
+
     # ==========================================================================
     # method
     # ==========================================================================
@@ -94,6 +121,14 @@ class DfGraph(object):
                           top = self.ymax)
         self._ax.autoscale_view(tight=True)
 
+        if self.xticks != None:
+            self._ax.set_xticks(self.xticks)
+        if self.yticks != None:
+            self._ax.set_yticks(self.yticks)
+
+        if self.aspect != None:
+            self._ax.set_aspect(self.aspect)
+        
     def _draw_data(self):
         pass
 
@@ -216,7 +251,7 @@ class DfEnergyLevelHistoryGraphV(DfEnergyLevelHistoryGraphH):
         self.xmax =   5.0
         self.ymin = None
         self.ymax = None
-        
+
         self._HOMO_level = -1
 
     def _draw_data_line(self, order, value, is_HOMO):
