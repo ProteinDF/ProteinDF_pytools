@@ -17,12 +17,18 @@ import pdf
 def main():
     # parse args
     parser = argparse.ArgumentParser(description='plot energy level(single; vertical)')
-    parser.add_argument('eigval_path',
-                        nargs=1,
-                        help='ProteinDF energy level file')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-e', '--elevel_vector',
+                       nargs=1,
+                       help='ProteinDF energy level vector file')
+    group.add_argument('-d', '--db',
+                       nargs='?',
+                       action='store',
+                       const='pdfresults.db',
+                       help='ProteinDF results file')
     parser.add_argument('-o', '--output',
                         nargs=1,
-                        default='elevel.png',
+                        default=['elevel.png'],
                         help='output graph path')
     parser.add_argument('-l', '--level',
                         nargs=1,
@@ -31,7 +37,7 @@ def main():
     parser.add_argument("-v", "--verbose",
                         action="store_true",
                         default=False)
-    parser.add_argument('-d', '--debug',
+    parser.add_argument('-D', '--debug',
                         action='store_true',
                         default=False)
     args = parser.parse_args()
@@ -40,22 +46,39 @@ def main():
     verbose = args.verbose
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
-    eigval_path = args.eigval_path[0]
-    output_path = args.output
-
-    itr = 1
+    output_path = args.output[0]
     HOMO_level = int(args.level[0])
-    data_path = 'tmp.dat'
 
-    eigvals = pdf.Vector()
-    if verbose:
-        print('load: %s' % (eigval_path))
-        print('output: %s' % (output_path))
-        print('HOMO: %d' % (HOMO_level))
-    eigvals.load(eigval_path)
-    elevel2dat(itr, eigvals, data_path)
-    plot_elevel_single(data_path, itr, HOMO_level, output_path)
+    if args.elevel_vector:
+        eigval_path = args.elevel_vector[0]
 
+        itr = 1
+        data_path = 'tmp.dat'
+
+        eigvals = pdf.Vector()
+        if verbose:
+            print('load: %s' % (eigval_path))
+            print('output: %s' % (output_path))
+            print('HOMO: %d' % (HOMO_level))
+        eigvals.load(eigval_path)
+        elevel2dat(itr, eigvals, data_path)
+        plot_elevel_single(data_path, itr, HOMO_level, output_path)
+    else:
+        entry = pdf.PdfArchive(args.db)
+
+        itr = entry.iterations
+        HOMO_level = entry.get_HOMO_level('ALPHA') # TODO
+        data_path = 'tmp.dat'
+
+        eigvals = entry.get_energylevel('ALPHA', itr) # TODO
+        if verbose:
+            print('load: %s' % (eigval_path))
+            print('output: %s' % (output_path))
+            print('HOMO: %d' % (HOMO_level))
+        eigvals.load(eigval_path)
+        elevel2dat(itr, eigvals, data_path)
+        plot_elevel_single(data_path, itr, HOMO_level, output_path)
+        
     
 def elevel2dat(itr, eigvals, data_path):
     """
