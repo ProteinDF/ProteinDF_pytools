@@ -89,12 +89,12 @@ def plot_convergence_energy_level(entry,
     EnergyLevelのヒストリ
     """
     itr = entry.iterations
-    HOMO_level = entry.get_HOMO_level('ALPHA') # TODO
+    HOMO_level = entry.get_HOMO_level('RKS') # TODO
 
     data_path = output_dir + '/eigvals_hist.dat'
     dat = open(data_path, 'w')
     for itr in range(1, entry.iterations +1):
-        eigvals = entry.get_energylevel('ALPHA', itr) # TODO
+        eigvals = entry.get_energylevel('RKS', itr) # TODO
         if eigvals:
             for level, e in enumerate(eigvals):
                 e *= 27.2116
@@ -112,7 +112,10 @@ def plot_convergence_energy_level(entry,
     graphV = pdf.DfEnergyLevelHistoryGraphV()
     graphV.set_HOMO_level(HOMO_level) # option base 0
     graphV.load_data(data_path)
-    graphV.select_iterations([itr])
+    if entry.scf_converged:
+        graphV.select_iterations([itr])
+    else:
+        graphV.select_iterations([itr -1])
     graphV.save(graphV_path)
     
     
