@@ -25,12 +25,14 @@ class PdfParam(object):
     #
     def runtypes(self):
         """
-        RKS, ROKS計算なら['ALPHA']を返す。
-        UKS計算なら['ALPHA', 'BETA']を返す。
         """
-        runtypes = ['ALPHA']
-        if self.method == 'UKS':
-            runtypes = ['ALPHA', 'BETA']
+        runtypes = []
+        if self.method == 'RKS':
+            runtypes = ['rks']
+        elif self.method == 'UKS':
+            runtypes = ['uks_alpha', 'uks_beta']
+        elif self.method == 'ROKS':
+            runtypes = ['roks_close', 'roks_open']
         return runtypes
     
     # path ---------------------------------------------------------------------
@@ -60,6 +62,7 @@ class PdfParam(object):
         file_name = ''
         if self._data.has_key('file_base_name'):
             file_name = self._data['file_base_name'].get('occupation_vtr', None)
+        file_name = file_name % (runtype)
         return self.work_path + '/' + file_name
 
     def get_cmat_path(self, itr, runtype):
