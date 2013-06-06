@@ -56,7 +56,8 @@ def main():
     else:
         logging.error('ProteinDF results are not consistent.')
         sys.exit(1)
-    
+
+        
 if __name__ == '__main__':
     main()
 

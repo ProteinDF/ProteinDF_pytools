@@ -4,6 +4,7 @@
 import types
 import hashlib
 import pickle
+import types
 
 import bridge
 from basisset import BasisSet
@@ -136,6 +137,8 @@ class PdfParam(object):
         return self._data.get('num_of_MOs', None)
 
     def _set_num_of_MOs(self, value):
+        if value == None or len(value) == 0:
+            value = 0
         self._data['num_of_MOs'] = int(value)
 
     num_of_MOs = property(_get_num_of_MOs, _set_num_of_MOs)
@@ -145,6 +148,8 @@ class PdfParam(object):
         return self._data.get('iterations', None)
 
     def _set_iterations(self, value):
+        if value == None or len(value) == 0:
+            value = 0
         self._data['iterations'] = int(value)
 
     iterations = property(_get_iterations, _set_iterations)
@@ -254,7 +259,7 @@ class PdfParam(object):
         # control
         self._data['file_base_name'] = {}
         control = rhs.get('control', None)
-        if control is not None:
+        if isinstance(control, types.DictType):
             file_base_name = control.get('file_base_name', None)
             if file_base_name is not None:
                 for key, value in file_base_name.items():
