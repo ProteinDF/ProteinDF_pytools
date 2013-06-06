@@ -117,6 +117,8 @@ class Pdf2Db(object):
             if v.is_loadable(path, self.is_little_endian):
                 v.load(path, self.is_little_endian)
                 entry.set_occupations(runtype, v)
+            else:
+                self._logger.warning('could not load %s' % (path))
         
     def set_lcao(self, mode ='last'):
         """
