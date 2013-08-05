@@ -140,7 +140,7 @@ class PdfParam(object):
         return self._data.get('num_of_MOs', None)
 
     def _set_num_of_MOs(self, value):
-        if value == None or len(value) == 0:
+        if value == None:
             value = 0
         self._data['num_of_MOs'] = int(value)
 
@@ -151,7 +151,7 @@ class PdfParam(object):
         return self._data.get('iterations', None)
 
     def _set_iterations(self, value):
-        if value == None or len(value) == 0:
+        if value == None:
             value = 0
         self._data['iterations'] = int(value)
 
