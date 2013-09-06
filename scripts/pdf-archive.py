@@ -88,6 +88,8 @@ class Pdf2Db(object):
     def set_energylevels(self, mode ='last'):
         """
         エネルギー準位をDBに格納する
+
+        TODO: modeの実装
         """
         pdfparam = self._pdfparam
         entry = self._entry
@@ -123,6 +125,8 @@ class Pdf2Db(object):
     def set_lcao(self, mode ='last'):
         """
         LCAO行列をDBに格納する
+
+        TODO: modeの実装
         """
         pdfparam = self._pdfparam
         entry = self._entry
