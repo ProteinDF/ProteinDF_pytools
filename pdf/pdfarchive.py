@@ -7,9 +7,7 @@ import logging
 import math
 
 import bridge
-from pdfparam import PdfParam
-import pdfcommon
-from basisset import *
+import pdf
 
 class PdfArchive(object):
     """
@@ -36,7 +34,7 @@ class PdfArchive(object):
         self._create_tables()
         self._read_db()
 
-        if isinstance(pdfparam, PdfParam):
+        if isinstance(pdfparam, pdf.PdfParam):
             pdf_id = pdfparam.digest()
             self._set_pdfparam_conditions(pdfparam)
             self._set_pdfparam_coordinates(pdfparam)
@@ -116,7 +114,7 @@ class PdfArchive(object):
                 self._pdf_id = lines[0]['pdf_id']
             
     def _set_pdfparam_conditions(self, pdfparam):
-        assert(isinstance(pdfparam, PdfParam))
+        assert(isinstance(pdfparam, pdf.PdfParam))
         table_name = 'conditions'
 
         self._pdf_id = pdfparam.digest()
@@ -161,7 +159,7 @@ class PdfArchive(object):
                              'scf_converged':scf_converged})
 
     def _set_pdfparam_coordinates(self, pdfparam):
-        assert(isinstance(pdfparam, PdfParam))
+        assert(isinstance(pdfparam, pdf.PdfParam))
         table_name = 'coordinates'
         if not self._db.has_table(table_name):
             self._db.create_table(table_name,
@@ -203,7 +201,7 @@ class PdfArchive(object):
         """
         BasisSet情報を格納する
         """
-        assert(isinstance(pdfparam, PdfParam))
+        assert(isinstance(pdfparam, pdf.PdfParam))
         table_name = 'basis'
         if not self._db.has_table(table_name):
             self._db.create_table(table_name,
@@ -256,7 +254,7 @@ class PdfArchive(object):
                                      })
             
     def _set_pdfparram_total_energies(self, pdfparam):
-        assert(isinstance(pdfparam, PdfParam))
+        assert(isinstance(pdfparam, pdf.PdfParam))
         table_name = 'total_energies'
         if not self._db.has_table(table_name):
             self._db.create_table(table_name,

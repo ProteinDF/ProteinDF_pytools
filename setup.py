@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 
 import sys, os
+import shutil
 from distutils.core import setup
+
+#if not os.path.exists('scripts'):
+#    os.makedirs('scripts')
+shutil.copyfile('scripts/pdfcmd.py', 'scripts/pdf')
 
 setup(name='pdfutils',
       version='0.1',
@@ -13,7 +18,7 @@ setup(name='pdfutils',
       scripts=[
         'scripts/mpac2yml.py',
         'scripts/yml2mpac.py',
-        'scripts/pdfcmd.py',
+        'scripts/pdf',
         'scripts/pdf-archive.py',
         'scripts/pdf-env.py',
 	'scripts/pdf-info-geom.py',
