@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
 import os
 import subprocess
 import logging
+import traceback
 
 try:
     import msgpack
@@ -51,9 +53,14 @@ def run_pdf(subcmd):
     cmdlist = [cmd]
     cmdlist.extend(subcmd)
     logger.debug("run: {0}".format(cmdlist))
-    print(cmdlist)
-    subprocess.check_call(cmdlist)
-    
+
+    try:
+        subprocess.check_call(cmdlist)
+    except:
+        print('-'*60)
+        traceback.print_exc(file=sys.stdout)
+        #print(traceback.format_exc())
+        print('-'*60)
     
 def mpac2py(path):
     """

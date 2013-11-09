@@ -112,6 +112,8 @@ class Basis2(object):
                     abort()
                 #self._logger.debug("create CGTO SPD=%d shell_type=%s size=%d" % (SPD_order, shell_type, numOfPGTOs))
                 cgto = ContractedGTO(shell_type, numOfPGTOs)
+                assert(cgto.shell_type == shell_type)
+                assert(len(cgto) == numOfPGTOs)
                 PGTO_index = 0
             else:
                 values = line.split()

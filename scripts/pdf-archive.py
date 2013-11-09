@@ -26,6 +26,7 @@ archive ProteinDF results.
 import sys
 import argparse
 import logging
+import traceback
 try:
     import msgpack
 except:
@@ -62,16 +63,22 @@ def main():
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
     is_little_endian = True
-    
-    # read ProteinDF parameters
-    pdfparam = pdf.load_pdfparam(pdfparam_path)
-    
-    # setup DB
-    entry = pdf.PdfArchive(output,
-                           pdfparam=pdfparam)
 
-    pdf2db = Pdf2Db(pdfparam, entry)
-    pdf2db.regist()
+    try:
+        # read ProteinDF parameters
+        pdfparam = pdf.load_pdfparam(pdfparam_path)
+    
+        # setup DB
+        entry = pdf.PdfArchive(output,
+                               pdfparam=pdfparam)
+
+        pdf2db = Pdf2Db(pdfparam, entry)
+        pdf2db.regist()
+    except:
+        print('-'*60)
+        traceback.print_exc(file=sys.stdout)
+        #print(traceback.format_exc())
+        print('-'*60)
     
 
 class Pdf2Db(object):

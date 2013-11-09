@@ -75,8 +75,9 @@ def main():
         sys.exit(1)
 
     return_code = proc.wait()
-    #(stdouterr, stdin) = (proc.stdout, proc.stdin)
-    print('return code: %s' % (return_code))
+    (stdouterr, stdin) = (proc.stdout, proc.stdin)
+
+    return return_code
 
 def get_cmd(arg_array):
     """
@@ -109,4 +110,5 @@ def get_cmd(arg_array):
     return (cmd, arg_array)
             
 if __name__ == '__main__':
-    main()
+    return_code = main()
+    sys.exit(return_code)

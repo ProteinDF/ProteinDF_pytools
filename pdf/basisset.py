@@ -71,12 +71,14 @@ class ContractedGTO(list):
     def __init__(self, *args, **kwargs):
         shell_type = 's'
         size = 0
-
+        
         if len(args) == 2:
-            self.shell_type = args[0]
+            shell_type = args[0]
             size = int(args[1])
-        shell_type = kwargs.get('shell_type', shell_type)
-        size = kwargs.get('size', size)
+        if kwargs.has_key('shell_type'):
+            shell_type = kwargs.get('shell_type')
+        if kwargs.has_key('size'):
+            size = kwargs.get('size')
 
         self.shell_type = shell_type
         list.__init__(self, [PrimitiveGTO() for x in range(size)])

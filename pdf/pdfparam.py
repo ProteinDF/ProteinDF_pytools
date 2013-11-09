@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+3#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import types
@@ -6,9 +6,10 @@ import hashlib
 import pickle
 import types
 import math
+import copy
 
 import bridge
-from basisset import BasisSet
+import pdf
 
 class PdfParam(object):
     """
@@ -16,8 +17,10 @@ class PdfParam(object):
     """
     def __init__(self, rhs = None):
         self._data = {}
-        if isinstance(rhs, types.DictType):
-            self.__setstate__(rhs)
+        if isinstance(rhs, PdfParam):
+            self._data = copy.deepcopy(rhs._data)
+        elif isinstance(rhs, types.DictType):
+            self._set_by_dict(rhs)
 
     def digest(self):
         md5obj = hashlib.md5()
@@ -102,7 +105,9 @@ class PdfParam(object):
         return self._data.get('method', 'rks')
 
     def _set_method(self, value):
-        value = value.lower()
+        value = str(value).lower()
+        if not (value == 'rks' or value == 'uks' or value == 'roks'):
+            print value
         assert(value == 'rks' or value == 'uks' or value == 'roks')
         self._data['method'] = value
 
@@ -129,6 +134,28 @@ class PdfParam(object):
     orbital_independence_threshold = property(_get_orbital_independence_threshold,
                                               _set_orbital_independence_threshold)
 
+    # orbital_independence_threshold_canonical
+    def _get_orbital_independence_threshold_canonical(self):
+        return self._data.get('orbital_independence_threshold_canonical', 0.007)
+
+    def _set_orbital_independence_threshold_canonical(self, value):
+        value = float(value)
+        self._data['orbital_independence_threshold_canonical'] = value
+
+    orbital_independence_threshold_canonical = property(_get_orbital_independence_threshold_canonical,
+                                                        _set_orbital_independence_threshold_canonical)
+        
+    # orbital_independence_threshold_lowdin
+    def _get_orbital_independence_threshold_lowdin(self):
+        return self._data.get('orbital_independence_threshold_lowdin', 0.007)
+
+    def _set_orbital_independence_threshold_lowdin(self, value):
+        value = float(value)
+        self._data['orbital_independence_threshold_lowdin'] = value
+
+    orbital_independence_threshold_lowdin = property(_get_orbital_independence_threshold_lowdin,
+                                                     _set_orbital_independence_threshold_lowdin)
+        
     # scf_acceleration
     def _get_scf_acceleration(self):
         return self._data.get('scf_acceleration', 'damping')
@@ -167,6 +194,62 @@ class PdfParam(object):
         """
         last_char = self.xc_functional[-1]
         return (last_char == '~')
+
+    # J_engine
+    def _get_j_engine(self):
+        return self._data.get('j_engine', 'RI_J')
+
+    def _set_j_engine(self, value):
+        value = str(value)
+        self._data['j_engine'] = value
+
+    j_engine = property(_get_j_engine, _set_j_engine)
+    
+    # K_engine
+    def _get_k_engine(self):
+        return self._data.get('k_engine', 'conventional')
+
+    def _set_k_engine(self, value):
+        value = str(value)
+        self._data['k_engine'] = value
+
+    k_engine = property(_get_k_engine, _set_k_engine)
+    
+    # XC_engine
+    def _get_xc_engine(self):
+        return self._data.get('xc_engine', 'grid')
+
+    def _set_xc_engine(self, value):
+        value = str(value)
+        self._data['xc_engine'] = value
+
+    xc_engine = property(_get_xc_engine, _set_xc_engine)
+    
+    # gridfree/dedicated_basis
+    def _get_gridfree_dedicated_basis(self):
+        return self._data.get('gridfree_dedicated_basis', 'no')
+
+    def _set_gridfree_dedicated_basis(self, value):
+        value = bool(value)
+        if value == True:
+            value = 'yes'
+        else:
+            value = 'no'
+        self._data['gridfree_dedicated_basis'] = value
+
+    gridfree_dedicated_basis = property(_get_gridfree_dedicated_basis,
+                                        _set_gridfree_dedicated_basis)
+        
+    # gridfree/orthogonalize_method
+    def _get_gridfree_orthogonalize_method(self):
+        return self._data.get('gridfree_orthogonalize_method', 'lowdin')
+
+    def _set_gridfree_orthogonalize_method(self, value):
+        value = str(value)
+        self._data['gridfree_orthogonalize_method'] = value
+
+    gridfree_orthogonalize_method = property(_get_gridfree_orthogonalize_method,
+                                             _set_gridfree_orthogonalize_method)
     
     # num_of_atoms
     def _get_num_of_atoms(self):
@@ -259,6 +342,34 @@ class PdfParam(object):
 
     convergence_target = property(_get_convergence_target, _set_convergence_target)
 
+    # level_shift
+    def _get_level_shift(self):
+        return self._data.get('level_shift', False)
+
+    def _set_level_shift(self, value):
+        self._data['level_shift'] = bool(value)
+
+    level_shift = property(_get_level_shift, _set_level_shift)
+
+    def _get_level_shift_start_iteration(self):
+        return self._data.get('level_shift_start_iterartion', 1)
+
+    def _set_level_shift_start_iteration(self, value):
+        self._data['level_shift_start_iteration'] = int(value)
+
+    level_shift_start_iteration = property(_get_level_shift_start_iteration,
+                                           _set_level_shift_start_iteration)
+
+    def _get_level_shift_virtual_mo(self):
+        return self._data.get('level_shift_virtual_mo', 0.0)
+
+    def _set_level_shift_virtual_mo(self, value):
+        self._data['level_shift_virtual_mo'] = float(value)
+
+    level_shift_virtual_mo = property(_get_level_shift_virtual_mo,
+                                      _set_level_shift_virtual_mo)
+    
+    
     # SCF converged
     @property
     def scf_converged(self):
@@ -301,14 +412,20 @@ class PdfParam(object):
     def set_basisset_xc(self, atom_label, basisset):
         self._set_basisset_common(atom_label, basisset, 'basisset_xc')
 
+    def get_basisset_gridfree(self, atom_label):
+        return self._get_basisset_common(atom_label, 'basisset_gridfree')
+
+    def set_basisset_gridfree(self, atom_label, basisset):
+        self._set_basisset_common(atom_label, basisset, 'basisset_gridfree')
+
     def _get_basisset_common(self, atom_label, key):
         """
         原子(ラベル)名のBasisSetがあれば、そのBasisSetオブジェクトを返す
         """
         assert(isinstance(atom_label, types.StringType))
-        answer = BasisSet()
+        answer = pdf.BasisSet()
         if self._data.has_key(key):
-            answer = self._data[key].get(atom_label, BasisSet())
+            answer = self._data[key].get(atom_label, pdf.BasisSet())
         return answer
 
     def _set_basisset_common(self, atom_label, basisset, key):
@@ -316,9 +433,14 @@ class PdfParam(object):
         原子(ラベル)名にBasisSetオブジェクトを設定する
         """
         assert(isinstance(atom_label, str))
-        assert(isinstance(basisset, BasisSet))
         self._data.setdefault(key, {})
-        self._data[key][atom_label] = basisset
+        if isinstance(basisset, str) == True:
+            basis2 = pdf.Basis2()
+            self._data[key][atom_label] = basis2.get_basisset(basisset)
+        elif isinstance(basisset, pdf.BasisSet) == True:
+            self._data[key][atom_label] = basisset
+        else:
+            raise "type mispatch"
         
     # TEs
     def _get_TEs(self):
@@ -350,10 +472,20 @@ class PdfParam(object):
             raise
         output += "    max_iteration = {0}\n".format(self.max_iterations)
         output += "    orbital_independence_threshold  = {0}\n".format(self.orbital_independence_threshold)
+        output += "    orbital_independence_threshold/canonical = {0}\n".format(self.orbital_independence_threshold_canonical)
+        output += "    orbital_independence_threshold/lowdin = {0}\n".format(self.orbital_independence_threshold_lowdin)
         output += "    scf-acceleration/damping/damping-type = {0}\n".format(self.convergence_target)
         output += "    scf_acceleration = {0}\n".format(self.scf_acceleration)
         output += "    scf_acceleration/damping/damping_factor = {0}\n".format(self.scf_acceleration_damping_factor)
-        output += "    xc_potential = {0}\n".format(self.xc_functional)
+        output += "    xc_functional = {0}\n".format(self.xc_functional)
+        output += "    J_engine = {0}\n".format(self.j_engine)
+        output += "    K_engine = {0}\n".format(self.k_engine)
+        output += "    XC_engine = {0}\n".format(self.xc_engine)
+        output += "    gridfree/dedicated_basis = {0}\n".format(self.gridfree_dedicated_basis)
+        output += "    gridfree/orthogonalize_method = {0}\n".format(self.gridfree_orthogonalize_method)
+        output += "    level_shift = {0}\n".format(self.level_shift)
+        output += "    level_shift/start_iteration = {0}\n".format(self.level_shift_start_iteration)
+        output += "    level_shift/virtual_mo = {0}\n".format(self.level_shift_virtual_mo)
         output += "\n"
         output += ">>>>MOLECULE\n"
         output += "    geometry/cartesian/unit = angstrom\n"
@@ -376,6 +508,12 @@ class PdfParam(object):
         
         output += "    basis-set/exchange-auxiliary = {\n"
         basisset_str = self._get_input_basisset_xc()
+        basisset_str = basisset_str.replace('\n', '\n        ')
+        output += "        " + basisset_str
+        output += "}\n\n"
+
+        output += "    basis-set/gridfree = {\n"
+        basisset_str = self._get_input_basisset_gridfree()
         basisset_str = basisset_str.replace('\n', '\n        ')
         output += "        " + basisset_str
         output += "}\n\n"
@@ -429,6 +567,13 @@ class PdfParam(object):
             output += '%s = "%s"\n' % (atom_kind, basisset.name)
         return output
         
+    def _get_input_basisset_gridfree(self):
+        output = ""
+        for atom_kind in self._pickup_atom_kinds():
+            basisset = self.get_basisset_gridfree(atom_kind)
+            output += '%s = "%s"\n' % (atom_kind, basisset.name)
+        return output
+
     def _pickup_atom_kinds(self, atom_group = None):
         answer = set()
         if (atom_group == None):
@@ -448,25 +593,25 @@ class PdfParam(object):
         
         
     # --------------------------------------------------------------------------
-    def __setstate__(self, rhs):
+    def _set_by_dict(self, rhs):
         assert(isinstance(rhs, types.DictType))
         rhs = self._alias_conversion(rhs)
     
-        self.method = rhs.get('method', None)
-        self.guess = rhs.get('guess', None)
-        self.xc_functional = rhs.get('xc_functional', None)
-        self.convergence_target = rhs.get('convergence_target', None)
-        self.num_of_atoms = rhs.get('num_of_atoms', None)
-        self.num_of_AOs = rhs.get('num_of_AOs', None)
-        self.num_of_MOs = rhs.get('num_of_MOs', None)
+        self.method = rhs.get('method', self.method)
+        self.guess = rhs.get('guess', self.guess)
+        self.xc_functional = rhs.get('xc_functional', self.xc_functional)
+        self.convergence_target = rhs.get('convergence_target', self.convergence_target)
+        self.num_of_atoms = rhs.get('num_of_atoms', self.num_of_atoms)
+        self.num_of_AOs = rhs.get('num_of_AOs', self.num_of_AOs)
+        self.num_of_MOs = rhs.get('num_of_MOs', self.num_of_MOs)
 
-        self.max_iteration = rhs.get('max_iteration', None)
-        self.iterations = rhs.get('iterations', None)
+        self.max_iterations = rhs.get('max_iterations', self.max_iterations)
+        self.iterations = rhs.get('iterations', self.iterations)
 
         # basis set
         self._basissets = {}
         for atom_label, basisset_state in rhs['basis_sets'].items():
-            basisset = BasisSet(**basisset_state)
+            basisset = pdf.BasisSet(**basisset_state)
             self.set_basisset(atom_label,
                               basisset)
             
@@ -500,8 +645,8 @@ class PdfParam(object):
                     self._data['file_base_name'][key] = value
             self._data['scf_converged'] = control.get('scf_converged', False)
         
-    def __getstate__(self):
-        return self._data
+    # def __getstate__(self):
+    #     return self._data
 
     def _alias_conversion(self, rhs):
         """
