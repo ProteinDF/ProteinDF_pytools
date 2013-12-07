@@ -49,7 +49,7 @@ def main():
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
     source_files = args.source_files
-    copyright_filepath = args.insert
+    copyright_filepath = args.insert[0]
 
     for source_file in source_files:
         logging.debug('processing...: {}'.format(source_file))
