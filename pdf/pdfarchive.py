@@ -620,7 +620,7 @@ class PdfArchive(object):
         answer = False
         if isinstance(val1, float) and isinstance(val2, float):
             v = math.fabs(val1 - val2)
-            answer = (v < pdfcommon.error)
+            answer = (v < pdf.error)
         else:
             answer = (val1 == val2)
 

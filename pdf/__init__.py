@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from pdfcommon import epsilon, error
 from pdfcommon import NullHandler
 from pdfcommon import pdf_home, pdf_setup, run_pdf, mpac2py, load_pdfparam
 
