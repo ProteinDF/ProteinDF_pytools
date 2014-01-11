@@ -70,7 +70,7 @@ class Basis2(object):
                         name = None
                     else:
                         print(name)
-                        abort()
+                        sys.exit('ERROR!')
                     
     def _load_basis(self, fh):
         basisset = None
