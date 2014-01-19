@@ -30,6 +30,7 @@ import os.path
 import argparse
 import subprocess
 import types
+import errno
 
 def main():
     # parse args
@@ -67,11 +68,14 @@ def main():
     #                }
     subproc_args = {'stdin': None,
                     'stderr': subprocess.STDOUT,
+                    'shell': True,
                     }
     try:
         proc = subprocess.Popen(args, **subproc_args)
-    except OSError:
+    except OSError, e:
         print('Failed to execute command: %s' % args[0])
+        #print(errno.errorcode[e.errno])
+        print(os.strerror(e.errno))
         sys.exit(1)
 
     return_code = proc.wait()
