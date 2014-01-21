@@ -56,7 +56,7 @@ def main():
         print('PDF_HOME environment variable is set to \'%s\'' % (pdf_home))
     os.environ['PDF_HOME'] = pdf_home
     
-    (pdfcmd, pdfargs) = get_cmd(arg_array)
+    (pdfcmd, pdfargs, ext) = get_cmd(arg_array)
     if verbose:
         print('exec cmd: \'%s\'' % (pdfcmd))
         print('args    : \'%s\'' % (pdfargs))
@@ -66,9 +66,12 @@ def main():
     #                'stdout': subprocess.PIPE,
     #                'stderr': subprocess.PIPE,
     #                }
+    use_shell = False
+    if ext == '.sh':
+        use_shell = True
     subproc_args = {'stdin': None,
                     'stderr': subprocess.STDOUT,
-                    'shell': True,
+                    'shell': use_shell,
                     }
     try:
         proc = subprocess.Popen(args, **subproc_args)
@@ -86,7 +89,7 @@ def main():
 def get_cmd(arg_array):
     """
     引数で指定された文字列配列から'pdf-'で始まるコマンドを検索、
-    コマンドとその引数(リスト)をタプルにして返す
+    コマンドとその引数(リスト)、拡張子をタプルにして返す
     """
     assert(isinstance(arg_array, types.ListType))
     assert(len(arg_array) > 0)
@@ -111,7 +114,7 @@ def get_cmd(arg_array):
             cmd += ext
             break
     
-    return (cmd, arg_array)
+    return (cmd, arg_array, ext)
             
 if __name__ == '__main__':
     return_code = main()
