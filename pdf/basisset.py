@@ -65,8 +65,9 @@ class ContractedGTO(list):
     >>> len(cgto)
     3
     """
-    _shell_types = ['s', 'p', 'd', 'spd']
-    _orb_types = ['s', 'px', 'py', 'pz', 'dxy', 'dyz', 'dzx', 'dxx-yy', 'dzz']
+    _shell_types = ['s', 'p', 'd', 'f', 'g']
+    _orb_types = ['s', 'px', 'py', 'pz', 'dxy', 'dyz', 'dzx', 'dxx-yy', 'dzz',
+                  'z3', 'xz2', 'yz2', '3x2y-y3', 'x3-3xy2', 'xyz', 'x2z-y2z']
 
     def __init__(self, *args, **kwargs):
         shell_type = 's'

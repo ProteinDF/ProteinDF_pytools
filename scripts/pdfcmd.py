@@ -41,9 +41,16 @@ def main():
     parser.add_argument("-v", "--verbose",
                         action="store_true",
                         default=False)
+    parser.add_argument("-o", "--output",
+                        nargs=1,
+                        action="store",
+                        default="")
     args, unknown = parser.parse_known_args()
     
     verbose = args.verbose
+    output = None
+    if len(args.output) > 0:
+        output = args.output[0]
     arg_array = args.cmd + unknown
 
     # PDF_HOMEを設定する
@@ -61,7 +68,7 @@ def main():
         print('exec cmd: \'%s\'' % (pdfcmd))
         print('args    : \'%s\'' % (pdfargs))
     
-    args = [pdfcmd] + pdfargs
+    args = " ".join([pdfcmd] + pdfargs)
     #subproc_args = {'stdin': None,
     #                'stdout': subprocess.PIPE,
     #                'stderr': subprocess.PIPE,
@@ -70,9 +77,15 @@ def main():
     if ext == '.sh':
         use_shell = True
     subproc_args = {'stdin': None,
+                    'stdout': None,
                     'stderr': subprocess.STDOUT,
                     'shell': use_shell,
                     }
+    output_file = None
+    if output != None:
+        output_file = open(output, "a")
+        subproc_args['stdout'] = output_file
+        
     try:
         proc = subprocess.Popen(args, **subproc_args)
     except OSError, e:
@@ -83,6 +96,9 @@ def main():
 
     return_code = proc.wait()
     (stdouterr, stdin) = (proc.stdout, proc.stdin)
+
+    if output_file != None:
+        output_file.close()
 
     return return_code
 

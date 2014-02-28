@@ -13,6 +13,7 @@ except:
     import msgpack_pure as msgpack
 
 from pdfparam import PdfParam
+from basis2 import Basis2
 
 epsilon = 1.0E-10 # 計算機イプシロン
 error = 1.0E-5 # 許容誤差
@@ -28,15 +29,78 @@ def pdf_home():
     answer = os.environ.get('PDF_HOME', '')
     return answer
 
-def pdf_setup(workdir = "."):
+def setup(pdfparam, workdir = "."):
     """
     setup to run ProteinDF
     """
+    # make fl_Userinput
+    assert(isinstance(pdfparam, PdfParam))
+    input_path = os.path.join(workdir, "fl_Userinput")
+    f = open(input_path, 'w')
+    f.write(pdfparam.get_inputfile_contents())
+    f.close()
+    
+    # make sub-directories
     dirs = ['fl_Work']
     for d in dirs:
         path = os.path.join(workdir, d)
         if not os.path.exists(path):
             os.mkdir(path)
+
+def get_default_pdfparam():
+    """
+    defaultのpdfparamを返す
+    """
+    pdfparam = PdfParam()
+    pdfparam.step_control = 'create integral guess scf'
+    
+    pdfparam.guess = 'harris'
+    pdfparam.orbital_independence_threshold = 0.0
+    pdfparam.orbital_independence_threshold_canonical = 0.0
+    orbital_independence_threshold_lowdin = 0.0
+    pdfparam.scf_acceleration = 'damping'
+    pdfparam.scf_acceleration_damping_factor = 0.85
+    pdfparam.convergence_threshold_energy = 1.0E-4
+    pdfparam.convergence_threshold = 1.0E-3
+    pdfparam.convergence_target = 'density_matrix'
+    pdfparam.xc_functional = "svwn"
+    pdfparam.j_engine = "CD"
+    pdfparam.k_engine = "CD"
+    pdfparam.xc_engine = "gridfree_CD"
+
+    return pdfparam
+
+def set_basisset(pdfparam,
+                 basisset_name_ao = "DZVP2",
+                 basisset_name_rij = "DZVP2",
+                 basisset_name_rixc = "DZVP2",
+                 basisset_name_gridfree = "cc-pVDZ-SP"):
+    """
+    pdfparamにbasissetを設定する
+    """
+    assert(isinstance(pdfparam, PdfParam))
+    
+    basis2 = Basis2()
+    atoms = ['C', 'H', 'N', 'O', 'S']
+    basisset = {}
+    
+    if basisset_name_ao == basisset_name_gridfree:
+        pdfparam.gridfree_dedicated_basis = False
+    else:
+        pdfparam.gridfree_dedicated_basis = True
+        
+    for atom in atoms:
+        basisset_ao = basis2.get_basisset('O-{}.{}'.format(basisset_name_ao, atom))
+        basisset_j = basis2.get_basisset_j('A-{}.{}'.format(basisset_name_rij, atom))
+        basisset_xc = basis2.get_basisset_xc('A-{}.{}'.format(basisset_name_rixc, atom))
+        basisset_gf = basis2.get_basisset('O-{}.{}'.format(basisset_name_gridfree, atom))
+        
+        pdfparam.set_basisset(atom, basisset_ao)
+        pdfparam.set_basisset_j(atom, basisset_j)
+        pdfparam.set_basisset_xc(atom, basisset_xc)
+        pdfparam.set_basisset_gridfree(atom, basisset_gf)
+        
+    return pdfparam
 
 def run_pdf(subcmd):
     """

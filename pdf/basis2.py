@@ -7,7 +7,8 @@ import logging
 
 import bridge
 from basisset import *
-from pdfcommon import *
+#from pdfcommon import *
+import pdfcommon
 
 class Basis2(object):
     def __init__(self):
@@ -18,14 +19,14 @@ class Basis2(object):
         self._initialize()
         
     def _load(self):
-        db_path = '%s/data/basis2' % (pdf_home())
+        db_path = '%s/data/basis2' % (pdfcommon.pdf_home())
         #self._basisset_db = {}
 
         self._line_count = 0
         basisset = None
         name = None
-        SPD = None
-        SPD_order = 0
+        #SPD = None
+        #SPD_order = 0
         cgto = None
         numOfCGTPs = 0
         numOfPGTOs = None
@@ -74,8 +75,8 @@ class Basis2(object):
                     
     def _load_basis(self, fh):
         basisset = None
-        SPD = None
-        SPD_order = 0
+        SPDFG = None
+        SPDFG_order = 0
         cgto = None
         numOfPGTOs = None
         PGTO_index = 0
@@ -90,24 +91,28 @@ class Basis2(object):
 
             #self._logger.debug('%6d: %s' % (self._line_count, line))
 
-            if (SPD == None):
-                SPD = [0, 0, 0]
-                input_SPD = line.split()
+            if (SPDFG == None):
+                SPDFG = [0, 0, 0, 0, 0]
+                input_SPDFG = line.split()
                 numOfCGTOs = 0
-                for i in range(len(input_SPD)):
-                    value = int(input_SPD[i])
-                    SPD[i] = value
+                for i in range(len(input_SPDFG)):
+                    value = int(input_SPDFG[i])
+                    SPDFG[i] = value
                     numOfCGTOs += value
                 basisset = BasisSet("", numOfCGTOs)
             elif (numOfPGTOs == None):
                 numOfPGTOs = int(line)
                 shell_type = ''
-                if (SPD_order < SPD[0]):
+                if (SPDFG_order < SPDFG[0]):
                     shell_type = 's'
-                elif (SPD_order < (SPD[0] + SPD[1])):
+                elif (SPDFG_order < (SPDFG[0] + SPDFG[1])):
                     shell_type = 'p'
-                elif (SPD_order < (SPD[0] + SPD[1] + SPD[2])):
+                elif (SPDFG_order < (SPDFG[0] + SPDFG[1] + SPDFG[2])):
                     shell_type = 'd'
+                elif (SPDFG_order < (SPDFG[0] + SPDFG[1] + SPDFG[2] + SPDFG[3])):
+                    shell_type = 'f'
+                elif (SPDFG_order < (SPDFG[0] + SPDFG[1] + SPDFG[2] + SPDFG[3] + SPDFG[4])):
+                    shell_type = 'g'
                 else:
                     abort()
                 #self._logger.debug("create CGTO SPD=%d shell_type=%s size=%d" % (SPD_order, shell_type, numOfPGTOs))
@@ -125,14 +130,16 @@ class Basis2(object):
                 if (PGTO_index == numOfPGTOs):
                     # end of PGTO list
                     assert(len(cgto) == numOfPGTOs)
-                    basisset[SPD_order] = cgto
-                    SPD_order += 1
+                    basisset[SPDFG_order] = cgto
+                    SPDFG_order += 1
                     numOfPGTOs = None
-                if (SPD_order == numOfCGTOs):
+                if (SPDFG_order == numOfCGTOs):
                     # end of basis set
-                    assert(basisset.get_num_of_CGTOs('s') == SPD[0])
-                    assert(basisset.get_num_of_CGTOs('p') == SPD[1])
-                    assert(basisset.get_num_of_CGTOs('d') == SPD[2])
+                    assert(basisset.get_num_of_CGTOs('s') == SPDFG[0])
+                    assert(basisset.get_num_of_CGTOs('p') == SPDFG[1])
+                    assert(basisset.get_num_of_CGTOs('d') == SPDFG[2])
+                    assert(basisset.get_num_of_CGTOs('f') == SPDFG[3])
+                    assert(basisset.get_num_of_CGTOs('g') == SPDFG[4])
                     assert(len(basisset) == numOfCGTOs)
                     break
 
@@ -140,8 +147,8 @@ class Basis2(object):
                     
     def _load_basis_aux(self, fh):
         basisset = None
-        SPD = None
-        SPD_order = 0
+        SPDFG = None
+        SPDFG_order = 0
         cgto = None
         numOfPGTOs = None
         PGTO_index = 0
@@ -156,26 +163,28 @@ class Basis2(object):
 
             self._logger.debug('%6d: %s' % (self._line_count, line))
                 
-            if (SPD == None):
-                SPD = [0, 0, 0, 0]
-                input_SPD = line.split()
+            if (SPDFG == None):
+                SPDFG = [0, 0, 0, 0, 0]
+                input_SPDFG = line.split()
                 numOfCGTOs = 0
-                for i in range(len(input_SPD)):
-                    value = int(input_SPD[i])
-                    SPD[i] = value
+                for i in range(len(input_SPDFG)):
+                    value = int(input_SPDFG[i])
+                    SPDFG[i] = value
                     numOfCGTOs += value
                 basisset = BasisSet("", numOfCGTOs)
             elif (numOfPGTOs == None):
                 numOfPGTOs = int(line)
                 shell_type = ''
-                if (SPD_order < SPD[0]):
+                if (SPDFG_order < SPDFG[0]):
                     shell_type = 's'
-                elif (SPD_order < (SPD[0] + SPD[1])):
+                elif (SPDFG_order < (SPDFG[0] + SPDFG[1])):
                     shell_type = 'p'
-                elif (SPD_order < (SPD[0] + SPD[1] + SPD[2])):
+                elif (SPDFG_order < (SPDFG[0] + SPDFG[1] + SPDFG[2])):
                     shell_type = 'd'
-                elif (SPD_order < (SPD[0] + SPD[1] + SPD[2] + SPD[3])):
-                    shell_type = 'spd'
+                elif (SPDFG_order < (SPDFG[0] + SPDFG[1] + SPDFG[2] + SPDFG[3])):
+                    shell_type = 'f'
+                elif (SPDFG_order < (SPDFG[0] + SPDFG[1] + SPDFG[2] + SPDFG[3] + SPDFG[4])):
+                    shell_type = 'g'
                 else:
                     abort()
                 #print("create CGTO SPD=%d shell_type=%s size=%d" % (SPD_order, shell_type, numOfPGTOs))
@@ -192,10 +201,10 @@ class Basis2(object):
                 if (PGTO_index >= numOfPGTOs):
                     # print('>>>> end of pGTO: spd=%d' % (SPD_order))
                     # end of PGTO list
-                    basisset[SPD_order] = copy.deepcopy(cgto)
-                    SPD_order += 1
+                    basisset[SPDFG_order] = copy.deepcopy(cgto)
+                    SPDFG_order += 1
                     numOfPGTOs = None
-                if (SPD_order >= numOfCGTOs):
+                if (SPDFG_order >= numOfCGTOs):
                     # end of basis set
                     break
 

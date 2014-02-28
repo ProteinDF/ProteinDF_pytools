@@ -342,6 +342,36 @@ class PdfParam(object):
 
     convergence_target = property(_get_convergence_target, _set_convergence_target)
 
+    # convergence_threshold_energy
+    def _get_convergence_threshold_energy(self):
+        return self._data.get('convergence_threshold_energy', 1.0E-4)
+
+    def _set_convergence_threshold_energy(self, value):
+        self._data['convergence_threshold_energy'] = float(value)
+
+    convergence_threshold_energy = property(_get_convergence_threshold_energy,
+                                            _set_convergence_threshold_energy)
+
+    # convergence_threshold
+    def _get_convergence_threshold(self):
+        return self._data.get('convergence_threshold', 1.0E-3)
+
+    def _set_convergence_threshold(self, value):
+        self._data['convergence_threshold'] = float(value)
+
+    convergence_threshold = property(_get_convergence_threshold,
+                                     _set_convergence_threshold)
+   
+    # convergence_type
+    def _get_convergence_type(self):
+        return self._data.get('convergence_type', 'density')
+
+    def _set_convergence_type(self, value):
+        self._data['convergence_type'] = str(value)
+
+    convergence_type = property(_get_convergence_type,
+                                _set_convergence_type)
+
     # level_shift
     def _get_level_shift(self):
         return self._data.get('level_shift', False)
@@ -450,7 +480,31 @@ class PdfParam(object):
         self._data['TEs'] = value
 
     TEs = property(_get_TEs, _set_TEs)
-        
+
+    # force
+    def get_force(self, atom_index):
+        atom_index = int(atom_index)
+        assert(0 <= atom_index < self.num_of_atoms)
+
+        force_mat = self._data.get('force', None)
+        force = None
+        if force_mat != None:
+            if atom_index < len(force_mat):
+                force = force_mat[atom_index]
+                assert(len(force) == 3)
+
+        return force
+            
+
+    def set_force(self, atom_index, fx, fy, fz):
+        atom_index = int(atom_index)
+        fx = float(fx)
+        fy = float(fy)
+        fz = float(fz)
+        assert(0 <= atom_index < self.num_of_atoms)
+        self._data.setdefault('force', [[] for x in range(self.num_of_atoms)])
+        self._data['force'][atom_index] = [fx, fy, fz]
+
     # --------------------------------------------------------------------------
     def get_inputfile_contents(self):
         """
@@ -474,9 +528,12 @@ class PdfParam(object):
         output += "    orbital_independence_threshold  = {0}\n".format(self.orbital_independence_threshold)
         output += "    orbital_independence_threshold/canonical = {0}\n".format(self.orbital_independence_threshold_canonical)
         output += "    orbital_independence_threshold/lowdin = {0}\n".format(self.orbital_independence_threshold_lowdin)
-        output += "    scf-acceleration/damping/damping-type = {0}\n".format(self.convergence_target)
+        output += "    scf_acceleration/damping/damping_type = {0}\n".format(self.convergence_target)
         output += "    scf_acceleration = {0}\n".format(self.scf_acceleration)
         output += "    scf_acceleration/damping/damping_factor = {0}\n".format(self.scf_acceleration_damping_factor)
+        output += "    convergence/threshold_energy = {0}\n".format(self.convergence_threshold_energy)
+        output += "    convergence/threshold = {0}\n".format(self.convergence_threshold)
+        output += "    convergence/type = {0}\n".format(self.convergence_type)
         output += "    xc_functional = {0}\n".format(self.xc_functional)
         output += "    J_engine = {0}\n".format(self.j_engine)
         output += "    K_engine = {0}\n".format(self.k_engine)
@@ -635,6 +692,13 @@ class PdfParam(object):
         # total energy
         self.TEs = rhs.get('TEs', {})
 
+        # force
+        force_dat = rhs.get('force', None)
+        if force_dat != None:
+            for atom_index in range(len(force_dat)):
+                force = force_dat[atom_index]
+                self.set_force(atom_index, force[0], force[1], force[2])
+        
         # control
         self._data['file_base_name'] = {}
         control = rhs.get('control', None)
