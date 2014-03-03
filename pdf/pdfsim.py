@@ -22,7 +22,7 @@ class PdfSim(object):
         
         return (itr, total_energy)
         
-    def numerical_grad(self, pdfparam, workdir="."):
+    def numerical_grad(self, pdfparam, workdir=".", accuracy=1.0E-3):
         direction_str = ["x", "y", "z"]
 
         print(">>>> start numerical grad")
@@ -33,7 +33,7 @@ class PdfSim(object):
         
         grad_mat = [[0.0, 0.0, 0.0] for x in range(num_of_atoms)]
         index = 0
-        accuracy = 1.0E-3 # 結果の信頼性(有効数字)
+        #accuracy = 1.0E-3 # 結果の信頼性(有効数字)
         for atom_id, atom in molecule.atoms():
             for direction in range(3):
                 print("start numerical grad for {}".format(direction_str[direction]))
@@ -55,7 +55,7 @@ class PdfSim(object):
 
                     delta_TE = total_energy2 - total_energy1
                     print("delta_TE={}".format(delta_TE))
-                    if math.fabs(delta_TE) < 1.0E-3:
+                    if math.fabs(delta_TE) < accuracy:
                         print("numerical grad condition satisfied. value={} < {}".format(delta_TE, accuracy))
                         break
 
@@ -75,7 +75,7 @@ class PdfSim(object):
                 sys.stdout.flush()
             index += 1
 
-        print("=== grad ===")
+        print("=== grad (accuracy={}) ===".format(accuracy))
         rms = 0.0
         index = 0
         for atom_id, atom in molecule.atoms():
