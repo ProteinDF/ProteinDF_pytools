@@ -5,6 +5,7 @@ import os
 import sys
 import copy
 import math
+import logging
 
 import bridge
 
@@ -15,28 +16,64 @@ class PdfSim(object):
     """
     """
     def __init__(self):
+        nullHandler = bridge.NullHandler()
+        self._logger = logging.getLogger(__name__)
+        self._logger.addHandler(nullHandler)
+
         self._data = {}
 
-    def total_energy(self, pdfparam, workdir="."):
-        (itr, total_energy) = self._calc_pdf(pdfparam, workdir)
-        
-        return (itr, total_energy)
-        
+    def opt(self, pdfparam, workdir=".", max_cycle=100):
+        current_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or ".")
+
+        alpha = 0.5
+        accuracy = 1.0E-3
+
+        opt_cycle = 1
+        while True:
+            opt_workdir = os.path.join(current_dir, "opt_cycle_{}".format(opt_cycle))            
+            if not os.path.exists(opt_workdir):
+                os.mkdir(opt_workdir)
+            else:
+                self._logger.warning('already exit: {}'.format(opt_workdir))
+            (grad_mat, rms) = self.numerical_grad(pdfparam, opt_workdir, accuracy)
+
+            max_force = 0.0
+            for i in range(len(grad_mat)):
+                for j in range(3):
+                    max_force = max(max_force, math.fabs(grad_mat[i][j]))
+
+            if (max_force < 0.001 and rms < 0.001) or (opt_cycle > max_cycle):
+                break
+
+            # update
+            i = 0
+            for atom_id, atom in pdfparam.molecule.atoms():
+                atom.shift_by(alpha * grad_mat[i][0],
+                              alpha * grad_mat[i][1],
+                              alpha * grad_mat[i][2])
+            
+            opt_cycle += 1
+
+        self._logger.info("opt done")
+        self._logger.info(str(pdfparam.molecule))
+            
     def numerical_grad(self, pdfparam, workdir=".", accuracy=1.0E-3):
         direction_str = ["x", "y", "z"]
 
-        print(">>>> start numerical grad")
+        self._logger.debug(">>>> start numerical grad")
         molecule = pdfparam.molecule
         num_of_atoms = molecule.get_number_of_all_atoms()
 
-        pdfparam.convergence_threshold_energy = 1.0E-6
-        
+        if pdfparam.convergence_threshold_energy < accuracy * 0.5:
+            self._logger.warning('convergence_thresold_energy={} > 0.5*accuracy(={})'.format(
+                pdfparam.convergence_threshold_energy,
+                accuracy*0.5))
+            
         grad_mat = [[0.0, 0.0, 0.0] for x in range(num_of_atoms)]
         index = 0
-        #accuracy = 1.0E-3 # 結果の信頼性(有効数字)
         for atom_id, atom in molecule.atoms():
             for direction in range(3):
-                print("start numerical grad for {}".format(direction_str[direction]))
+                self._logger.debug("start numerical grad for {}".format(direction_str[direction]))
                 h = 0.01
                 delta_TE = 0.0
                 while True:
@@ -56,7 +93,7 @@ class PdfSim(object):
                     delta_TE = total_energy2 - total_energy1
                     print("delta_TE={}".format(delta_TE))
                     if math.fabs(delta_TE) < accuracy:
-                        print("numerical grad condition satisfied. value={} < {}".format(delta_TE, accuracy))
+                        self._logger.debug("numerical grad condition satisfied. value={} < {}".format(delta_TE, accuracy))
                         break
 
                     h *= 0.5
@@ -66,30 +103,35 @@ class PdfSim(object):
                 # x,y,zのどれかが終了
                 value = delta_TE / (2.0 * h)
                 grad_mat[index][direction] = float(value)
-                print("gradient value [{}][{}] = {}".format(atom_id,
-                                                            direction_str[direction],
-                                                            value))
+                self._logger.debug("gradient value [{}][{}] = {}".format(atom_id,
+                                                                         direction_str[direction],
+                                                                         value))
                 #self._show_grad_mat(grad_mat)
 
                 sys.stderr.flush()
                 sys.stdout.flush()
             index += 1
 
-        print("=== grad (accuracy={}) ===".format(accuracy))
+        self._logger.info("=== grad (accuracy={}) ===".format(accuracy))
         rms = 0.0
         index = 0
         for atom_id, atom in molecule.atoms():
-            print("[{}] {: 8.5f} {: 8.5f} {: 8.5f}".format(atom_id, grad_mat[index][0], grad_mat[index][1], grad_mat[index][2]))
+            self._logger.info("[{}] {: 8.5f} {: 8.5f} {: 8.5f}".format(atom_id, grad_mat[index][0], grad_mat[index][1], grad_mat[index][2]))
             for i in range(3):
                 rms += grad_mat[index][i] * grad_mat[index][i]
             index += 1
         rms /= num_of_atoms * 3
         rms = math.sqrt(rms)
-        print("RMS = {}".format(rms))
-        print("============\n")
+        self._logger.info("RMS = {}".format(rms))
+        self._logger.info("============\n")
 
         return (grad_mat, rms)
     
+    def total_energy(self, pdfparam, workdir="."):
+        (itr, total_energy) = self._calc_pdf(pdfparam, workdir)
+        
+        return (itr, total_energy)
+        
     def _show_grad_mat(self, grad_mat):
         for i in range(len(grad_mat)):
             print("[{}] ({}, {}, {})".format(i, grad_mat[i][0], grad_mat[i][1], grad_mat[i][2]))
@@ -104,7 +146,7 @@ class PdfSim(object):
         elif direction == 2:
             answer.xyz.z += delta
         else:
-            print("program error.")
+            self._logger.critical("program error.")
             exit(1)
         
         return answer
@@ -116,7 +158,7 @@ class PdfSim(object):
         if not os.path.exists(pdf_workdir):
             os.mkdir(pdf_workdir)
         else:
-            print('[WARN] already exists {}'.format(pdf_workdir))
+            self._logger.warning('already exist {}'.format(pdf_workdir))
             
         setup(pdfparam, pdf_workdir)
         os.chdir(pdf_workdir)
