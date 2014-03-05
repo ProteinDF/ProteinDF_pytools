@@ -22,14 +22,16 @@ class PdfSim(object):
         
         return (itr, total_energy)
         
-    def numerical_grad(self, pdfparam, workdir=".", accuracy=1.0E-3):
+    def numerical_grad(self, pdfparam, workdir=".", accuracy=1.0E-3, delta=0.001):
         direction_str = ["x", "y", "z"]
 
         print(">>>> start numerical grad")
         molecule = pdfparam.molecule
         num_of_atoms = molecule.get_number_of_all_atoms()
 
-        pdfparam.convergence_threshold_energy = 1.0E-6
+        if pdfparam.convergence_threshold_energy > accuracy * 0.5:
+            print("pdfparam.convergence_threshold_energy({} > {}) is too small.".format(pdfparam.convergence_threshold_energy,
+                                                                                        accuracy*0.5))
         
         grad_mat = [[0.0, 0.0, 0.0] for x in range(num_of_atoms)]
         index = 0
@@ -37,7 +39,7 @@ class PdfSim(object):
         for atom_id, atom in molecule.atoms():
             for direction in range(3):
                 print("start numerical grad for {}".format(direction_str[direction]))
-                h = 0.01
+                h = delta
                 delta_TE = 0.0
                 while True:
                     atom1 = self._move(atom, direction, -h)
