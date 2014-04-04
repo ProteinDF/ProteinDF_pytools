@@ -92,8 +92,8 @@ class PdfSim(object):
                     (itr, total_energy2) = self._calc_pdf(pdfparam2, workdir2)
 
                     delta_TE = total_energy2 - total_energy1
-                    print("delta_TE={}".format(delta_TE))
-                    if math.fabs(delta_TE) < accuracy:
+                    print("h={: e}, delta_TE={: e}, v={: e}".format(h, delta_TE, delta_TE / (2.0 * h)))
+                    if (math.fabs(delta_TE) < accuracy) or (h < 1.0E-2):
                         self._logger.debug("numerical grad condition satisfied. value={} < {}".format(delta_TE, accuracy))
                         break
 
@@ -117,7 +117,7 @@ class PdfSim(object):
         rms = 0.0
         index = 0
         for atom_id, atom in molecule.atoms():
-            self._logger.info("[{}] {: 8.5f} {: 8.5f} {: 8.5f}".format(atom_id, grad_mat[index][0], grad_mat[index][1], grad_mat[index][2]))
+            self._logger.info("[{:>8s}] {: 8.5f} {: 8.5f} {: 8.5f}".format(atom_id, grad_mat[index][0], grad_mat[index][1], grad_mat[index][2]))
             for i in range(3):
                 rms += grad_mat[index][i] * grad_mat[index][i]
             index += 1
@@ -139,17 +139,19 @@ class PdfSim(object):
     
     def _move(self, atom, direction, delta):
         assert(0 <= direction < 3)
-        answer = copy.deepcopy(atom)
+        #answer = copy.deepcopy(atom)
+        answer = bridge.Atom(atom)
+
         if direction == 0:
-            answer.xyz.x += delta
+            answer.xyz.x = float(answer.xyz.x) + delta
         elif direction == 1:
-            answer.xyz.y += delta
+            answer.xyz.y = float(answer.xyz.y) + delta
         elif direction == 2:
-            answer.xyz.z += delta
+            answer.xyz.z = float(answer.xyz.z) + delta
         else:
             self._logger.critical("program error.")
             exit(1)
-        
+
         return answer
         
     def _calc_pdf(self, pdfparam, workdir):

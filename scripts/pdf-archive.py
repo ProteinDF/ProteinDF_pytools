@@ -83,7 +83,10 @@ def main():
 
 class Pdf2Db(object):
     def __init__(self, pdfparam, entry):
+        nullHandler = bridge.NullHandler()
         self._logger = logging.getLogger(__name__)
+        self._logger.addHandler(nullHandler)
+
         self._is_little_endian = True
 
         assert(isinstance(pdfparam, pdf.PdfParam))

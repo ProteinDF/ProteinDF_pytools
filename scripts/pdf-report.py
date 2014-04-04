@@ -107,12 +107,13 @@ def plot_convergence_energy_level(entry,
     EnergyLevelのヒストリ
     """
     itr = entry.iterations
-    HOMO_level = entry.get_HOMO_level('RKS') # TODO
+    method = entry.method
+    HOMO_level = entry.get_HOMO_level(method)
 
     data_path = output_dir + '/eigvals_hist.dat'
     dat = open(data_path, 'w')
     for itr in range(1, entry.iterations +1):
-        eigvals = entry.get_energylevel('RKS', itr) # TODO
+        eigvals = entry.get_energylevel(method, itr)
         if eigvals:
             for level, e in enumerate(eigvals):
                 e *= 27.2116

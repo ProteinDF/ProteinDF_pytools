@@ -349,6 +349,16 @@ class PdfArchive(object):
                 value = int(values[0]['num_of_MOs'])
         return value
 
+    def _get_method(self):
+        value = None
+        table_name = 'conditions'
+        if self._db.has_table(table_name):
+            values = self._db.select(table_name,
+                                     fields=['method'])
+            if len(values) > 0:
+                value = values[0]['method']
+        return value
+        
     def _get_iterations(self):
         value = None
         table_name = 'conditions'
@@ -642,6 +652,7 @@ class PdfArchive(object):
     num_of_atoms = property(_get_num_of_atoms)
     num_of_AOs = property(_get_num_of_AOs)
     num_of_MOs = property(_get_num_of_MOs)
+    method = property(_get_method)
     iterations = property(_get_iterations)
     scf_converged = property(_get_scf_converged)
 
