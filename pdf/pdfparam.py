@@ -1,4 +1,4 @@
-3#!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import types
@@ -587,21 +587,36 @@ class PdfParam(object):
                 output += self._get_input_geometry(group)
                 output += "\n"
             for key, atom in atom_group.atoms():
-                if (math.fabs(atom.charge) < 1.0E-5):
-                    output += "%2s % 10.6f % 10.6f % 10.6f // %s:%s\n" %(
-                        atom.symbol,
-                        atom.xyz.x,
-                        atom.xyz.y,
-                        atom.xyz.z,
-                        atom.path,
-                        atom.name)
+                label = ""
+                if len(atom.label) > 0:
+                    label = "@{}".format(label)
+                    label = re.sub("\s+", "_", label)
+
+                charge = ""
+                if math.fabs(atom.charge) > 1.0E-5:
+                    charge = str(atom.charge)
+
+                atom_symbol = atom.symbol
+                if atom_symbol != 'X':
+                    output += "{atom_symbol}{label} {x: f} {y: f} {z: 6f} // {path}:{name}\n".format(
+                        atom_symbol = atom_symbol,
+                        label = label,
+                        x = atom.xyz.x,
+                        y = atom.xyz.y,
+                        z = atom.xyz.z,
+                        path = atom.path,
+                        name = atom.name)
                 else:
-                    output += "%2s % 10.6f % 10.6f % 10.6f % 10.6f\n" %(
-                        atom.symbol,
-                        atom.xyz.x,
-                        atom.xyz.y,
-                        atom.xyz.z,
-                        atom.charge)
+                    output += "{atom_symbol}{label} {x: f} {y: f} {z: 6f} {charge} // {path}:{name}\n".format(
+                        atom_symbol = atom_symbol,
+                        label = label,
+                        x = atom.xyz.x,
+                        y = atom.xyz.y,
+                        z = atom.xyz.z,
+                        charge = charge,
+                        path = atom.path,
+                        name = atom.name)
+                    
         return output
 
     def _get_input_basisset(self):

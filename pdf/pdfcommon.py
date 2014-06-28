@@ -29,31 +29,13 @@ def pdf_home():
     answer = os.environ.get('PDF_HOME', '')
     return answer
 
-def setup(pdfparam, workdir = "."):
-    """
-    setup to run ProteinDF
-    """
-    # make fl_Userinput
-    assert(isinstance(pdfparam, PdfParam))
-    input_path = os.path.join(workdir, "fl_Userinput")
-    f = open(input_path, 'w')
-    f.write(pdfparam.get_inputfile_contents())
-    f.close()
-    
-    # make sub-directories
-    dirs = ['fl_Work']
-    for d in dirs:
-        path = os.path.join(workdir, d)
-        if not os.path.exists(path):
-            os.mkdir(path)
-
 def get_default_pdfparam():
     """
     defaultのpdfparamを返す
     """
     pdfparam = PdfParam()
     pdfparam.step_control = 'create integral guess scf'
-    
+
     pdfparam.guess = 'harris'
     pdfparam.orbital_independence_threshold = 0.0
     pdfparam.orbital_independence_threshold_canonical = 0.0
@@ -79,27 +61,27 @@ def set_basisset(pdfparam,
     pdfparamにbasissetを設定する
     """
     assert(isinstance(pdfparam, PdfParam))
-    
+
     basis2 = Basis2()
     atoms = ['C', 'H', 'N', 'O', 'S']
     basisset = {}
-    
+
     if basisset_name_ao == basisset_name_gridfree:
         pdfparam.gridfree_dedicated_basis = False
     else:
         pdfparam.gridfree_dedicated_basis = True
-        
+
     for atom in atoms:
         basisset_ao = basis2.get_basisset('O-{}.{}'.format(basisset_name_ao, atom))
         basisset_j = basis2.get_basisset_j('A-{}.{}'.format(basisset_name_rij, atom))
         basisset_xc = basis2.get_basisset_xc('A-{}.{}'.format(basisset_name_rixc, atom))
         basisset_gf = basis2.get_basisset('O-{}.{}'.format(basisset_name_gridfree, atom))
-        
+
         pdfparam.set_basisset(atom, basisset_ao)
         pdfparam.set_basisset_j(atom, basisset_j)
         pdfparam.set_basisset_xc(atom, basisset_xc)
         pdfparam.set_basisset_gridfree(atom, basisset_gf)
-        
+
     return pdfparam
 
 def run_pdf(subcmd):
@@ -112,7 +94,7 @@ def run_pdf(subcmd):
     nullHandler = NullHandler()
     logger = logging.getLogger(__name__)
     logger.addHandler(nullHandler)
-    
+
     cmd = os.path.join(pdf_home(), "bin", "pdf")
     cmdlist = [cmd]
     cmdlist.extend(subcmd)
@@ -125,13 +107,13 @@ def run_pdf(subcmd):
         traceback.print_exc(file=sys.stdout)
         #print(traceback.format_exc())
         print('-'*60)
-    
+
 def mpac2py(path):
     """
     load message pack binary file to python dictionary data
     """
     assert(isinstance(path, str) == True)
-    
+
     f = open(path, "rb")
     contents = f.read()
     data = msgpack.unpackb(contents)
@@ -142,5 +124,5 @@ def mpac2py(path):
 def load_pdfparam(pdfparam_path='pdfparam.mpac'):
     data = mpac2py(pdfparam_path)
     param = PdfParam(data)
-    
+
     return param

@@ -22,6 +22,32 @@ class PdfSim(object):
 
         self._data = {}
 
+    @classmethod
+    def setup(cls, pdfparam, workdir = "."):
+        """
+        setup to run ProteinDF
+        """
+        # make fl_Userinput
+        assert(isinstance(pdfparam, PdfParam))
+
+        if not os.path.exists(workdir):
+            os.mkdir(workdir)
+        else:
+            self._logger.warning('already exit: {}'.format(workdir))
+
+        input_path = os.path.join(workdir, "fl_Userinput")
+        f = open(input_path, 'w')
+        f.write(pdfparam.get_inputfile_contents())
+        f.close()
+
+        # make sub-directories
+        dirs = ['fl_Work']
+        for d in dirs:
+            path = os.path.join(workdir, d)
+            if not os.path.exists(path):
+                os.mkdir(path)
+
+
     def opt(self, pdfparam, workdir=".", max_cycle=100):
         current_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or ".")
 
@@ -30,7 +56,7 @@ class PdfSim(object):
 
         opt_cycle = 1
         while True:
-            opt_workdir = os.path.join(current_dir, "opt_cycle_{}".format(opt_cycle))            
+            opt_workdir = os.path.join(current_dir, "opt_cycle_{}".format(opt_cycle))
             if not os.path.exists(opt_workdir):
                 os.mkdir(opt_workdir)
             else:
@@ -51,12 +77,12 @@ class PdfSim(object):
                 atom.shift_by(alpha * grad_mat[i][0],
                               alpha * grad_mat[i][1],
                               alpha * grad_mat[i][2])
-            
+
             opt_cycle += 1
 
         self._logger.info("opt done")
         self._logger.info(str(pdfparam.molecule))
-            
+
     def numerical_grad(self, pdfparam, workdir=".", accuracy=1.0E-3, delta=0.001):
         direction_str = ["x", "y", "z"]
 
@@ -80,16 +106,16 @@ class PdfSim(object):
                 while True:
                     atom1 = self._move(atom, direction, -h)
                     atom2 = self._move(atom, direction, +h)
-                
+
                     pdfparam1 = pdfparam
                     pdfparam1.molecule[atom_id] = atom1
                     workdir1 = os.path.join(workdir, "{}_d{}_h{}_1".format(atom_id, direction,h))
-                    (itr, total_energy1) = self._calc_pdf(pdfparam1, workdir1)
+                    (itr, total_energy1) = self.calc_pdf(pdfparam1, workdir1)
 
                     pdfparam2 = pdfparam
                     pdfparam2.molecule[atom_id] = atom2
                     workdir2 = os.path.join(workdir, "{}_d{}_h{}_2".format(atom_id, direction,h))
-                    (itr, total_energy2) = self._calc_pdf(pdfparam2, workdir2)
+                    (itr, total_energy2) = self.calc_pdf(pdfparam2, workdir2)
 
                     delta_TE = total_energy2 - total_energy1
                     print("h={: e}, delta_TE={: e}, v={: e}".format(h, delta_TE, delta_TE / (2.0 * h)))
@@ -127,16 +153,16 @@ class PdfSim(object):
         self._logger.info("============\n")
 
         return (grad_mat, rms)
-    
+
     def total_energy(self, pdfparam, workdir="."):
-        (itr, total_energy) = self._calc_pdf(pdfparam, workdir)
-        
+        (itr, total_energy) = self.calc_pdf(pdfparam, workdir)
+
         return (itr, total_energy)
-        
+
     def _show_grad_mat(self, grad_mat):
         for i in range(len(grad_mat)):
             print("[{}] ({}, {}, {})".format(i, grad_mat[i][0], grad_mat[i][1], grad_mat[i][2]))
-    
+
     def _move(self, atom, direction, delta):
         assert(0 <= direction < 3)
         #answer = copy.deepcopy(atom)
@@ -153,8 +179,8 @@ class PdfSim(object):
             exit(1)
 
         return answer
-        
-    def _calc_pdf(self, pdfparam, workdir):
+
+    def calc_pdf(self, pdfparam, workdir, ):
         current_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or ".")
 
         pdf_workdir = os.path.join('.', workdir)
@@ -162,17 +188,16 @@ class PdfSim(object):
             os.mkdir(pdf_workdir)
         else:
             self._logger.warning('already exist {}'.format(pdf_workdir))
-            
+
         setup(pdfparam, pdf_workdir)
         os.chdir(pdf_workdir)
         run_pdf(['-o', 'pdf.log', 'serial'])
         run_pdf('archive')
-        
+
         entry = PdfArchive('pdfresults.db')
         itr = entry.iterations
         total_energy = entry.get_total_energy(itr)
-        
-        os.chdir(current_dir)
-        
-        return (itr, total_energy)
 
+        os.chdir(current_dir)
+
+        return (itr, total_energy)

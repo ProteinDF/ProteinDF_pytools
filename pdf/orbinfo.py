@@ -78,8 +78,8 @@ class OrbInfo(object):
             
     def _get_atom_label(self, atom):
         atom_label = atom.symbol
-        if len(atom.name) > 0:
-            atom_label += '@' + atom.name
+        if len(atom.label) > 0:
+            atom_label += '@' + atom.label
         return atom_label
 
     def get_num_of_orbitals(self):
