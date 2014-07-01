@@ -76,15 +76,15 @@ class ContractedGTO(list):
         if len(args) == 2:
             shell_type = args[0]
             size = int(args[1])
-        if kwargs.has_key('shell_type'):
+        if 'shell_type' in kwargs:
             shell_type = kwargs.get('shell_type')
-        if kwargs.has_key('size'):
+        if 'size' in kwargs:
             size = kwargs.get('size')
 
         self.shell_type = shell_type
         list.__init__(self, [PrimitiveGTO() for x in range(size)])
 
-        if kwargs.has_key('pGTOs'):
+        if 'pGTOs' in kwargs:
             pgtos = kwargs.get('pGTOs', [])
             self.__init__(size = len(pgtos))
             for i in range(len(pgtos)):
@@ -226,9 +226,9 @@ class BasisSet(list):
                 size = args[1]
         list.__init__(self, [ContractedGTO() for x in range(size)])
 
-        if kwargs.has_key('name'):
+        if 'name' in kwargs:
             self.name = kwargs.get('name')
-        if kwargs.has_key('cGTOs'):
+        if 'cGTOs' in kwargs:
             cgtos = kwargs.get('cGTOs', [])
             size = len(cgtos)
             list.__init__(self, [ContractedGTO() for x in range(size)])

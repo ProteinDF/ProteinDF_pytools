@@ -12,8 +12,8 @@ try:
 except:
     import msgpack_pure as msgpack
 
-from pdfparam import PdfParam
-from basis2 import Basis2
+from .pdfparam import PdfParam
+from .basis2 import Basis2
 
 epsilon = 1.0E-10 # 計算機イプシロン
 error = 1.0E-5 # 許容誤差

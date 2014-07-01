@@ -6,9 +6,8 @@ import re
 import logging
 
 import bridge
-from basisset import *
-#from pdfcommon import *
-import pdfcommon
+
+from .basisset import PrimitiveGTO, ContractedGTO, BasisSet
 
 class Basis2(object):
     def __init__(self):
@@ -19,6 +18,7 @@ class Basis2(object):
         self._initialize()
         
     def _load(self):
+        from . import pdfcommon
         db_path = '%s/data/basis2' % (pdfcommon.pdf_home())
         #self._basisset_db = {}
 
@@ -45,7 +45,8 @@ class Basis2(object):
 
                     name = line
                     if (name[0] == 'O'):
-                        basisset = copy.deepcopy(self._load_basis(f))
+                        #basisset = copy.deepcopy(self._load_basis(f))
+                        basisset = BasisSet(self._load_basis(f))
 
                         self._logger.debug(str(basisset))
                         #print('>>>> {0}'.format(name))
@@ -59,12 +60,14 @@ class Basis2(object):
                         self._basis[name] = basisset
                         name = None
                     elif (name[0] == 'A'):
-                        basisset = copy.deepcopy(self._load_basis_aux(f))
+                        #basisset = copy.deepcopy(self._load_basis_aux(f))
+                        basisset = BasisSet(self._load_basis_aux(f))
                         basisset = basisset.expand()
                         basisset.name = name
                         self._basis_j[name] = basisset
                         
-                        basisset = copy.deepcopy(self._load_basis_aux(f))
+                        #basisset = copy.deepcopy(self._load_basis_aux(f))
+                        basisset = BasisSet(self._load_basis_aux(f))
                         basisset = basisset.expand()
                         basisset.name = name
                         self._basis_xc[name] = basisset
@@ -201,7 +204,8 @@ class Basis2(object):
                 if (PGTO_index >= numOfPGTOs):
                     # print('>>>> end of pGTO: spd=%d' % (SPD_order))
                     # end of PGTO list
-                    basisset[SPDFG_order] = copy.deepcopy(cgto)
+                    # basisset[SPDFG_order] = copy.deepcopy(cgto)
+                    basisset[SPDFG_order] = ContractedGTO(cgto)
                     SPDFG_order += 1
                     numOfPGTOs = None
                 if (SPDFG_order >= numOfCGTOs):

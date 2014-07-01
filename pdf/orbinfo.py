@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import copy
-from pdfarchive import PdfArchive
-from pdfparam import PdfParam
-from basisset import BasisSet, ContractedGTO, PrimitiveGTO
+from .pdfarchive import PdfArchive
+from .pdfparam import PdfParam
+from .basisset import BasisSet, ContractedGTO, PrimitiveGTO
 
 class OrbInfo(object):
     """

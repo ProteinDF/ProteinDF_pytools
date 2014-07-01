@@ -7,7 +7,10 @@ import logging
 import math
 
 import bridge
-import pdf
+
+from .pdfcommon import *
+from .pdfparam import PdfParam
+
 
 class PdfArchive(object):
     """
@@ -34,7 +37,7 @@ class PdfArchive(object):
         self._create_tables()
         self._read_db()
 
-        if isinstance(pdfparam, pdf.PdfParam):
+        if isinstance(pdfparam, PdfParam):
             pdf_id = pdfparam.digest()
             self._set_pdfparam_conditions(pdfparam)
             self._set_pdfparam_coordinates(pdfparam)
@@ -129,7 +132,7 @@ class PdfArchive(object):
                 self._pdf_id = lines[0]['pdf_id']
             
     def _set_pdfparam_conditions(self, pdfparam):
-        assert(isinstance(pdfparam, pdf.PdfParam))
+        assert(isinstance(pdfparam, PdfParam))
         table_name = 'conditions'
 
         self._pdf_id = pdfparam.digest()
@@ -174,7 +177,7 @@ class PdfArchive(object):
                              'scf_converged':scf_converged})
 
     def _set_pdfparam_coordinates(self, pdfparam):
-        assert(isinstance(pdfparam, pdf.PdfParam))
+        assert(isinstance(pdfparam, PdfParam))
         table_name = 'coordinates'
         if not self._db.has_table(table_name):
             self._db.create_table(table_name,
@@ -216,7 +219,7 @@ class PdfArchive(object):
         """
         BasisSet情報を格納する
         """
-        assert(isinstance(pdfparam, pdf.PdfParam))
+        assert(isinstance(pdfparam, PdfParam))
         table_name = 'basis'
         if not self._db.has_table(table_name):
             self._db.create_table(table_name,
@@ -269,7 +272,7 @@ class PdfArchive(object):
                                      })
             
     def _set_pdfparram_total_energies(self, pdfparam):
-        assert(isinstance(pdfparam, pdf.PdfParam))
+        assert(isinstance(pdfparam, PdfParam))
         table_name = 'total_energies'
         if not self._db.has_table(table_name):
             self._db.create_table(table_name,
@@ -292,7 +295,7 @@ class PdfArchive(object):
                                      'energy':energy})
 
     def _set_pdfparam_force(self, pdfparam):
-        assert(isinstance(pdfparam, pdf.PdfParam))
+        assert(isinstance(pdfparam, PdfParam))
         table_name = 'force'
         if not self._db.has_table(table_name):
             self._create_table_force()
@@ -706,7 +709,7 @@ class PdfArchive(object):
         answer = False
         if isinstance(val1, float) and isinstance(val2, float):
             v = math.fabs(val1 - val2)
-            answer = (v < pdf.error)
+            answer = (v < pdfcommon.error)
         else:
             answer = (val1 == val2)
 

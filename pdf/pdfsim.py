@@ -9,8 +9,8 @@ import logging
 
 import bridge
 
-from pdfcommon import *
-from pdfarchive import PdfArchive
+from .pdfcommon import *
+from .pdfarchive import PdfArchive
 
 class PdfSim(object):
     """
