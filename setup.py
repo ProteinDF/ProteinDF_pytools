@@ -34,7 +34,6 @@ setup(name='pdfutils',
       url='http://satolab.iis.u-tokyo.ac.jp/',
       packages=['pdf'],
       scripts=[
-        'scripts/mpac2yml.py',
         'scripts/yml2mpac.py',
         'scripts/pdf',
         'scripts/pdf-archive.py',

@@ -8,9 +8,7 @@ import math
 import logging
 
 import bridge
-
-from .pdfcommon import *
-from .pdfarchive import PdfArchive
+import pdf
 
 class PdfSim(object):
     """
@@ -20,15 +18,13 @@ class PdfSim(object):
         self._logger = logging.getLogger(__name__)
         self._logger.addHandler(nullHandler)
 
-        self._data = {}
 
-    @classmethod
-    def setup(cls, pdfparam, workdir = "."):
+    def setup(self, pdfparam, workdir = "."):
         """
         setup to run ProteinDF
         """
         # make fl_Userinput
-        assert(isinstance(pdfparam, PdfParam))
+        assert(isinstance(pdfparam, pdf.PdfParam))
 
         if not os.path.exists(workdir):
             os.mkdir(workdir)
@@ -47,6 +43,75 @@ class PdfSim(object):
             if not os.path.exists(path):
                 os.mkdir(path)
 
+
+    def run_pdf(self, subcmd):
+        """
+        run ProteinDF command
+        """
+        if isinstance(subcmd, str):
+            subcmd = [subcmd]
+            
+        cmd = os.path.join(pdf_home(), "bin", "pdf")
+        cmdlist = [cmd]
+        cmdlist.extend(subcmd)
+        self._logger.debug("run: {0}".format(cmdlist))
+        
+        try:
+            subprocess.check_call(cmdlist)
+        except:
+            print('-'*60)
+            traceback.print_exc(file=sys.stdout)
+            #print(traceback.format_exc())
+            print('-'*60)
+
+
+    def sp(self, pdfparam, *args, **kwargs):
+        """
+        calc single-point
+
+        Keyword arguments:
+        pdfparam --- PdfParam object represented the calculation condition.
+        workdir --- working directory.
+        dry_run --- if True, the calculation is NOT carried out. Default is False.
+
+        Returns:
+        tuple of the number of iterations and the total energy.
+        
+        """
+        workdir = kwargs.get('workdir', '')
+        dry_run = kwargs.get('dry_run', False)
+        
+        current_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or ".")
+
+        pdf_workdir = os.path.join('.', workdir)
+        if not os.path.exists(pdf_workdir):
+            os.mkdir(pdf_workdir)
+        else:
+            self._logger.warning('already exist {}'.format(pdf_workdir))
+
+        self.setup(pdfparam, pdf_workdir)
+        os.chdir(pdf_workdir)
+
+        itr = None
+        total_energy = None
+        if not dry_run:
+            self.run_pdf(['-o', 'pdf.log', 'serial'])
+            self.run_pdf('archive')
+
+            entry = pdf.PdfArchive('pdfresults.db')
+            itr = entry.iterations
+            total_energy = entry.get_total_energy(itr)
+
+        os.chdir(current_dir)
+
+        return (itr, total_energy)
+    # ------------------------------------------------------------------
+
+
+
+
+
+                
 
     def opt(self, pdfparam, workdir=".", max_cycle=100):
         current_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or ".")
@@ -180,7 +245,7 @@ class PdfSim(object):
 
         return answer
 
-    def calc_pdf(self, pdfparam, workdir, ):
+    def calc_pdf(self, pdfparam, workdir):
         current_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or ".")
 
         pdf_workdir = os.path.join('.', workdir)
@@ -189,15 +254,18 @@ class PdfSim(object):
         else:
             self._logger.warning('already exist {}'.format(pdf_workdir))
 
-        setup(pdfparam, pdf_workdir)
+        self.setup(pdfparam, pdf_workdir)
         os.chdir(pdf_workdir)
         run_pdf(['-o', 'pdf.log', 'serial'])
         run_pdf('archive')
 
-        entry = PdfArchive('pdfresults.db')
+        entry = pdf.PdfArchive('pdfresults.db')
         itr = entry.iterations
         total_energy = entry.get_total_energy(itr)
 
         os.chdir(current_dir)
 
         return (itr, total_energy)
+
+
+        

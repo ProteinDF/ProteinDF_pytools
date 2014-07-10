@@ -5,7 +5,6 @@ import re
 import array
 import copy
 import math
-import pprint
 
 class PrimitiveGTO(object):
     """
@@ -16,12 +15,19 @@ class PrimitiveGTO(object):
     True
     """
     def __init__(self, *args, **kwargs):
+        if (len(args) == 1) and isinstance(args[0], PrimitiveGTO):
+            rhs = args[0]
+            self.exp = rhs.exp
+            self.coef = rhs.coef
+            return
+            
         self.exp = kwargs.get('exp', 0.0)
         self.coef = kwargs.get('coef', 1.0)
         if (len(args) == 2):
             self.exp = args[0]
             self.coef = args[1]
-        
+
+    # exp --------------------------------------------------------------
     def __get_exp(self):
         return self._exp
 
@@ -30,6 +36,7 @@ class PrimitiveGTO(object):
 
     exp = property(__get_exp, __set_exp)
 
+    # coef -------------------------------------------------------------
     def __get_coef(self):
         return self._coef
 
@@ -38,21 +45,11 @@ class PrimitiveGTO(object):
 
     coef = property(__get_coef, __set_coef)
 
+    # __str__ ----------------------------------------------------------
     def __str__(self):
         output = "    {0: e} {1: e}\n".format(self.exp, self.coef)
         return output
 
-    #def __getstate__(self):
-    #    odict = {}
-    #    odict['exp'] = self.exp
-    #    odict['coef'] = self.coef
-    #    return odict
-    
-    #def _init_by_dict(self, odict):
-    #    assert(isinstance(odict, dict) == True)
-    #    self.exp  = odict.get('exp', 0.0)
-    #    self.coef = odict.get('coef', 1.0)
-    
         
 class ContractedGTO(list):
     """
@@ -73,6 +70,10 @@ class ContractedGTO(list):
         shell_type = 's'
         size = 0
         
+        if (len(args) == 1) and isinstance(args[0], ContractedGTO):
+            self._copy_constructer(args[0])
+            return
+        
         if len(args) == 2:
             shell_type = args[0]
             size = int(args[1])
@@ -91,7 +92,14 @@ class ContractedGTO(list):
                 self[i] = PrimitiveGTO(**(pgtos[i]))
             self.shell_type = kwargs.get('shell_type', 's')
             self.scale_factor = kwargs.get('scale_factor', 1.0)
-    
+
+    def _copy_constructer(self, rhs):
+        self.shell_type = rhs.shell_type
+        self.scale_factor = rhs.scale_factor
+        list.__init__(self, [PrimitiveGTO() for x in range(len(rhs))])
+        for i, pgto in enumerate(rhs):
+            self[i] = PrimitiveGTO(pgto)
+        
     # shell_type ---------------------------------------------------------------
     def __get_shell_type_id(self):
         return self._shell_type_id
@@ -123,6 +131,7 @@ class ContractedGTO(list):
 
     scale_factor = property(__get_scale_factor, __set_scale_factor)
 
+    # ------------------------------------------------------------------
     @classmethod
     def get_supported_shell_types(cls):
         return cls._shell_types
@@ -220,6 +229,11 @@ class BasisSet(list):
     def __init__(self, *args, **kwargs):
         self._name = ''
         size = 0
+
+        if (len(args) == 1) and isinstance(args[0], BasisSet):
+            self._copy_constructer(args[0])
+            return
+        
         if (len(args) > 0):
             self.name = args[0]
             if (len(args) > 1):
@@ -234,7 +248,20 @@ class BasisSet(list):
             list.__init__(self, [ContractedGTO() for x in range(size)])
             for i in range(len(cgtos)):
                 self[i] = ContractedGTO(**(cgtos[i]))
-                
+
+    def _copy_constructer(self, rhs):
+        self.name = rhs.name
+        list.__init__(self, [ContractedGTO() for x in range(len(rhs))])
+        for i, cgto in enumerate(rhs):
+            self[i] = ContractedGTO(cgto)
+
+    #def __setitem__(self, key, value):
+    #    super(BasisSet, self).__setitem__(key, value)
+
+    #def __getitem__(self, key):
+    #    return super(BasisSet, self).__getitem__(key)
+            
+    # name -------------------------------------------------------------
     def _get_name(self):
         return self._name
 
@@ -242,6 +269,7 @@ class BasisSet(list):
         self._name = name
 
     name = property(_get_name, _set_name)
+    # ------------------------------------------------------------------
 
     def get_num_of_CGTOs(self, shell_type):
         answer = 0

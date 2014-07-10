@@ -6,8 +6,7 @@ import re
 import logging
 
 import bridge
-
-from .basisset import PrimitiveGTO, ContractedGTO, BasisSet
+import pdf
 
 class Basis2(object):
     def __init__(self):
@@ -18,9 +17,7 @@ class Basis2(object):
         self._initialize()
         
     def _load(self):
-        from . import pdfcommon
-        db_path = '%s/data/basis2' % (pdfcommon.pdf_home())
-        #self._basisset_db = {}
+        db_path = '%s/data/basis2' % (pdf.pdf_home())
 
         self._line_count = 0
         basisset = None
@@ -46,7 +43,7 @@ class Basis2(object):
                     name = line
                     if (name[0] == 'O'):
                         #basisset = copy.deepcopy(self._load_basis(f))
-                        basisset = BasisSet(self._load_basis(f))
+                        basisset = pdf.BasisSet(self._load_basis(f))
 
                         self._logger.debug(str(basisset))
                         #print('>>>> {0}'.format(name))
@@ -61,13 +58,13 @@ class Basis2(object):
                         name = None
                     elif (name[0] == 'A'):
                         #basisset = copy.deepcopy(self._load_basis_aux(f))
-                        basisset = BasisSet(self._load_basis_aux(f))
+                        basisset = pdf.BasisSet(self._load_basis_aux(f))
                         basisset = basisset.expand()
                         basisset.name = name
                         self._basis_j[name] = basisset
                         
                         #basisset = copy.deepcopy(self._load_basis_aux(f))
-                        basisset = BasisSet(self._load_basis_aux(f))
+                        basisset = pdf.BasisSet(self._load_basis_aux(f))
                         basisset = basisset.expand()
                         basisset.name = name
                         self._basis_xc[name] = basisset
@@ -102,7 +99,7 @@ class Basis2(object):
                     value = int(input_SPDFG[i])
                     SPDFG[i] = value
                     numOfCGTOs += value
-                basisset = BasisSet("", numOfCGTOs)
+                basisset = pdf.BasisSet("", numOfCGTOs)
             elif (numOfPGTOs == None):
                 numOfPGTOs = int(line)
                 shell_type = ''
@@ -119,7 +116,7 @@ class Basis2(object):
                 else:
                     abort()
                 #self._logger.debug("create CGTO SPD=%d shell_type=%s size=%d" % (SPD_order, shell_type, numOfPGTOs))
-                cgto = ContractedGTO(shell_type, numOfPGTOs)
+                cgto = pdf.ContractedGTO(shell_type, numOfPGTOs)
                 assert(cgto.shell_type == shell_type)
                 assert(len(cgto) == numOfPGTOs)
                 PGTO_index = 0
@@ -128,7 +125,7 @@ class Basis2(object):
                 assert(len(values) == 2)
                 exponent = float(values[0])
                 coefficient = float(values[1])
-                cgto[PGTO_index] = PrimitiveGTO(exponent, coefficient)
+                cgto[PGTO_index] = pdf.PrimitiveGTO(exponent, coefficient)
                 PGTO_index += 1
                 if (PGTO_index == numOfPGTOs):
                     # end of PGTO list
@@ -174,7 +171,7 @@ class Basis2(object):
                     value = int(input_SPDFG[i])
                     SPDFG[i] = value
                     numOfCGTOs += value
-                basisset = BasisSet("", numOfCGTOs)
+                basisset = pdf.BasisSet("", numOfCGTOs)
             elif (numOfPGTOs == None):
                 numOfPGTOs = int(line)
                 shell_type = ''
@@ -191,7 +188,7 @@ class Basis2(object):
                 else:
                     abort()
                 #print("create CGTO SPD=%d shell_type=%s size=%d" % (SPD_order, shell_type, numOfPGTOs))
-                cgto = ContractedGTO(shell_type, numOfPGTOs)
+                cgto = pdf.ContractedGTO(shell_type, numOfPGTOs)
                 PGTO_index = 0
             else:
                 values = line.split()
@@ -199,13 +196,13 @@ class Basis2(object):
                 exponent = float(values[0])
                 coefficient = 1.0
                 #print("PGTO_index=%d" % (PGTO_index))
-                cgto[PGTO_index] = PrimitiveGTO(exponent, coefficient)
+                cgto[PGTO_index] = pdf.PrimitiveGTO(exponent, coefficient)
                 PGTO_index += 1
                 if (PGTO_index >= numOfPGTOs):
                     # print('>>>> end of pGTO: spd=%d' % (SPD_order))
                     # end of PGTO list
                     # basisset[SPDFG_order] = copy.deepcopy(cgto)
-                    basisset[SPDFG_order] = ContractedGTO(cgto)
+                    basisset[SPDFG_order] = pdf.ContractedGTO(cgto)
                     SPDFG_order += 1
                     numOfPGTOs = None
                 if (SPDFG_order >= numOfCGTOs):
@@ -215,13 +212,13 @@ class Basis2(object):
         return basisset
                         
     def get_basisset(self, name):
-        return self._basis.get(name, BasisSet())
+        return self._basis.get(name, pdf.BasisSet())
 
     def get_basisset_j(self, name):
-        return self._basis_j.get(name, BasisSet())
+        return self._basis_j.get(name, pdf.BasisSet())
         
     def get_basisset_xc(self, name):
-        return self._basis_xc.get(name, BasisSet())
+        return self._basis_xc.get(name, pdf.BasisSet())
 
     #@property
     #def basis(self):
@@ -238,19 +235,19 @@ class Basis2(object):
     def get_basis2(self):
         output = ''
         # basis
-        for name, basis in self.basis.items():
-            output += name + '\n'
+        for name, basis in self._basis.items():
+            output += '# {}\n'.format(name)
             output += str(basis)
             output += '\n'
 
-        # basis for J, K
-        for name, basis_j in self.basis_j.items():
-            if name in self.basis_k:
-                basis_k = self.basis_k[name]
+        # basis for J, XC
+        for name, basis_j in self._basis_j.items():
+            if name in self._basis_xc:
+                basis_xc = self._basis_xc[name]
                 output += name + '\n'
                 output += str(basis_j)
                 output += '#\n'
-                output += str(basis_k)
+                output += str(basis_xc)
                 output += '\n'
             
         return output
@@ -263,8 +260,6 @@ class Basis2(object):
         self._load()
         
 if __name__ == "__main__":
-    bs2 = Basis2()
-    #bs2.debug = True
-    bs2.load()
-
+    #logging.basicConfig(level=logging.DEBUG)
+    bs2 = pdf.Basis2()
     print(bs2.get_basis2())

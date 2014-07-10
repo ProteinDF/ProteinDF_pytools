@@ -8,9 +8,7 @@ import math
 import copy
 
 import bridge
-
-from .basisset import BasisSet
-from .basis2 import Basis2
+import pdf
 
 class PdfParam(object):
     """
@@ -267,6 +265,7 @@ class PdfParam(object):
         value = self._data.get('num_of_electrons', None)
         if (value == None):
             value = self.molecule.sum_of_atomic_number()
+            value += self.molecule.charge
             self.num_of_electrons = value
         return value
 
@@ -469,53 +468,61 @@ class PdfParam(object):
         self._data.setdefault('basisset_gridfree_name', {})
         self._data['basisset_gridfree_name'][atomlabel] = bridge.Utils.byte2str(value)
 
-    #def get_basisset(self, atom_label):
-    #    return self._get_basisset_common(atom_label, 'basisset')
-    #
-    #def set_basisset(self, atom_label, basisset):
-    #    self._set_basisset_common(atom_label, basisset, 'basisset')
+    def get_basisset(self, atom_label):
+        return self._get_basisset_common(atom_label, 'basisset')
+        
+    def set_basisset(self, atom_label, basisset):
+        self._set_basisset_common(atom_label, basisset, 'basisset')
 
-    #def get_basisset_j(self, atom_label):
-    #    return self._get_basisset_common(atom_label, 'basisset_j')
-    #
-    #def set_basisset_j(self, atom_label, basisset):
-    #    self._set_basisset_common(atom_label, basisset, 'basisset_j')
+    def get_basisset_j(self, atom_label):
+        return self._get_basisset_common(atom_label, 'basisset_j')
+    
+    def set_basisset_j(self, atom_label, basisset):
+        self._set_basisset_common(atom_label, basisset, 'basisset_j')
 
-    #def get_basisset_xc(self, atom_label):
-    #    return self._get_basisset_common(atom_label, 'basisset_xc')
-    #
-    #def set_basisset_xc(self, atom_label, basisset):
-    #    self._set_basisset_common(atom_label, basisset, 'basisset_xc')
+    def get_basisset_xc(self, atom_label):
+        return self._get_basisset_common(atom_label, 'basisset_xc')
+    
+    def set_basisset_xc(self, atom_label, basisset):
+        self._set_basisset_common(atom_label, basisset, 'basisset_xc')
 
-    #def get_basisset_gridfree(self, atom_label):
-    #    return self._get_basisset_common(atom_label, 'basisset_gridfree')
-    #
-    #def set_basisset_gridfree(self, atom_label, basisset):
-    #    self._set_basisset_common(atom_label, basisset, 'basisset_gridfree')
+    def get_basisset_gridfree(self, atom_label):
+        return self._get_basisset_common(atom_label, 'basisset_gridfree')
+    
+    def set_basisset_gridfree(self, atom_label, basisset):
+        self._set_basisset_common(atom_label, basisset, 'basisset_gridfree')
 
-    #def _get_basisset_common(self, atom_label, key):
-    #    """
-    #    原子(ラベル)名のBasisSetがあれば、そのBasisSetオブジェクトを返す
-    #    """
-    #    atom_label = bridge.Utils.byte2str(atom_label)
-    #    answer = BasisSet()
-    #    if key in self._data:
-    #        answer = self._data[key].get(atom_label, BasisSet())
-    #    return answer
+    def _get_basisset_common(self, atom_label, key):
+        """
+        原子(ラベル)名のBasisSetがあれば、そのBasisSetオブジェクトを返す
+        """
+        atom_label = bridge.Utils.byte2str(atom_label)
+        answer = BasisSet()
+        if key in self._data:
+            answer = self._data[key].get(atom_label, BasisSet())
+        return answer
 
-    #def _set_basisset_common(self, atom_label, basisset, key):
-    #    """
-    #    原子(ラベル)名にBasisSetオブジェクトを設定する
-    #    """
-    #    atom_label = bridge.Utils.byte2str(atom_label)
-    #    self._data.setdefault(key, {})
-    #    if isinstance(basisset, str) == True:
-    #        basis2 = Basis2()
-    #        self._data[key][atom_label] = basis2.get_basisset(basisset)
-    #    elif isinstance(basisset, BasisSet) == True:
-    #        self._data[key][atom_label] = basisset
-    #    else:
-    #        raise "type mispatch"
+    def _set_basisset_common(self, atom_label, basisset, key):
+        """
+        原子(ラベル)名にBasisSetオブジェクトを設定する
+        """
+        atom_label = bridge.Utils.byte2str(atom_label)
+        self._data.setdefault(key, {})
+        if isinstance(basisset, str) == True:
+            basis2 = Basis2()
+            if (key == 'basis_set') or (key == 'basis_set_gridfree'):
+                self._data[key][atom_label] = basis2.get_basisset(basisset)
+            elif key == 'basis_set_j':
+                self._data[key][atom_label] = basis2.get_basisset_j(basisset)
+            elif key == 'basis_set_xc':
+                self._data[key][atom_label] = basis2.get_basisset_xc(basisset)
+            else:
+                raise                              
+                
+        elif isinstance(basisset, BasisSet) == True:
+            self._data[key][atom_label] = basisset
+        else:
+            raise "type mispatch"
         
     # TEs
     def _get_TEs(self):
@@ -526,6 +533,12 @@ class PdfParam(object):
 
     TEs = property(_get_TEs, _set_TEs)
 
+    # counterpoise
+    def _get_counterpoise(self):
+        return self._data.get('counterpoise', False)
+
+    counterpoise = property(_get_counterpoise)
+    
     # force
     def get_force(self, atom_index):
         atom_index = int(atom_index)
@@ -676,14 +689,12 @@ class PdfParam(object):
         output = ""
         for atom_kind in self._pickup_atom_kinds():
             output += '%s = "%s"\n' % (atom_kind, self.get_basisset_j_name(atom_kind))
-        print("get_input_basisset_j", output)
         return output
 
     def _get_input_basisset_xc(self):
         output = ""
         for atom_kind in self._pickup_atom_kinds():
             output += '%s = "%s"\n' % (atom_kind, self.get_basisset_xc_name(atom_kind))
-        print("get_input_basisset_xc", output)
         return output
         
     def _get_input_basisset_gridfree(self):
@@ -693,6 +704,9 @@ class PdfParam(object):
         return output
 
     def _pickup_atom_kinds(self, atom_group = None):
+        '''
+        counterpoise =
+        '''
         answer = set()
         if (atom_group == None):
             answer = self._pickup_atom_kinds(self.molecule)
@@ -701,11 +715,12 @@ class PdfParam(object):
                 answer.update(self._pickup_atom_kinds(group))
             for key, atom in atom_group.atoms():
                 atom_symbol = atom.symbol
-                atom_label = atom.label
-
-                atom_kind = atom_symbol
-                if (len(atom_label) != 0):
-                    atom_kind = "%s@%s" % (atom_symbol, label)
+                if (atom_symbol != 'X') or (self.counterpoise == True):
+                    atom_label = atom.label
+                    
+                    atom_kind = atom_symbol
+                    if (len(atom_label) != 0):
+                        atom_kind = "%s@%s" % (atom_symbol, label)
                 answer.add(atom_kind)
         return answer
         
@@ -728,7 +743,7 @@ class PdfParam(object):
 
         # basis set
         self._basissets = {}
-        for atom_label, basisset_state in rhs['basis_sets'].items():
+        for atom_label, basisset_state in rhs['basis_set'].items():
             basisset = BasisSet(**basisset_state)
             self.set_basisset(atom_label,
                               basisset)
@@ -737,6 +752,7 @@ class PdfParam(object):
         index = 0
         molecule = bridge.AtomGroup()
         for atomgroup_label, atomgroup_data in rhs['coordinates'].items():
+            subgroup = bridge.AtomGroup()
             for atom_data in atomgroup_data:
                 symbol = atom_data['symbol']
                 xyz = bridge.Position(atom_data['xyz'])
@@ -746,8 +762,9 @@ class PdfParam(object):
                                    position = xyz,
                                    charge = z,
                                    name = label)
-                molecule.set_atom(index, atom)
+                subgroup.set_atom(index, atom)
                 index += 1
+            molecule.set_group(atomgroup_label, subgroup)
         self.molecule = molecule
 
         # total energy

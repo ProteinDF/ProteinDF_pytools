@@ -88,7 +88,7 @@ def main():
         
     try:
         proc = subprocess.Popen(args, **subproc_args)
-    except OSError, e:
+    except OSError as e:
         print('Failed to execute command: %s' % args[0])
         #print(errno.errorcode[e.errno])
         print(os.strerror(e.errno))
@@ -107,7 +107,7 @@ def get_cmd(arg_array):
     引数で指定された文字列配列から'pdf-'で始まるコマンドを検索、
     コマンドとその引数(リスト)、拡張子をタプルにして返す
     """
-    assert(isinstance(arg_array, types.ListType))
+    #assert(isinstance(arg_array, types.ListType))
     assert(len(arg_array) > 0)
 
     current_path = os.path.abspath(os.path.dirname(sys.argv[0]))

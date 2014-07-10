@@ -12,8 +12,8 @@ try:
 except:
     import msgpack_pure as msgpack
 
-from .pdfparam import PdfParam
-from .basis2 import Basis2
+import bridge
+import pdf
 
 epsilon = 1.0E-10 # 計算機イプシロン
 error = 1.0E-5 # 許容誤差
@@ -33,19 +33,19 @@ def get_default_pdfparam():
     """
     defaultのpdfparamを返す
     """
-    pdfparam = PdfParam()
+    pdfparam = pdf.PdfParam()
     pdfparam.step_control = 'create integral guess scf'
 
     pdfparam.guess = 'harris'
     pdfparam.orbital_independence_threshold = 0.0
     pdfparam.orbital_independence_threshold_canonical = 0.0
-    orbital_independence_threshold_lowdin = 0.0
+    pdfparam.orbital_independence_threshold_lowdin = 0.0
     pdfparam.scf_acceleration = 'damping'
     pdfparam.scf_acceleration_damping_factor = 0.85
     pdfparam.convergence_threshold_energy = 1.0E-4
     pdfparam.convergence_threshold = 1.0E-3
     pdfparam.convergence_target = 'density_matrix'
-    pdfparam.xc_functional = "svwn"
+    pdfparam.xc_functional = "b3lyp"
     pdfparam.j_engine = "CD"
     pdfparam.k_engine = "CD"
     pdfparam.xc_engine = "gridfree_CD"
@@ -60,7 +60,7 @@ def set_basisset(pdfparam,
     """
     pdfparamにbasissetを設定する
     """
-    assert(isinstance(pdfparam, PdfParam))
+    assert(isinstance(pdfparam, pdf.PdfParam))
 
     basis2 = Basis2()
     atoms = ['C', 'H', 'N', 'O', 'S']
@@ -116,13 +116,13 @@ def mpac2py(path):
 
     f = open(path, "rb")
     contents = f.read()
-    data = msgpack.unpackb(contents)
+    data = bridge.Utils.byte2str(msgpack.unpackb(contents))
     f.close()
 
     return data
 
 def load_pdfparam(pdfparam_path='pdfparam.mpac'):
     data = mpac2py(pdfparam_path)
-    param = PdfParam(data)
+    param = pdf.PdfParam(data)
 
     return param
