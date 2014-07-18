@@ -29,7 +29,7 @@ class PdfSim(object):
         if not os.path.exists(workdir):
             os.mkdir(workdir)
         else:
-            self._logger.warning('already exit: {}'.format(workdir))
+            self._logger.info('already exist: {}'.format(workdir))
 
         input_path = os.path.join(workdir, "fl_Userinput")
         f = open(input_path, 'w')
@@ -65,6 +65,7 @@ class PdfSim(object):
             print('-'*60)
 
 
+    # ------------------------------------------------------------------
     def sp(self, pdfparam, *args, **kwargs):
         """
         calc single-point
@@ -72,6 +73,7 @@ class PdfSim(object):
         Keyword arguments:
         pdfparam --- PdfParam object represented the calculation condition.
         workdir --- working directory.
+        db_path --- ProteinDF ArchiveDB path (default: pdfresults.db)
         dry_run --- if True, the calculation is NOT carried out. Default is False.
 
         Returns:
@@ -79,6 +81,7 @@ class PdfSim(object):
         
         """
         workdir = kwargs.get('workdir', '')
+        db_path = kwargs.get('db_path', 'pdfresults.db')
         dry_run = kwargs.get('dry_run', False)
         
         current_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or ".")
@@ -87,7 +90,7 @@ class PdfSim(object):
         if not os.path.exists(pdf_workdir):
             os.mkdir(pdf_workdir)
         else:
-            self._logger.warning('already exist {}'.format(pdf_workdir))
+            self._logger.info('already exist {}'.format(pdf_workdir))
 
         self.setup(pdfparam, pdf_workdir)
         os.chdir(pdf_workdir)
@@ -98,7 +101,7 @@ class PdfSim(object):
             self.run_pdf(['-o', 'pdf.log', 'serial'])
             self.run_pdf('archive')
 
-            entry = pdf.PdfArchive('pdfresults.db')
+            entry = pdf.PdfArchive(db_path)
             itr = entry.iterations
             total_energy = entry.get_total_energy(itr)
 
@@ -125,7 +128,7 @@ class PdfSim(object):
             if not os.path.exists(opt_workdir):
                 os.mkdir(opt_workdir)
             else:
-                self._logger.warning('already exit: {}'.format(opt_workdir))
+                self._logger.info('already exist: {}'.format(opt_workdir))
             (grad_mat, rms) = self.numerical_grad(pdfparam, opt_workdir, accuracy)
 
             max_force = 0.0
@@ -252,7 +255,7 @@ class PdfSim(object):
         if not os.path.exists(pdf_workdir):
             os.mkdir(pdf_workdir)
         else:
-            self._logger.warning('already exist {}'.format(pdf_workdir))
+            self._logger.info('already exist {}'.format(pdf_workdir))
 
         self.setup(pdfparam, pdf_workdir)
         os.chdir(pdf_workdir)

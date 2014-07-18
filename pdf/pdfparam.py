@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 import hashlib
 import pickle
 import types
 import math
 import copy
+import pprint
 
 import bridge
 import pdf
@@ -79,6 +81,24 @@ class PdfParam(object):
         base_name = 'C.rks%s.mat'
         file_name = base_name % (itr)
         return self.work_path + '/' + file_name
+
+    def get_ovpmat_path(self):
+        filename = self._get_file_base_name('Spq_matrix')
+        return os.path.join(self.work_path, filename)
+
+    def get_clomat_path(self, runtype='rks', itr=-1):
+        '''
+        return localized matrix (C_lo) path
+        '''
+        if itr == -1:
+            itr = self.lo_num_of_iterations
+        
+        filename = self._get_file_base_name('Clo_matrix')
+        filename = filename.replace('%s', '{}{}'.format(runtype, itr))
+        return os.path.join(self.work_path, filename)
+        
+    def _get_file_base_name(self, key):
+        return self._data['file_base_name'].get(key, '')
         
     # property -----------------------------------------------------------------
 
@@ -309,12 +329,12 @@ class PdfParam(object):
 
     # iterations
     def _get_iterations(self):
-        return self._data.get('iterations', None)
+        return self._data.get('num_of_iterations', None)
 
     def _set_iterations(self, value):
         if value == None:
             value = 0
-        self._data['iterations'] = int(value)
+        self._data['num_of_iterations'] = int(value)
 
     iterations = property(_get_iterations, _set_iterations)
         
@@ -497,9 +517,9 @@ class PdfParam(object):
         原子(ラベル)名のBasisSetがあれば、そのBasisSetオブジェクトを返す
         """
         atom_label = bridge.Utils.byte2str(atom_label)
-        answer = BasisSet()
+        answer = pdf.BasisSet()
         if key in self._data:
-            answer = self._data[key].get(atom_label, BasisSet())
+            answer = self._data[key].get(atom_label, pdf.BasisSet())
         return answer
 
     def _set_basisset_common(self, atom_label, basisset, key):
@@ -509,7 +529,7 @@ class PdfParam(object):
         atom_label = bridge.Utils.byte2str(atom_label)
         self._data.setdefault(key, {})
         if isinstance(basisset, str) == True:
-            basis2 = Basis2()
+            basis2 = pdf.Basis2()
             if (key == 'basis_set') or (key == 'basis_set_gridfree'):
                 self._data[key][atom_label] = basis2.get_basisset(basisset)
             elif key == 'basis_set_j':
@@ -519,7 +539,7 @@ class PdfParam(object):
             else:
                 raise                              
                 
-        elif isinstance(basisset, BasisSet) == True:
+        elif isinstance(basisset, pdf.BasisSet) == True:
             self._data[key][atom_label] = basisset
         else:
             raise "type mispatch"
@@ -538,8 +558,22 @@ class PdfParam(object):
         return self._data.get('counterpoise', False)
 
     counterpoise = property(_get_counterpoise)
+
+    # LO ===============================================================
+    def _get_lo_satisfied(self):
+        yn = False
+        if self._data.get('lo/satisfied', 'no').upper() == 'YES':
+            yn = True
+        return yn
+
+    lo_satisfied = property(_get_lo_satisfied)
+
+    def _get_lo_num_of_iterations(self):
+        return self._data.get('lo/num_of_iterations', None)
     
-    # force
+    lo_num_of_iterations = property(_get_lo_num_of_iterations)
+    
+    # force ============================================================
     def get_force(self, atom_index):
         atom_index = int(atom_index)
         assert(0 <= atom_index < self.num_of_atoms)
@@ -739,12 +773,12 @@ class PdfParam(object):
         self.num_of_MOs = rhs.get('num_of_MOs', self.num_of_MOs)
 
         self.max_iterations = rhs.get('max_iterations', self.max_iterations)
-        self.iterations = rhs.get('iterations', self.iterations)
+        self.iterations = rhs.get('num_of_iterations', self.iterations)
 
         # basis set
         self._basissets = {}
         for atom_label, basisset_state in rhs['basis_set'].items():
-            basisset = BasisSet(**basisset_state)
+            basisset = pdf.BasisSet(**basisset_state)
             self.set_basisset(atom_label,
                               basisset)
             
@@ -776,7 +810,11 @@ class PdfParam(object):
             for atom_index in range(len(force_dat)):
                 force = force_dat[atom_index]
                 self.set_force(atom_index, force[0], force[1], force[2])
-        
+
+        # lo
+        self._data['lo/satisfied'] = rhs.get('lo/satisfied', 'no')
+        self._data['lo/num_of_iterations'] = rhs.get('lo/num_of_iterations', None)
+                
         # control
         self._data['file_base_name'] = {}
         control = rhs.get('control', None)
@@ -794,6 +832,7 @@ class PdfParam(object):
         """
         キーおよび値に別名(alias)が使用されていた場合、処理すべきキーに変換する
         """
+        answer = {}
         for k, v in rhs.items():
             if k == 'method':
                 v = v.lower()
@@ -801,29 +840,19 @@ class PdfParam(object):
                     v = 'rks'
                 elif v == 'sp':
                     v = 'uks'
-                rhs[k] = v
+                answer[k] = v
+            elif k == 'scf-start-guess':
+                answer['guess'] = v
+            elif k == 'xc-potential':
+                answer['xc_functional'] = v
+            elif k == 'max-iteration':
+                answer['max_iteration'] = v
+            elif k == 'TE':
+                answer['TEs'] = v
+            else:
+                answer[k] = v
 
-            if k == 'scf-start-guess':
-                rhs['guess'] = v
-                rhs.pop(k)
-
-            if k == 'xc-potential':
-                rhs['xc_functional'] = v
-                rhs.pop(k)
-                
-            if k == 'max-iteration':
-                rhs['max_iteration'] = v
-                rhs.pop(k)
-
-            if k == 'num_of_iterations':
-                rhs['iterations'] = v
-                rhs.pop(k)
-
-            if k == 'TE':
-                rhs['TEs'] = v
-                rhs.pop(k)
-
-        return rhs
+        return answer
 
     
 if __name__ == '__main__':

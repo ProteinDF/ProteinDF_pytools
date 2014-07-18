@@ -28,9 +28,11 @@ ProteinDF コマンドを実行する
 import sys
 import os.path
 import argparse
+import shlex
 import subprocess
 import types
 import errno
+import pprint
 
 def main():
     # parse args
@@ -64,22 +66,18 @@ def main():
     os.environ['PDF_HOME'] = pdf_home
     
     (pdfcmd, pdfargs, ext) = get_cmd(arg_array)
+    subproc_cmd = " ".join([pdfcmd] + pdfargs)
+    subproc_cmd = shlex.split(subproc_cmd)
     if verbose:
-        print('exec cmd: \'%s\'' % (pdfcmd))
-        print('args    : \'%s\'' % (pdfargs))
+        print('cmd="{}"'.format(subproc_cmd))
     
-    args = " ".join([pdfcmd] + pdfargs)
-    #subproc_args = {'stdin': None,
-    #                'stdout': subprocess.PIPE,
-    #                'stderr': subprocess.PIPE,
-    #                }
     use_shell = False
     if ext == '.sh':
         use_shell = True
     subproc_args = {'stdin': None,
                     'stdout': None,
                     'stderr': subprocess.STDOUT,
-                    'shell': use_shell,
+                    'shell': use_shell
                     }
     output_file = None
     if output != None:
@@ -87,16 +85,19 @@ def main():
         subproc_args['stdout'] = output_file
         
     try:
-        proc = subprocess.Popen(args, **subproc_args)
+        proc = subprocess.Popen(args = subproc_cmd, **subproc_args)
     except OSError as e:
-        print('Failed to execute command: %s' % args[0])
-        #print(errno.errorcode[e.errno])
+        print('Failed to execute command: %s' % subproc_cmd)
+        print(errno.errorcode[e.errno])
         print(os.strerror(e.errno))
-        sys.exit(1)
+        raise e
+        #sys.exit(1)
 
     return_code = proc.wait()
     (stdouterr, stdin) = (proc.stdout, proc.stdin)
-
+    if verbose:
+        print('return code={}'.format(return_code))
+    
     if output_file != None:
         output_file.close()
 

@@ -88,12 +88,14 @@ def run_pdf(subcmd):
     """
     run ProteinDF command
     """
+    print("pdf.run_pdf >> ", subcmd)
     if isinstance(subcmd, str):
         subcmd = [subcmd]
 
-    nullHandler = NullHandler()
+    for i, c in enumerate(subcmd):
+        subcmd[i] = str(c)
+        
     logger = logging.getLogger(__name__)
-    logger.addHandler(nullHandler)
 
     cmd = os.path.join(pdf_home(), "bin", "pdf")
     cmdlist = [cmd]

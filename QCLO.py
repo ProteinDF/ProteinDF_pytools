@@ -25,6 +25,8 @@ import argparse
 import logging
 import logging.config
 import math
+import pprint
+
 try:
     import msgpack
 except:
@@ -47,7 +49,7 @@ class QcAtom(bridge.Atom):
     def get_number_of_AOs(self):
         basis2 = pdf.Basis2()
         bs = basis2.get_basisset(self.basisset)
-        return len(bs)
+        return bs.get_number_of_AOs()
         
     # basisset -------------------------------------------------------
     def _get_basisset(self):
@@ -161,7 +163,10 @@ class QcFrame(object):
         self._fragments = {}
         self._state = 0
         self._frame_molecule = None
-        
+
+        self._workdir = ''
+        self._pdfparam_filename = 'pdfparam.mpac'
+        self._db_filename = 'pdfresults.db'
         self.make_workdir()
 
     # ------------------------------------------------------------------
@@ -174,22 +179,35 @@ class QcFrame(object):
         return self._frame_molecule
 
     frame_molecule = property(_get_frame_molecule)
-    # ------------------------------------------------------------------
+
+    # work dir ---------------------------------------------------------
     def make_workdir(self):
+        '''
+        カレントディレクトリ下に作業ディレクトリとなる
+        nameのディレクトリを作成する。
+        '''
         workdir = self.name
-        self._logger.debug('make workdir: {}'.format(workdir))
+        self._logger.info('make workdir: {}'.format(workdir))
         if not os.path.exists(workdir):
             os.mkdir(workdir)
         else:
-            self._logger.warning('already exit: {}'.format(workdir))
+            self._logger.info('already exist: {}'.format(workdir))
+        self._workdir = os.path.abspath(os.path.join('.', self.name))    
 
-    #def is_neutralize(self):
-    #    charge = self.frame_molecule.charge
-    #    return (math.fabs(charge) < 1.0E-5)
+    def _get_workdir(self):
+        return self._workdir
 
-    def neutralize(self):
-        pass
-        
+    workdir = property(_get_workdir)
+
+    #
+    def cd_workdir(self):
+        self._prev_dir = os.path.abspath('.')
+        os.chdir(self.workdir)
+
+    def restore_cwd(self):
+        os.chdir(self._prev_dir)
+    
+    # ------------------------------------------------------------------
     def calc_sp(self):
         pdfsim = pdf.PdfSim()
         pdfparam = pdf.get_default_pdfparam()
@@ -201,22 +219,120 @@ class QcFrame(object):
         # for debug
         #self.output_xyz("{}/model.xyz".format(self.name))
 
-        #if not self.is_neutralize():
-        #    self._logger.warning('The frame-molecule is NOT neutralized.')
-        # 
-
         pdfsim.sp(pdfparam,
-                  workdir = self.name,
+                  workdir = self.workdir,
+                  db_path = self.db_path,
                   dry_run = True)
 
+    # ------------------------------------------------------------------
+    def get_pdfparam(self):
+        '''
+        '''
+        mpac_file = open(self.pdfparam_path, 'rb')
+        mpac_data = msgpack.unpackb(mpac_file.read())
+        mpac_data = bridge.Utils.byte2str(mpac_data)
+        #pprint.pprint(mpac_data)
+        mpac_file.close()
+        pdfparam = pdf.PdfParam(mpac_data)
+        return pdfparam
 
+    def _get_pdfparam_path(self):
+        path = os.path.abspath(os.path.join(self.workdir, self._pdfparam_filename))
+        return path
+
+    pdfparam_path = property(_get_pdfparam_path)
+        
+    # ------------------------------------------------------------------
+    def get_pdfarchive(self):
+        '''
+        '''
+        pdfarc = pdf.PdfArchive(self.db_path)
+        return pdfarc
+
+    # ------------------------------------------------------------------
+    def _get_db_path(self):
+        path = os.path.abspath(os.path.join(self.workdir, self._db_filename))
+        return path
+
+    db_path = property(_get_db_path)
+        
+    # ------------------------------------------------------------------
     def calc_lo(self):
+        print(">>>> calc lo")
+        self.cd_workdir()
+
+        print('start lo')
+        self._logger.info('start lo calculation.')
+        pdf.run_pdf('lo')
+        print('end lo')
+
+        self.restore_cwd()
+        print("<<<<")
+
+    # ------------------------------------------------------------------
+    def pickup_lo(self):
+        print(">>>> pickup lo")
+        self.cd_workdir()
+
+        # debug
+        pdfarc = self.get_pdfarchive()
+        num_of_AOs = pdfarc.num_of_AOs
+        num_of_MOs = pdfarc.num_of_MOs
+        HOMO_level = pdfarc.get_HOMO_level('rks') # option base 0
+        print('>>> num of AOs: {}'.format(num_of_AOs))
+        print('>>> num of MOs: {}'.format(num_of_MOs))
+        print('>>> HOMO: {}'.format(HOMO_level +1)) 
         for frg_name, frg in self._fragments.items():
             frg_AOs = frg.get_number_of_AOs()
             print('frg={}, AOs={}'.format(frg_name, frg_AOs))
 
-    def pickup_lo(self):
-        pass
+        # calc S*C
+        pdfparam = self.get_pdfparam()
+
+        lo_satisfied = pdfparam.lo_satisfied
+        if lo_satisfied != True:
+            print('lo_satisfied: {}'.format(lo_satisfied))
+        lo_iterations = pdfparam.lo_num_of_iterations
+        print('lo iterations: {}'.format(lo_iterations))
+
+        CSC_path = 'CSC.mat'
+        Clo_path = pdfparam.get_clomat_path()
+        pdf.run_pdf(['component',
+                     '-v',
+                     '-S', 'CSC.mat',
+                     '-c', Clo_path])
+
+        
+        #S_path = pdfparam.get_ovpmat_path()
+        #Clo_path = pdfparam.get_clomat_path()
+        #Clo_occ_path = 'Clo_occ.mat'
+        #pdf.run_pdf(['mat-resize',
+        #             '-c', num_of_MOs,
+        #             Clo_path, Clo_occ_path])
+
+        #SC_path = "SC.mat"
+        #pdf.run_pdf(['mat-mul',
+        #             S_path,
+        #             Clo_occ_path,
+        #             SC_path])
+
+        #CSC_path = "CSC.mat"
+        #pdf.run_pdf(['mat-dot',
+        #             Clo_occ_path,
+        #             SC_path,
+        #             CSC_path])
+        
+        # calc contribution
+        #CSC = pdf.Matrix()
+        #CSC.load(CSC_path)
+        #for mo in range(num_of_MOs):
+        #    print(mo)
+        
+        
+        print('end lo')
+
+        self.restore_cwd()
+        print("<<<<")
 
     # name -------------------------------------------------------------
     def _get_name(self):
@@ -342,11 +458,10 @@ def main():
             #ag = frame.atomgroup
             #print(str(ag))
 
-            frame.calc_sp()
+            #frame.calc_sp()
             frame.calc_lo()
-
-            #break
-
+            frame.pickup_lo()
+            
     exit()
 
     #======
