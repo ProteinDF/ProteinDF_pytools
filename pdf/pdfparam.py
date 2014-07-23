@@ -72,20 +72,35 @@ class PdfParam(object):
         file_name = file_name % (runtype)
         return self.work_path + '/' + file_name
 
-    def get_cmat_path(self, itr, runtype):
-        """
-        TODO: 'file_base_name'から取得すること
-        """
-        #if self._data.has_key('file_base_name'):
-        #    base_name = self._data['file_base_name'].get('C_matrix', '')
-        base_name = 'C.rks%s.mat'
-        file_name = base_name % (itr)
-        return self.work_path + '/' + file_name
-
     def get_ovpmat_path(self):
+        '''
+        return overlap matrix path
+        '''
         filename = self._get_file_base_name('Spq_matrix')
         return os.path.join(self.work_path, filename)
 
+    def get_cmat_path(self, runtype='rks', itr=-1):
+        '''
+        return Cmatrix path
+        '''
+        if itr == -1:
+            itr = self.iterations
+
+        filename = self._get_file_base_name('C_matrix')
+        filename = filename.replace('%s', '{}{}'.format(runtype, itr))
+        return os.path.join(self.work_path, filename)
+
+    def get_density_matrix_path(self, runtype='rks', itr=-1):
+        '''
+        return density matrix path
+        '''
+        if itr == -1:
+            itr = self.iterations
+
+        filename = self._get_file_base_name('Ppq_matrix')
+        filename = filename.replace('%s', '{}{}'.format(runtype, itr))
+        return os.path.join(self.work_path, filename)
+        
     def get_clomat_path(self, runtype='rks', itr=-1):
         '''
         return localized matrix (C_lo) path
@@ -777,32 +792,37 @@ class PdfParam(object):
 
         # basis set
         self._basissets = {}
-        for atom_label, basisset_state in rhs['basis_set'].items():
-            basisset = pdf.BasisSet(**basisset_state)
-            self.set_basisset(atom_label,
-                              basisset)
+        if isinstance(rhs['basis_set'], dict):
+            for atom_label, basisset_state in rhs['basis_set'].items():
+                basisset = pdf.BasisSet(**basisset_state)
+                self.set_basisset(atom_label,
+                                  basisset)
             
         # coordinates
         index = 0
         molecule = bridge.AtomGroup()
-        for atomgroup_label, atomgroup_data in rhs['coordinates'].items():
-            subgroup = bridge.AtomGroup()
-            for atom_data in atomgroup_data:
-                symbol = atom_data['symbol']
-                xyz = bridge.Position(atom_data['xyz'])
-                z = atom_data['charge']
-                label = atom_data['label']
-                atom = bridge.Atom(symbol = symbol,
-                                   position = xyz,
-                                   charge = z,
-                                   name = label)
-                subgroup.set_atom(index, atom)
-                index += 1
-            molecule.set_group(atomgroup_label, subgroup)
+        if isinstance(rhs['coordinates'], dict):
+            for atomgroup_label, atomgroup_data in rhs['coordinates'].items():
+                subgroup = bridge.AtomGroup()
+                for atom_data in atomgroup_data:
+                    symbol = atom_data['symbol']
+                    xyz = bridge.Position(atom_data['xyz'])
+                    z = atom_data['charge']
+                    label = atom_data['label']
+                    atom = bridge.Atom(symbol = symbol,
+                                       position = xyz,
+                                       charge = z,
+                                       name = label)
+                    subgroup.set_atom(index, atom)
+                    index += 1
+                molecule.set_group(atomgroup_label, subgroup)
         self.molecule = molecule
 
         # total energy
-        self.TEs = rhs.get('TEs', {})
+        if isinstance(rhs['TEs'], dict):
+            self.TEs = rhs.get('TEs')
+        else:
+            self.TEs = {}
 
         # force
         force_dat = rhs.get('force', None)
@@ -825,6 +845,9 @@ class PdfParam(object):
                     self._data['file_base_name'][key] = value
             self._data['scf_converged'] = control.get('scf_converged', False)
         
+    def get_dict_data(self):
+        return dict(self._data)
+
     # def __getstate__(self):
     #     return self._data
 

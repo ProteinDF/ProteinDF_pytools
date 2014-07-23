@@ -4,6 +4,7 @@
 import sys
 import os
 import subprocess
+import tempfile
 import logging
 import traceback
 
@@ -33,7 +34,20 @@ def get_default_pdfparam():
     """
     defaultのpdfparamを返す
     """
-    pdfparam = pdf.PdfParam()
+    # 一時ファイル名を取得する
+    tmpfile_fd, tmpfile_path = tempfile.mkstemp()
+    os.close(tmpfile_fd)
+
+    # 一時ファイルの初期化情報を読取る
+    pdf.run_pdf(['init-param', '-o', tmpfile_path])
+    f = open(tmpfile_path, "rb")
+    tmpdata = msgpack.unpackb(f.read())
+    tmpdata = bridge.Utils.byte2str(tmpdata)
+    f.close()
+
+    #os.remove(tmpfile_path)
+    
+    pdfparam = pdf.PdfParam(tmpdata)
     pdfparam.step_control = 'create integral guess scf'
 
     pdfparam.guess = 'harris'
@@ -88,22 +102,30 @@ def run_pdf(subcmd):
     """
     run ProteinDF command
     """
-    print("pdf.run_pdf >> ", subcmd)
+    logger = logging.getLogger(__name__)
+    logger.info("pdf.run_pdf >> ", subcmd)
+
     if isinstance(subcmd, str):
         subcmd = [subcmd]
 
     for i, c in enumerate(subcmd):
         subcmd[i] = str(c)
         
-    logger = logging.getLogger(__name__)
-
     cmd = os.path.join(pdf_home(), "bin", "pdf")
     cmdlist = [cmd]
     cmdlist.extend(subcmd)
     logger.debug("run: {0}".format(cmdlist))
-
+    print('run_pdf(): {}'.format(cmdlist))
+    
     try:
-        subprocess.check_call(cmdlist)
+        p = subprocess.Popen(cmdlist,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
+        if stdout:
+            logger.info(stdout)
+        if stderr:
+            logger.error(stderr)
     except:
         print('-'*60)
         traceback.print_exc(file=sys.stdout)

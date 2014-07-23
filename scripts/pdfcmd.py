@@ -40,19 +40,19 @@ def main():
     parser.add_argument('cmd',
                         nargs='+',
                         help='command')
-    parser.add_argument("-v", "--verbose",
+    parser.add_argument("-D", "--DEBUG",
                         action="store_true",
                         default=False)
-    parser.add_argument("-o", "--output",
+    parser.add_argument("-O", "--OUTPUT",
                         nargs=1,
                         action="store",
                         default="")
     args, unknown = parser.parse_known_args()
     
-    verbose = args.verbose
+    debug = args.DEBUG
     output = None
-    if len(args.output) > 0:
-        output = args.output[0]
+    if len(args.OUTPUT) > 0:
+        output = args.OUTPUT[0]
     arg_array = args.cmd + unknown
 
     # PDF_HOMEを設定する
@@ -61,16 +61,16 @@ def main():
     pdf_home = pdfcmd_dirname
     if pdfcmd_dirname[-4:] == '/bin':
         pdf_home = pdfcmd_dirname[0:-5]
-    if verbose:
+    if debug:
         print('PDF_HOME environment variable is set to \'%s\'' % (pdf_home))
     os.environ['PDF_HOME'] = pdf_home
-    
+
     (pdfcmd, pdfargs, ext) = get_cmd(arg_array)
     subproc_cmd = " ".join([pdfcmd] + pdfargs)
     subproc_cmd = shlex.split(subproc_cmd)
-    if verbose:
-        print('cmd="{}"'.format(subproc_cmd))
-    
+    if debug:
+        print('cmd={}'.format(subproc_cmd))
+        
     use_shell = False
     if ext == '.sh':
         use_shell = True
@@ -95,7 +95,7 @@ def main():
 
     return_code = proc.wait()
     (stdouterr, stdin) = (proc.stdout, proc.stdin)
-    if verbose:
+    if debug:
         print('return code={}'.format(return_code))
     
     if output_file != None:
