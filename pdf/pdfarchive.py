@@ -246,30 +246,71 @@ class PdfArchive(object):
         for atom_label in pdfparam.get_basisset_atomlabels():
             basisset = pdfparam.get_basisset(atom_label)
             name = basisset.name
-            self._db.insert('basis',
-                            {'atom_label': atom_label,
-                             'name': name})
+
+            has_atom_label = self._db.select('basis',
+                                             where='atom_label="{atom_label}"'.format(
+                                                 atom_label=atom_label))
+            if has_atom_label:
+                self._db.update('basis',
+                                contents={'name': name},
+                                where='atom_label="{}"'.format(atom_label))
+            else:
+                self._db.insert('basis',
+                                {'atom_label': atom_label,
+                                 'name': name})
             
             for cgto_id, cgto in enumerate(basisset):
                 shell_type = cgto.shell_type
                 scale_factor = cgto.scale_factor
-                self._db.insert('basisset_CGTO',
-                                {'name': name,
-                                 'CGTO_ID': cgto_id,
-                                 'shell_type': shell_type,
-                                 'scale_factor': scale_factor
-                                 })
+
+                has_CGTO = self._db.select('basisset_CGTO',
+                                           where='name="{name}" and CGTO_ID={CGTO_ID}'.format(
+                                               name=name,
+                                               CGTO_ID=cgto_id))
+                if has_CGTO:
+                    self._db.update('basisset_CGTO',
+                                    {'shell_type': shell_type,
+                                     'scale_factor': scale_factor
+                                    },
+                                    where='name="{name}" and CGTO_ID={CGTO_ID}'.format(
+                                        name=name,
+                                        CGTO_ID=cgto_id))
+                else:
+                    self._db.insert('basisset_CGTO',
+                                    {'name': name,
+                                     'CGTO_ID': cgto_id,
+                                     'shell_type': shell_type,
+                                     'scale_factor': scale_factor
+                                    })
+
                 for pgto_id, pgto in enumerate(cgto):
                     coef = pgto.coef
                     exp = pgto.exp
-                    self._db.insert('basisset_PGTO',
-                                    {'name': name,
-                                     'CGTO_ID': cgto_id,
-                                     'PGTO_ID': pgto_id,
-                                     'coef': coef,
-                                     'exp': exp
-                                     })
-            
+
+                    has_PGTO = self._db.select('basisset_PGTO',
+                                               where='name="{name}" and CGTO_ID={CGTO_ID} and PGTO_ID={PGTO_ID}'.format(
+                                                   name=name,
+                                                   CGTO_ID=cgto_id,
+                                                   PGTO_ID=pgto_id))
+
+                    if has_PGTO:
+                        self._db.update('basisset_PGTO',
+                                        {'coef': coef,
+                                         'exp': exp
+                                        },
+                                        where='name="{name}" and CGTO_ID="{CGTO_ID}" and PGTO_ID="{PGTO_ID}"'.format(
+                                            name=name,
+                                            CGTO_ID=cgto_id,
+                                            PGTO_ID=pgto_id))
+                    else:
+                        self._db.insert('basisset_PGTO',
+                                        {'name': name,
+                                         'CGTO_ID': cgto_id,
+                                         'PGTO_ID': pgto_id,
+                                         'coef': coef,
+                                         'exp': exp
+                                        })
+                        
     def _set_pdfparram_total_energies(self, pdfparam):
         assert(isinstance(pdfparam, PdfParam))
         table_name = 'total_energies'

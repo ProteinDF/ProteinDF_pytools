@@ -37,32 +37,33 @@ def get_default_pdfparam():
     # 一時ファイル名を取得する
     tmpfile_fd, tmpfile_path = tempfile.mkstemp()
     os.close(tmpfile_fd)
-
     # 一時ファイルの初期化情報を読取る
     pdf.run_pdf(['init-param', '-o', tmpfile_path])
     f = open(tmpfile_path, "rb")
     tmpdata = msgpack.unpackb(f.read())
     tmpdata = bridge.Utils.byte2str(tmpdata)
     f.close()
-
-    #os.remove(tmpfile_path)
+    # remove
+    os.remove(tmpfile_path)
     
     pdfparam = pdf.PdfParam(tmpdata)
+    print('>>>> GF/orthogonalize={}'.format(pdfparam.gridfree_orthogonalize_method))
     pdfparam.step_control = 'create integral guess scf'
 
     pdfparam.guess = 'harris'
-    pdfparam.orbital_independence_threshold = 0.0
-    pdfparam.orbital_independence_threshold_canonical = 0.0
-    pdfparam.orbital_independence_threshold_lowdin = 0.0
+    pdfparam.orbital_independence_threshold = 0.007
+    pdfparam.orbital_independence_threshold_canonical = 0.007
+    pdfparam.orbital_independence_threshold_lowdin = 0.007
     pdfparam.scf_acceleration = 'damping'
     pdfparam.scf_acceleration_damping_factor = 0.85
     pdfparam.convergence_threshold_energy = 1.0E-4
     pdfparam.convergence_threshold = 1.0E-3
-    pdfparam.convergence_target = 'density_matrix'
+    pdfparam.scf_acceleration_damping_damping_type = 'density_matrix'
     pdfparam.xc_functional = "b3lyp"
     pdfparam.j_engine = "CD"
     pdfparam.k_engine = "CD"
     pdfparam.xc_engine = "gridfree_CD"
+    pdfparam.gridfree_orthogonalize_method = "canonical"
 
     return pdfparam
 
@@ -115,7 +116,6 @@ def run_pdf(subcmd):
     cmdlist = [cmd]
     cmdlist.extend(subcmd)
     logger.debug("run: {0}".format(cmdlist))
-    print('run_pdf(): {}'.format(cmdlist))
     
     try:
         p = subprocess.Popen(cmdlist,

@@ -46,27 +46,6 @@ class PdfSim(object):
 
         self.make_workdir(workdir)
 
-    def run_pdf(self, subcmd):
-        """
-        run ProteinDF command
-        """
-        if isinstance(subcmd, str):
-            subcmd = [subcmd]
-            
-        cmd = os.path.join(pdf_home(), "bin", "pdf")
-        cmdlist = [cmd]
-        cmdlist.extend(subcmd)
-        self._logger.debug("run: {0}".format(cmdlist))
-        
-        try:
-            subprocess.check_call(cmdlist)
-        except:
-            print('-'*60)
-            traceback.print_exc(file=sys.stdout)
-            #print(traceback.format_exc())
-            print('-'*60)
-
-
     # ------------------------------------------------------------------
     def sp(self, pdfparam, *args, **kwargs):
         """
@@ -100,8 +79,8 @@ class PdfSim(object):
         itr = None
         total_energy = None
         if not dry_run:
-            self.run_pdf(['-o', 'pdf.log', 'serial'])
-            self.run_pdf('archive')
+            pdf.run_pdf(['serial', '-o', 'pdf.log'])
+            pdf.run_pdf('archive')
 
             entry = pdf.PdfArchive(db_path)
             itr = entry.iterations
@@ -261,8 +240,8 @@ class PdfSim(object):
 
         self.setup(pdfparam, pdf_workdir)
         os.chdir(pdf_workdir)
-        self.run_pdf(['-o', 'pdf.log', 'serial'])
-        self.run_pdf('archive')
+        pdf.run_pdf(['-o', 'pdf.log', 'serial'])
+        pdf.run_pdf('archive')
 
         entry = pdf.PdfArchive('pdfresults.db')
         itr = entry.iterations

@@ -23,9 +23,11 @@
 archive ProteinDF results.
 """
 
+import os
 import sys
 import argparse
 import logging
+import logging.config
 import traceback
 try:
     import msgpack
@@ -175,5 +177,8 @@ class Pdf2Db(object):
                 
     
 if __name__ == '__main__':
+    logconfig_file = 'logconfig.ini'
+    if os.path.exists(logconfig_file):
+        logging.config.fileConfig(logconfig_file)
     main()
 
