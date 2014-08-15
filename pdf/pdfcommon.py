@@ -47,7 +47,6 @@ def get_default_pdfparam():
     os.remove(tmpfile_path)
     
     pdfparam = pdf.PdfParam(tmpdata)
-    print('>>>> GF/orthogonalize={}'.format(pdfparam.gridfree_orthogonalize_method))
     pdfparam.step_control = 'create integral guess scf'
 
     pdfparam.guess = 'harris'
@@ -117,21 +116,49 @@ def run_pdf(subcmd):
     cmdlist.extend(subcmd)
     logger.debug("run: {0}".format(cmdlist))
     
-    try:
-        p = subprocess.Popen(cmdlist,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-        if stdout:
-            logger.info(stdout)
-        if stderr:
-            logger.error(stderr)
-    except:
-        print('-'*60)
-        traceback.print_exc(file=sys.stdout)
-        #print(traceback.format_exc())
-        print('-'*60)
+    #try:
+    #    p = subprocess.Popen(cmdlist,
+    #                         stdout=subprocess.PIPE,
+    #                         stderr=subprocess.PIPE)
+    #    stdout, stderr = p.communicate()
+    #    if stdout:
+    #        sys.stdout.write(stdout)
+    #        logger.info(stdout)
+    #    if stderr:
+    #        sys.stderr.write(stderr)
+    #        logger.error(stderr)
+    #except:
+    #    print('-'*60)
+    #    traceback.print_exc(file=sys.stdout)
+    #    #print(traceback.format_exc())
+    #    print('-'*60)
 
+    subproc_args = {'stdin': None,
+                    'stdout': subprocess.PIPE,
+                    'stderr': subprocess.STDOUT,
+                    'shell': False,
+                    'universal_newlines': True
+                    }
+    try:
+        proc = subprocess.Popen(cmdlist, **subproc_args)
+    except OSError as e:
+        print('Failed to execute command: %s' % cmdlist)
+        print(errno.errorcode[e.errno])
+        print(os.strerror(e.errno))
+        raise e
+
+    if proc.stdout != None:
+        while True:
+            line = proc.stdout.readline()
+            if not line:
+                break
+            logger.info(line)
+        
+    return_code = proc.wait()
+    (stdouterr, stdin) = (proc.stdout, proc.stdin)
+    logger.info('return code={}'.format(return_code))
+    
+    
 def mpac2py(path):
     """
     load message pack binary file to python dictionary data

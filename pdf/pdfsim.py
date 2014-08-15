@@ -18,15 +18,6 @@ class PdfSim(object):
         self._logger = logging.getLogger(__name__)
         self._logger.addHandler(nullHandler)
 
-    def make_workdir(self, workdir ='.'):
-        # make sub-directories
-        dirs = ['fl_Work']
-        for d in dirs:
-            path = os.path.join(workdir, d)
-            if not os.path.exists(path):
-                os.mkdir(path)
-
-        
     def setup(self, pdfparam =pdf.get_default_pdfparam(), workdir ="."):
         """
         setup to run ProteinDF
@@ -44,8 +35,16 @@ class PdfSim(object):
         f.write(pdfparam.get_inputfile_contents())
         f.close()
 
-        self.make_workdir(workdir)
+        self._make_workdir(workdir)
 
+    def _make_workdir(self, workdir ='.'):
+        # make sub-directories
+        dirs = ['fl_Work']
+        for d in dirs:
+            path = os.path.join(workdir, d)
+            if not os.path.exists(path):
+                os.mkdir(path)
+        
     # ------------------------------------------------------------------
     def sp(self, pdfparam, *args, **kwargs):
         """

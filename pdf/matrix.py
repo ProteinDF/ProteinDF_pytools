@@ -10,15 +10,37 @@ import bridge
 class Matrix(bridge.Matrix):
     """
     """
+    __header_struct_little_endian = "<iii"
+    __header_struct_big_endian = ">iii"
+    __body_struct_little_endian = "<d"
+    __body_struct_big_endian = ">d"
+
     def __init__(self, *args, **kwargs):
         self._logger = logging.getLogger(__name__)
         bridge.Matrix.__init__(self, *args, **kwargs)
 
-    def is_loadable(self, file_path, is_little_endian = True):
+    @classmethod
+    def __get_header_struct(cls, is_little_endian):
+        if is_little_endian:
+            return cls.__header_struct_little_endian
+        else:
+            return cls.__header_struct_big_endian
+
+    @classmethod
+    def __get_body_struct(cls, is_little_endian):
+        if is_little_endian:
+            return cls.__body_struct_little_endian
+        else:
+            return cls.__body_struct_big_endian
+
+    @classmethod
+    def is_loadable(cls, file_path, is_little_endian = True):
         answer = False
+        row = None
+        col = None
         if os.path.isfile(file_path):
             fin = open(file_path, "rb")
-            header_struct = self.__get_header_struct(is_little_endian)
+            header_struct = cls.__get_header_struct(is_little_endian)
             size_of_header = struct.calcsize(header_struct)
             data = fin.read(size_of_header)
             fin.close()
@@ -28,8 +50,8 @@ class Matrix(bridge.Matrix):
             col = header[2]
             if (matrix_type == 0):
                 answer = True
-        return answer
-        
+        return (answer, row, col)
+
     def load(self, file_path, is_little_endian = True):
         if os.path.isfile(file_path):
             fin = open(file_path, "rb")
@@ -56,8 +78,8 @@ class Matrix(bridge.Matrix):
             self._logger.error("file not found: %s" % (file_path))
             
     def save(self, file_path, is_little_endian = True):
-        row = self.get_num_of_rows()
-        col = self.get_num_of_cols()
+        row = self.rows
+        col = self.cols
         matrix_type = 0
 
         fout = open(file_path, "wb")
@@ -81,15 +103,37 @@ class Matrix(bridge.Matrix):
 class SymmetricMatrix(bridge.SymmetricMatrix):
     """
     """
+    __header_struct_little_endian = "<iii"
+    __header_struct_big_endian = ">iii"
+    __body_struct_little_endian = "<d"
+    __body_struct_big_endian = ">d"
+
     def __init__(self, *args, **kwargs):
         self._logger = logging.getLogger(__name__)
         bridge.SymmetricMatrix.__init__(self, *args, **kwargs)
 
-    def is_loadable(self, file_path, is_little_endian = True):
+    @classmethod
+    def __get_header_struct(cls, is_little_endian):
+        if is_little_endian:
+            return cls.__header_struct_little_endian
+        else:
+            return cls.__header_struct_big_endian
+
+    @classmethod
+    def __get_body_struct(cls, is_little_endian):
+        if is_little_endian:
+            return cls.__body_struct_little_endian
+        else:
+            return cls.__body_struct_big_endian
+
+    @classmethod
+    def is_loadable(cls, file_path, is_little_endian = True):
         answer = False
+        row = None
+        col = None
         if os.path.isfile(file_path):
             fin = open(file_path, "rb")
-            header_struct = self.__get_header_struct(is_little_endian)
+            header_struct = cls.__get_header_struct(is_little_endian)
             size_of_header = struct.calcsize(header_struct);
             data = fin.read(size_of_header)
             fin.close()
@@ -99,7 +143,7 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
             col = header[2]
             if (matrix_type == 2):
                 answer = True
-        return answer
+        return (answer, row, col)
 
     def load(self, file_path, is_little_endian = True):
         if os.path.isfile(file_path):
@@ -120,8 +164,8 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
             # body
             body_struct = self.__get_body_struct(is_little_endian)
             size_of_double = struct.calcsize(body_struct);
-            for r in xrange(dim):
-                for c in xrange(r +1):
+            for r in range(dim):
+                for c in range(r +1):
                     value = struct.unpack(body_struct, fin.read(size_of_double))
                     self.set(r, c, value[0])
             fin.close()
@@ -129,8 +173,8 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
             self._logger.error("file not found: %s" % (file_path))
             
     def save(self, file_path, is_little_endian = True):
-        dim = self.get_num_of_rows()
-        assert(dim == self.get_num_of_cols())
+        dim = self.rows
+        assert(dim == self.cols)
         matrix_type = 2
 
         fout = open(file_path, "wb")
@@ -142,8 +186,8 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
         
         # write elements
         body_struct = self.__get_body_struct(is_little_endian)
-        for r in xrange(dim):
-            for c in xrange(r +1):
+        for r in range(dim):
+            for c in range(r +1):
                 value = self.get(r, c)
                 value_str = struct.pack(body_struct, value)
                 fout.write(value_str)

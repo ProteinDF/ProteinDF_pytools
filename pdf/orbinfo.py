@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import copy
-from .pdfarchive import PdfArchive
-from .pdfparam import PdfParam
-from .basisset import BasisSet, ContractedGTO, PrimitiveGTO
+import pdf
 
 class OrbInfo(object):
     """
@@ -14,13 +12,13 @@ class OrbInfo(object):
         self._orb_info = []
         self._atoms = []
         self._basissets = {}
-        if isinstance(obj, PdfArchive):
+        if isinstance(obj, pdf.PdfArchive):
             self._setup_by_db(obj)
-        elif isinstance(obj, PdfParam):
+        elif isinstance(obj, pdf.PdfParam):
             self._setup_by_param(obj)
         
     def _setup_by_db(self, db):
-        assert(isinstance(db, PdfArchive))
+        assert(isinstance(db, pdf.PdfArchive))
 
         mol = db.get_molecule()
         # make atom and basisset list
@@ -37,7 +35,7 @@ class OrbInfo(object):
             for CGTO_index in range(num_of_CGTOs):
                 CGTO = basisset[CGTO_index]
                 shell_type = CGTO.shell_type
-                shell_type_id = ContractedGTO.get_shell_type_id(shell_type)
+                shell_type_id = pdf.ContractedGTO.get_shell_type_id(shell_type)
                 num_of_basis_type = shell_type_id * 2 + 1
                 for basis_type in range(num_of_basis_type):
                     data = {'atom_index': atom_index,
@@ -49,7 +47,7 @@ class OrbInfo(object):
             atom_index += 1
 
     def _setup_by_param(self, param):
-        assert(isinstance(param, PdfParam))
+        assert(isinstance(param, pdf.PdfParam))
 
         mol = param.molecule
         # make atom and basisset list
@@ -65,7 +63,7 @@ class OrbInfo(object):
             for CGTO_index in range(num_of_CGTOs):
                 CGTO = basisset[CGTO_index]
                 shell_type = CGTO.shell_type
-                shell_type_id = ContractedGTO.get_shell_type_id(shell_type)
+                shell_type_id = pdf.ContractedGTO.get_shell_type_id(shell_type)
                 num_of_basis_type = shell_type_id * 2 + 1
                 for basis_type in range(num_of_basis_type):
                     data = {'atom_index': atom_index,
@@ -115,7 +113,7 @@ class OrbInfo(object):
             CGTO_index = self._orb_info[orb_index]['CGTO_index']
             shell_type = basisset[CGTO_index].shell_type_id
             basis_type = self._orb_info[orb_index]['basis_type']
-            answer = ContractedGTO.get_basis_type(shell_type, basis_type)
+            answer = pdf.ContractedGTO.get_basis_type(shell_type, basis_type)
         return answer
         
     

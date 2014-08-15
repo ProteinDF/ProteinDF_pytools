@@ -77,6 +77,31 @@ class PdfParam(object):
         filename = self._get_file_base_name('Spq_matrix')
         return os.path.join(self.work_path, filename)
 
+    def get_X_mat_path(self):
+        '''
+        return X matrix path
+        '''
+        filename = self._get_file_base_name('X_matrix')
+        return os.path.join(self.work_path, filename)
+        
+    def get_Xinv_mat_path(self):
+        '''
+        return X^-1 matrix path
+        '''
+        filename = self._get_file_base_name('Xinv_matrix')
+        return os.path.join(self.work_path, filename)
+        
+    def get_Fmat_path(self, runtype='rks', itr=-1):
+        '''
+        return Fmatrix path
+        '''
+        if itr == -1:
+            itr = self.iterations
+
+        filename = self._get_file_base_name('Fpq_matrix')
+        filename = filename.replace('%s', '{}{}'.format(runtype, itr))
+        return os.path.join(self.work_path, filename)
+
     def get_cmat_path(self, runtype='rks', itr=-1):
         '''
         return Cmatrix path
@@ -637,7 +662,7 @@ class PdfParam(object):
         output += "    orbital_independence_threshold/lowdin = {0}\n".format(self.orbital_independence_threshold_lowdin)
         output += "    scf_acceleration = {0}\n".format(self.scf_acceleration)
         output += "    scf_acceleration/damping/damping_type = {0}\n".format(self.scf_acceleration_damping_damping_type)
-        output += "    scf_acceleration/damping/damping_factor = {0}\n".format(self.scf_acceleration_damping_factor)
+        output += "    scf_acceleration/damping/damping_factor = {0}\n".format(self.scf_acceleration_damping_damping_factor)
         output += "    convergence/threshold_energy = {0}\n".format(self.convergence_threshold_energy)
         output += "    convergence/threshold = {0}\n".format(self.convergence_threshold)
         output += "    convergence/type = {0}\n".format(self.convergence_type)

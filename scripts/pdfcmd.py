@@ -50,7 +50,7 @@ def main():
     args, unknown = parser.parse_known_args()
     
     debug = args.DEBUG
-    output = None
+    output = ''
     if len(args.OUTPUT) > 0:
         output = args.OUTPUT[0]
     arg_array = args.cmd + unknown
@@ -75,12 +75,13 @@ def main():
     if ext == '.sh':
         use_shell = True
     subproc_args = {'stdin': None,
-                    'stdout': None,
+                    'stdout': subprocess.PIPE,
                     'stderr': subprocess.STDOUT,
-                    'shell': use_shell
+                    'shell': use_shell,
+                    'universal_newlines': True
                     }
     output_file = None
-    if output != None:
+    if output != '':
         output_file = open(output, "a")
         subproc_args['stdout'] = output_file
         
@@ -91,8 +92,15 @@ def main():
         print(errno.errorcode[e.errno])
         print(os.strerror(e.errno))
         raise e
-        #sys.exit(1)
 
+    if proc.stdout != None:
+        while True:
+            line = proc.stdout.readline()
+            if not line:
+                break
+            line = line.rstrip()
+            print(line)
+        
     return_code = proc.wait()
     (stdouterr, stdin) = (proc.stdout, proc.stdin)
     if debug:

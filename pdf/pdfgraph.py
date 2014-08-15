@@ -160,7 +160,7 @@ class DfTotalEnergyHistGraph(DfGraph):
         # see. http://matplotlib.sourceforge.net/api/pyplot_api.html#matplotlib.pyplot.plot
         self._ax.plot(self._x, self._y, 'bo-')
 
-        self._ax.legend(('total energy', ))
+        self._ax.legend(('total energy', loc='best'))
 
         
 class DfEnergyLevelHistoryGraphH(DfGraph):
@@ -503,7 +503,7 @@ class Graph(object):
 
         # legend
         if (self.param.setdefault('draw_legend', False) == True):
-            self.ax.legend()
+            self.ax.legend(loc='best')
 
 
 class GraphEnergyLevelHistory(Graph):
@@ -658,6 +658,6 @@ class BarGraph(Graph):
 
         if labels:
             #self.ax.legend(labels, bbox_to_anchor=(1.05, 1), loc=2)
-            self.ax.legend(labels)
+            self.ax.legend(labels, loc='best')
             
         
