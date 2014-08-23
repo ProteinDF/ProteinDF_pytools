@@ -12,7 +12,7 @@ class Vector(bridge.Vector):
     """
     def __init__(self, obj = []):
         self._logger = logging.getLogger(__name__)
-        bridge.Vector.__init__(self, obj)
+        super(Vector, self).__init__(self, obj)
 
     def is_loadable(self, file_path, is_little_endian = True):
         answer = False

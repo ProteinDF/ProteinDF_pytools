@@ -19,9 +19,11 @@ import pdf
 epsilon = 1.0E-10 # 計算機イプシロン
 error = 1.0E-5 # 許容誤差
 
-class NullHandler(logging.Handler):
-    def emit(self, record):
-        pass
+module_logger = logging.getLogger(__name__)
+
+#class NullHandler(logging.Handler):
+#    def emit(self, record):
+#        pass
 
 def pdf_home():
     """
@@ -34,6 +36,7 @@ def get_default_pdfparam():
     """
     defaultのpdfparamを返す
     """
+    print('get_default_pdfparam()')
     # 一時ファイル名を取得する
     tmpfile_fd, tmpfile_path = tempfile.mkstemp()
     os.close(tmpfile_fd)
@@ -102,8 +105,12 @@ def run_pdf(subcmd):
     """
     run ProteinDF command
     """
-    logger = logging.getLogger(__name__)
-    logger.info("pdf.run_pdf >> ", subcmd)
+    #handler = logging.StreamHandler()
+    #handler.setLevel(logging.DEBUG)
+    #module_logger.setLevel(logging.DEBUG)
+    #logger.addHandler(handler)
+
+    module_logger.info("pdf.run_pdf >> {}".format(subcmd))
 
     if isinstance(subcmd, str):
         subcmd = [subcmd]
@@ -114,7 +121,7 @@ def run_pdf(subcmd):
     cmd = os.path.join(pdf_home(), "bin", "pdf")
     cmdlist = [cmd]
     cmdlist.extend(subcmd)
-    logger.debug("run: {0}".format(cmdlist))
+    module_logger.critical("run: {0}".format(cmdlist))
     
     #try:
     #    p = subprocess.Popen(cmdlist,
@@ -142,9 +149,9 @@ def run_pdf(subcmd):
     try:
         proc = subprocess.Popen(cmdlist, **subproc_args)
     except OSError as e:
-        print('Failed to execute command: %s' % cmdlist)
-        print(errno.errorcode[e.errno])
-        print(os.strerror(e.errno))
+        module_logger.critical('Failed to execute command: %s' % cmdlist)
+        module_logger.critical(str(errno.errorcode[e.errno]))
+        module_logger.critical(str(os.strerror(e.errno)))
         raise e
 
     if proc.stdout != None:
@@ -152,11 +159,17 @@ def run_pdf(subcmd):
             line = proc.stdout.readline()
             if not line:
                 break
-            logger.info(line)
+            module_logger.info(line)
         
     return_code = proc.wait()
     (stdouterr, stdin) = (proc.stdout, proc.stdin)
-    logger.info('return code={}'.format(return_code))
+    module_logger.info('return code={}'.format(return_code))
+    if return_code != 0:
+        print('Failed to execute command: %s' % cmdlist)
+        print('return code = '.format(return_code))
+        module_logger.critical('Failed to execute command: %s' % cmdlist)
+        module_logger.critical('return code = '.format(return_code))
+        raise
     
     
 def mpac2py(path):

@@ -40,10 +40,10 @@ def main():
     parser.add_argument('cmd',
                         nargs='+',
                         help='command')
-    parser.add_argument("-D", "--DEBUG",
+    parser.add_argument("--DEBUG",
                         action="store_true",
                         default=False)
-    parser.add_argument("-O", "--OUTPUT",
+    parser.add_argument("--OUTPUT",
                         nargs=1,
                         action="store",
                         default="")

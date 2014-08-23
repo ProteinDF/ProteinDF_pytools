@@ -601,10 +601,11 @@ class PdfParam(object):
 
     # LO ===============================================================
     def _get_lo_satisfied(self):
-        yn = False
-        if self._data.get('lo/satisfied', 'no').upper() == 'YES':
-            yn = True
-        return yn
+        answer = self._data.get('lo/satisfied', False)
+        if isinstance(answer, str):
+            self._data['lo/satisfied'] = (answer.upper() == 'YES')
+            answer = self._data['lo/satisfied']
+        return answer
 
     lo_satisfied = property(_get_lo_satisfied)
 
@@ -795,7 +796,7 @@ class PdfParam(object):
                     atom_kind = atom_symbol
                     if (len(atom_label) != 0):
                         atom_kind = "%s@%s" % (atom_symbol, label)
-                answer.add(atom_kind)
+                    answer.add(atom_kind)
         return answer
         
         

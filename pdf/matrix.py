@@ -17,7 +17,7 @@ class Matrix(bridge.Matrix):
 
     def __init__(self, *args, **kwargs):
         self._logger = logging.getLogger(__name__)
-        bridge.Matrix.__init__(self, *args, **kwargs)
+        super(Matrix, self).__init__(self, *args, **kwargs)
 
     @classmethod
     def __get_header_struct(cls, is_little_endian):
@@ -110,7 +110,7 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
 
     def __init__(self, *args, **kwargs):
         self._logger = logging.getLogger(__name__)
-        bridge.SymmetricMatrix.__init__(self, *args, **kwargs)
+        super(SymmetricMatrix, self).__init__(self, *args, **kwargs)
 
     @classmethod
     def __get_header_struct(cls, is_little_endian):

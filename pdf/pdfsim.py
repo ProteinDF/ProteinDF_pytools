@@ -18,17 +18,19 @@ class PdfSim(object):
         self._logger = logging.getLogger(__name__)
         self._logger.addHandler(nullHandler)
 
-    def setup(self, pdfparam =pdf.get_default_pdfparam(), workdir ="."):
+    def setup(self, pdfparam =None, workdir ="."):
         """
         setup to run ProteinDF
         """
         # make fl_Userinput
+        if pdfparam == None:
+            pdfparam = pdf.get_default_pdfparam()
         assert(isinstance(pdfparam, pdf.PdfParam))
-
+        
         if not os.path.exists(workdir):
             os.mkdir(workdir)
         else:
-            self._logger.info('already exist: {}'.format(workdir))
+            self._logger.debug('already exist: {}'.format(workdir))
 
         input_path = os.path.join(workdir, "fl_Userinput")
         f = open(input_path, 'w')
@@ -70,7 +72,7 @@ class PdfSim(object):
         if not os.path.exists(pdf_workdir):
             os.mkdir(pdf_workdir)
         else:
-            self._logger.info('already exist {}'.format(pdf_workdir))
+            self._logger.debug('already exist {}'.format(pdf_workdir))
 
         self.setup(pdfparam, pdf_workdir)
         os.chdir(pdf_workdir)
