@@ -6,8 +6,6 @@ import array
 import copy
 import math
 
-import bridge
-
 class PrimitiveGTO(object):
     """
     >>> pgto = PrimitiveGTO(2.80806400E+03, 2.01783000E-03)
@@ -16,10 +14,24 @@ class PrimitiveGTO(object):
     >>> math.fabs(pgto.coef - 2.01783000E-03) < 1.0E-15
     True
     """
-    def __init__(self, exponent = 0.0, coef = 1.0):
-        self.coef = float(coef)
-        self.exp = float(exponent)
-        
+    def __init__(self, *args, **kwargs):
+        if (len(args) == 1):
+            if isinstance(args[0], PrimitiveGTO):
+                rhs = args[0]
+                self.exp = rhs.exp
+                self.coef = rhs.coef
+                return
+            elif isinstance(args[0], dict):
+                self.set_by_raw_data(args[0])
+                return
+            
+        self.exp = kwargs.get('exp', 0.0)
+        self.coef = kwargs.get('coef', 1.0)
+        if (len(args) == 2):
+            self.exp = args[0]
+            self.coef = args[1]
+
+    # exp --------------------------------------------------------------
     def __get_exp(self):
         return self._exp
 
@@ -28,6 +40,7 @@ class PrimitiveGTO(object):
 
     exp = property(__get_exp, __set_exp)
 
+    # coef -------------------------------------------------------------
     def __get_coef(self):
         return self._coef
 
@@ -36,21 +49,26 @@ class PrimitiveGTO(object):
 
     coef = property(__get_coef, __set_coef)
 
-    def __str__(self):
-        output = "    %e %e\n" % (self.exp, self.coef)
-        return output
+    # ==================================================================
+    # raw data
+    # ==================================================================
+    def set_by_raw_data(self, odict):
+        self.coef = odict.get('coef', 0.0)
+        self.exp = odict.get('exp', 0.0)
 
-    def __getstate__(self):
+    def get_raw_data(self):
         odict = {}
-        odict['exp'] = self.exp
         odict['coef'] = self.coef
+        odict['exp'] = self.exp
         return odict
     
-    def __setstate__(self, odict):
-        assert(isinstance(odict, dict) == True)
-        self.exp  = odict.get('exp', 0.0)
-        self.coef = odict.get('coef', 1.0)
-    
+    # ==================================================================
+    # debug
+    # ==================================================================
+    def __str__(self):
+        output = "    {0: e} {1: e}\n".format(self.exp, self.coef)
+        return output
+
         
 class ContractedGTO(list):
     """
@@ -63,46 +81,81 @@ class ContractedGTO(list):
     >>> len(cgto)
     3
     """
-    _shell_types = ['s', 'p', 'd', 'spd']
-    _orb_types = ['s', 'px', 'py', 'pz', 'dxy', 'dyz', 'dzx', 'dxx-yy', 'dzz']
-    
-    def __init__(self,
-                 shell_type = 's',
-                 size = 0):
-        list.__init__(self, [PrimitiveGTO() for x in range(size)])
-        self.shell_type = shell_type
+    _shell_types = ['s', 'p', 'd', 'f', 'g']
+    _orb_types = ['s', 'px', 'py', 'pz', 'dxy', 'dyz', 'dzx', 'dxx-yy', 'dzz',
+                  'z3', 'xz2', 'yz2', '3x2y-y3', 'x3-3xy2', 'xyz', 'x2z-y2z']
 
-    # shell_type ---------------------------------------------------------------
-    def __get_shell_type_id(self):
+    def __init__(self, *args, **kwargs):
+        shell_type = 's'
+        size = 0
+        
+        if (len(args) == 1):
+            if isinstance(args[0], ContractedGTO):
+                self._copy_constructer(args[0])
+                return
+            elif isinstance(args[0], dict):
+                self.set_by_raw_data(args[0])
+                return 
+        
+        if len(args) == 2:
+            shell_type = args[0]
+            size = int(args[1])
+        if 'shell_type' in kwargs:
+            shell_type = kwargs.get('shell_type')
+        if 'size' in kwargs:
+            size = kwargs.get('size')
+
+        self.shell_type = shell_type
+        list.__init__(self, [PrimitiveGTO() for x in range(size)])
+
+        if 'pGTOs' in kwargs:
+            pgtos = kwargs.get('pGTOs', [])
+            self.__init__(size = len(pgtos))
+            for i in range(len(pgtos)):
+                self[i] = PrimitiveGTO(**(pgtos[i]))
+            self.shell_type = kwargs.get('shell_type', 's')
+            self.scale_factor = kwargs.get('scale_factor', 1.0)
+
+    def _copy_constructer(self, rhs):
+        self.shell_type = rhs.shell_type
+        self.scale_factor = rhs.scale_factor
+        list.__init__(self, [PrimitiveGTO() for x in range(len(rhs))])
+        for i, pgto in enumerate(rhs):
+            self[i] = PrimitiveGTO(pgto)
+        
+    # shell_type_id ------------------------------------------------------------
+    def _get_shell_type_id(self):
         return self._shell_type_id
 
-    shell_type_id = property(__get_shell_type_id)
+    shell_type_id = property(_get_shell_type_id)
 
-    def __get_shell_type(self):
+    # shell_type ---------------------------------------------------------------
+    def _get_shell_type(self):
         if not '_shell_type' in self.__dict__:
             self._shell_type = 's'
         return self._shell_types[self._shell_type_id]
 
-    def __set_shell_type(self, shell_type):
+    def _set_shell_type(self, shell_type):
         self._shell_type_id = None
         for index, st in enumerate(self._shell_types):
             if st == shell_type:
                 self._shell_type_id = index
                 break
 
-    shell_type = property(__get_shell_type, __set_shell_type)
+    shell_type = property(_get_shell_type, _set_shell_type)
 
     # scale factor -------------------------------------------------------------
-    def __get_scale_factor(self):
+    def _get_scale_factor(self):
         if not '_scale_factor' in self.__dict__:
             self._scale_factor = 1.0
         return self._scale_factor
 
-    def __set_scale_factor(self, value):
+    def _set_scale_factor(self, value):
         self._scale_factor = value
 
-    scale_factor = property(__get_scale_factor, __set_scale_factor)
+    scale_factor = property(_get_scale_factor, _set_scale_factor)
 
+    # ------------------------------------------------------------------
     @classmethod
     def get_supported_shell_types(cls):
         return cls._shell_types
@@ -156,32 +209,40 @@ class ContractedGTO(list):
             answer = [self]
         return answer
     
+    # ==================================================================
+    # raw data
+    # ==================================================================
+    def set_by_raw_data(self, odict):
+        list.__init__(self, [])
+
+        self.shell_type = odict.get('shell_type')
+        self.scale_factor = odict.get('scale_factor')
+        pGTOs = odict.get('pGTOs', [])
+        for pGTO in pGTOs:
+            self.append(PrimitiveGTO(pGTO))
+        
+    def get_raw_data(self):
+        odict = {}
+
+        odict['shell_type'] = self.shell_type
+        odict['scale_factor'] = self.scale_factor
+        odict.setdefault('pGTOs', [])
+        for pgto in self:
+            odict['pGTOs'].append(pgto.get_raw_data())
+        
+        return odict
+    
+    # ==================================================================
+    # debug
+    # ==================================================================
     def __str__(self):
         output = ""
-        #output += " %s %d\n" % (self.shell_type, len(self))
+        #output += " %s %d\n".format(self.shell_type, len(self))
         output += " %d\n" % (len(self))
         for pgto in self:
             output += str(pgto)
         return output
 
-    def __getstate__(self):
-        odict = {}
-        odict['shell_type'] = self.shell_type
-        odict['scale_factor'] = self.scale_factor
-        odict['pGTOs'] = []
-        for pgto in self:
-            odict['pGTOs'].append(pgto.__getstate__())
-        return odict
-        
-    def __setstate__(self, odict):
-        assert(isinstance(odict, dict) == True)
-        self.shell_type = odict.get('shell_type', 's')
-        self.scale_factor = odict.get('scale_factor', 1.0)
-        for pgto_var in odict.get('pGTOs', []):
-            pgto = PrimitiveGTO()
-            pgto.__setstate__(pgto_var)
-            self.append(pgto)
-    
 class BasisSet(list):
     """
     >>> bs = BasisSet('sample', 3)
@@ -194,18 +255,56 @@ class BasisSet(list):
     >>> bs[0][1] = PrimitiveGTO(4.21138300E+02, 1.54332000E-02)
     >>> bs[0][2] = PrimitiveGTO(9.55866200E+01, 7.55815500E-02)
     """
-    def __init__(self, name = "", size = 0):
-        list.__init__(self, [ContractedGTO() for x in range(size)])
-        self.name = name
+    def __init__(self, *args, **kwargs):
+        self._name = ''
+        size = 0
+
+        if (len(args) == 1):
+            if isinstance(args[0], BasisSet):
+                self._copy_constructer(args[0])
+                return
+            elif isinstance(args[0], dict):
+                self.set_by_raw_data(args[0])
+                return
         
-    def __get_name(self):
+        if (len(args) > 0):
+            self.name = args[0]
+            if (len(args) > 1):
+                size = args[1]
+        list.__init__(self, [ContractedGTO() for x in range(size)])
+
+        if 'name' in kwargs:
+            self.name = kwargs.get('name')
+        if 'cGTOs' in kwargs:
+            cgtos = kwargs.get('cGTOs', [])
+            size = len(cgtos)
+            list.__init__(self, [ContractedGTO() for x in range(size)])
+            for i in range(len(cgtos)):
+                self[i] = ContractedGTO(**(cgtos[i]))
+
+    def _copy_constructer(self, rhs):
+        self.name = rhs.name
+        list.__init__(self, [ContractedGTO() for x in range(len(rhs))])
+        for i, cgto in enumerate(rhs):
+            self[i] = ContractedGTO(cgto)
+
+    # name -------------------------------------------------------------
+    def _get_name(self):
         return self._name
 
-    def __set_name(self, name):
-        self._name = name
+    def _set_name(self, name):
+        self._name = str(name)
 
-    name = property(__get_name, __set_name)
-
+    name = property(_get_name, _set_name)
+    # ------------------------------------------------------------------
+    
+    def get_number_of_AOs(self):
+        answer = 0
+        for cgto in self:
+            st_id = cgto.shell_type_id
+            answer += st_id * 2 + 1
+        return answer
+    
     def get_num_of_CGTOs(self, shell_type):
         answer = 0
         for i in range(len(self)):
@@ -234,17 +333,35 @@ class BasisSet(list):
         for shell_type in ContractedGTO.get_supported_shell_types():
             self.extend(CGTOs[shell_type])
 
-    def get_raw_data(self):
-        return self.__getstate__()
+    # ==================================================================
+    # raw data
+    # ==================================================================
+    def set_by_raw_data(self, odict):
+        list.__init__(self, [])
 
-    #def setstate(self, odict):
-    #    self.__setstate__(odict)
-            
+        self.name = odict.get('name', '')
+        cGTOs = odict.get('cGTOs', [])
+        for cGTO in cGTOs:
+            self.append(ContractedGTO(cGTO))
+        
+    def get_raw_data(self):
+        odict = {}
+
+        odict['name'] = self.name
+        odict['cGTOs'] = []
+        for cGTO in self:
+            odict['cGTOs'].append(cGTO.get_raw_data())
+
+        return odict
+        
+    # ==================================================================
+    # debug
+    # ==================================================================
     def __str__(self):
         self.sort()
         
         output = ""
-        #output += "%s\n" % (self.name)
+        output += "name:%s\n" % (self.name)
 
         for shell_type in ContractedGTO.get_supported_shell_types():
             num_of_CGTOs = self.get_num_of_CGTOs(shell_type)
@@ -257,22 +374,6 @@ class BasisSet(list):
             output += str(cgto)
         
         return output
-
-    def __getstate__(self):
-        odict = {}
-        odict['name'] = self.name
-        odict['cGTOs'] = []
-        for i in range(len(self)):
-            odict['cGTOs'].append(self[i].__getstate__())
-        return odict
-    
-    def __setstate__(self, odict):
-        assert(isinstance(odict, dict) == True)
-        self.name = odict.get('name', '')
-        for cgto_var in odict.get('cGTOs', []):
-            cgto = ContractedGTO()
-            cgto.__setstate__(cgto_var)
-            self.append(cgto)
 
     
 if __name__ == "__main__":

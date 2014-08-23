@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import types
 import array
 import logging
 import math
 
 import bridge
-from pdfparam import PdfParam
-import pdfcommon
-from basisset import *
+import pdf
+
 
 class PdfArchive(object):
     """
@@ -36,18 +34,20 @@ class PdfArchive(object):
         self._create_tables()
         self._read_db()
 
-        if isinstance(pdfparam, PdfParam):
+        if isinstance(pdfparam, pdf.PdfParam):
             pdf_id = pdfparam.digest()
             self._set_pdfparam_conditions(pdfparam)
             self._set_pdfparam_coordinates(pdfparam)
             self._set_pdfparam_basisset(pdfparam)
             self._set_pdfparram_total_energies(pdfparam)
+            self._set_pdfparam_force(pdfparam)
             
     # private ------------------------------------------------------------------
     def _create_tables(self):
         self._create_table_conditions()
         self._create_table_vectors()
         self._create_table_matrices()
+        self._create_table_force()
         
     def _create_table_conditions(self):
         """
@@ -107,6 +107,19 @@ class PdfArchive(object):
                                    'runtype',
                                    'iteration'])
             
+    def _create_table_force(self):
+        """
+        力情報のDBを作成
+        """
+        table_name = 'force'
+        if not self._db.has_table(table_name):
+            self._db.create_table(table_name,
+                                  ['atom_id',
+                                   'x',
+                                   'y',
+                                   'z'],
+                                  ['atom_id'])
+
     def _read_db(self):
         # set pdf_id
         table_name = 'conditions'
@@ -116,7 +129,7 @@ class PdfArchive(object):
                 self._pdf_id = lines[0]['pdf_id']
             
     def _set_pdfparam_conditions(self, pdfparam):
-        assert(isinstance(pdfparam, PdfParam))
+        assert(isinstance(pdfparam, pdf.PdfParam))
         table_name = 'conditions'
 
         self._pdf_id = pdfparam.digest()
@@ -161,7 +174,7 @@ class PdfArchive(object):
                              'scf_converged':scf_converged})
 
     def _set_pdfparam_coordinates(self, pdfparam):
-        assert(isinstance(pdfparam, PdfParam))
+        assert(isinstance(pdfparam, pdf.PdfParam))
         table_name = 'coordinates'
         if not self._db.has_table(table_name):
             self._db.create_table(table_name,
@@ -203,7 +216,7 @@ class PdfArchive(object):
         """
         BasisSet情報を格納する
         """
-        assert(isinstance(pdfparam, PdfParam))
+        assert(isinstance(pdfparam, pdf.PdfParam))
         table_name = 'basis'
         if not self._db.has_table(table_name):
             self._db.create_table(table_name,
@@ -231,32 +244,73 @@ class PdfArchive(object):
         for atom_label in pdfparam.get_basisset_atomlabels():
             basisset = pdfparam.get_basisset(atom_label)
             name = basisset.name
-            self._db.insert('basis',
-                            {'atom_label': atom_label,
-                             'name': name})
+
+            has_atom_label = self._db.select('basis',
+                                             where='atom_label="{atom_label}"'.format(
+                                                 atom_label=atom_label))
+            if has_atom_label:
+                self._db.update('basis',
+                                contents={'name': name},
+                                where='atom_label="{}"'.format(atom_label))
+            else:
+                self._db.insert('basis',
+                                {'atom_label': atom_label,
+                                 'name': name})
             
             for cgto_id, cgto in enumerate(basisset):
                 shell_type = cgto.shell_type
                 scale_factor = cgto.scale_factor
-                self._db.insert('basisset_CGTO',
-                                {'name': name,
-                                 'CGTO_ID': cgto_id,
-                                 'shell_type': shell_type,
-                                 'scale_factor': scale_factor
-                                 })
+
+                has_CGTO = self._db.select('basisset_CGTO',
+                                           where='name="{name}" and CGTO_ID={CGTO_ID}'.format(
+                                               name=name,
+                                               CGTO_ID=cgto_id))
+                if has_CGTO:
+                    self._db.update('basisset_CGTO',
+                                    {'shell_type': shell_type,
+                                     'scale_factor': scale_factor
+                                    },
+                                    where='name="{name}" and CGTO_ID={CGTO_ID}'.format(
+                                        name=name,
+                                        CGTO_ID=cgto_id))
+                else:
+                    self._db.insert('basisset_CGTO',
+                                    {'name': name,
+                                     'CGTO_ID': cgto_id,
+                                     'shell_type': shell_type,
+                                     'scale_factor': scale_factor
+                                    })
+
                 for pgto_id, pgto in enumerate(cgto):
                     coef = pgto.coef
                     exp = pgto.exp
-                    self._db.insert('basisset_PGTO',
-                                    {'name': name,
-                                     'CGTO_ID': cgto_id,
-                                     'PGTO_ID': pgto_id,
-                                     'coef': coef,
-                                     'exp': exp
-                                     })
-            
+
+                    has_PGTO = self._db.select('basisset_PGTO',
+                                               where='name="{name}" and CGTO_ID={CGTO_ID} and PGTO_ID={PGTO_ID}'.format(
+                                                   name=name,
+                                                   CGTO_ID=cgto_id,
+                                                   PGTO_ID=pgto_id))
+
+                    if has_PGTO:
+                        self._db.update('basisset_PGTO',
+                                        {'coef': coef,
+                                         'exp': exp
+                                        },
+                                        where='name="{name}" and CGTO_ID="{CGTO_ID}" and PGTO_ID="{PGTO_ID}"'.format(
+                                            name=name,
+                                            CGTO_ID=cgto_id,
+                                            PGTO_ID=pgto_id))
+                    else:
+                        self._db.insert('basisset_PGTO',
+                                        {'name': name,
+                                         'CGTO_ID': cgto_id,
+                                         'PGTO_ID': pgto_id,
+                                         'coef': coef,
+                                         'exp': exp
+                                        })
+                        
     def _set_pdfparram_total_energies(self, pdfparam):
-        assert(isinstance(pdfparam, PdfParam))
+        assert(isinstance(pdfparam, pdf.PdfParam))
         table_name = 'total_energies'
         if not self._db.has_table(table_name):
             self._db.create_table(table_name,
@@ -278,10 +332,44 @@ class PdfArchive(object):
                                     {'iteration':iteration,
                                      'energy':energy})
 
+    def _set_pdfparam_force(self, pdfparam):
+        assert(isinstance(pdfparam, pdf.PdfParam))
+        table_name = 'force'
+        if not self._db.has_table(table_name):
+            self._create_table_force()
+
+        num_of_atoms = pdfparam.num_of_atoms
+        for atom_index in range(num_of_atoms):
+            v = pdfparam.get_force(atom_index)
+            if v != None:
+                data = {'atom_id':atom_index,
+                        'x':v[0],
+                        'y':v[1],
+                        'z':v[2]}
+                where_str = 'atom_id = %d' % (atom_index)
+                check_record = self._db.select(table_name, where=where_str)
+                if check_record:
+                    self._db.update(table_name,
+                                    contents=data,
+                                    where=where_str)
+                else:
+                    self._db.insert(table_name, data)
+        #
+                    
     # -------
     def _get_pdf_id(self):
         return self._pdf_id
 
+    def _get_num_of_atoms(self):
+        value = None
+        table_name = 'conditions'
+        if self._db.has_table(table_name):
+            values = self._db.select(table_name,
+                                     fields=['num_of_atoms'])
+            if len(values) > 0:
+                value = int(values[0]['num_of_atoms'])
+        return value        
+    
     def _get_num_of_AOs(self):
         value = None
         table_name = 'conditions'
@@ -302,6 +390,16 @@ class PdfArchive(object):
                 value = int(values[0]['num_of_MOs'])
         return value
 
+    def _get_method(self):
+        value = None
+        table_name = 'conditions'
+        if self._db.has_table(table_name):
+            values = self._db.select(table_name,
+                                     fields=['method'])
+            if len(values) > 0:
+                value = values[0]['method']
+        return value
+        
     def _get_iterations(self):
         value = None
         table_name = 'conditions'
@@ -439,9 +537,9 @@ class PdfArchive(object):
         """
         ベクトルを保存する
         """
-        assert(isinstance(dtype, types.StringType))
+        assert(isinstance(dtype, str))
         dtype = dtype.upper()
-        assert(isinstance(runtype, types.StringType))
+        assert(isinstance(runtype, str))
         runtype = runtype.upper()
         iteration = int(iteration)
 
@@ -466,9 +564,9 @@ class PdfArchive(object):
         """
         ベクトルを取得する
         """
-        assert(isinstance(dtype, types.StringType))
+        assert(isinstance(dtype, str))
         dtype = dtype.upper()
-        assert(isinstance(runtype, types.StringType))
+        assert(isinstance(runtype, str))
         runtype = runtype.upper()
         iteration = int(iteration)
 
@@ -493,9 +591,9 @@ class PdfArchive(object):
         """
         行列を設定する
         """
-        assert(isinstance(dtype, types.StringType))
+        assert(isinstance(dtype, str))
         dtype = dtype.upper()
-        assert(isinstance(runtype, types.StringType))
+        assert(isinstance(runtype, str))
         runtype = runtype.upper()
         iteration = int(iteration)
         assert(isinstance(m, bridge.Matrix))
@@ -526,9 +624,9 @@ class PdfArchive(object):
         """
         行列を取得する
         """
-        assert(isinstance(dtype, types.StringType))
+        assert(isinstance(dtype, str))
         dtype = dtype.upper()
-        assert(isinstance(runtype, types.StringType))
+        assert(isinstance(runtype, str))
         runtype = runtype.upper()
         iteration = int(iteration)
 
@@ -592,11 +690,38 @@ class PdfArchive(object):
         
     # property
     pdf_id = property(_get_pdf_id)
+    num_of_atoms = property(_get_num_of_atoms)
     num_of_AOs = property(_get_num_of_AOs)
     num_of_MOs = property(_get_num_of_MOs)
+    method = property(_get_method)
     iterations = property(_get_iterations)
     scf_converged = property(_get_scf_converged)
 
+    # force --------------------------------------------------------------------
+    def get_force(self, atom_id):
+        atom_id = int(atom_id)
+        force = None
+        table_name = 'force'
+        if self._db.has_table(table_name):
+            results = self._db.select(table_name,fields=['x', 'y', 'z'], where={'atom_id': atom_id})
+            if len(results) > 0:
+                force = [results[0]['x'], results[0]['y'], results[0]['z']]
+        return force
+        
+    def get_force_RMS(self):
+        """
+        forceのRMSを返す
+        """
+        rms = 0.0
+        for atom_index in range(self.num_of_atoms):
+            v = self.get_force(atom_index)
+            if v != None:
+                rms += v[0]*v[0] + v[1]*v[1] + v[2]*v[2]
+            else:
+                return None
+        return math.sqrt(rms / (3 * self.num_of_atoms))
+        
+            
     # compare ------------------------------------------------------------------
     def __eq__(self, other):
         answer = True
@@ -622,7 +747,7 @@ class PdfArchive(object):
         answer = False
         if isinstance(val1, float) and isinstance(val2, float):
             v = math.fabs(val1 - val2)
-            answer = (v < pdfcommon.error)
+            answer = (v < pdf.error)
         else:
             answer = (val1 == val2)
 
