@@ -30,7 +30,7 @@ class Vector(bridge.Vector):
     """
     def __init__(self, obj = []):
         self._logger = logging.getLogger(__name__)
-        super(Vector, self).__init__(self, obj)
+        super(Vector, self).__init__(obj)
 
     def is_loadable(self, file_path, is_little_endian = True):
         answer = False
@@ -70,7 +70,7 @@ class Vector(bridge.Vector):
             self._logger.error("file not found: %s" % (file_path))
 
     def save(self, file_path, is_little_endian = True):
-        size = self.len(self)
+        size = len(self)
 
         fout = open(file_path, "wb")
         # write header
