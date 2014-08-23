@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2002-2014 The ProteinDF project
-# see also AUTHORS and README.
+# Copyright (C) 2014 The ProteinDF development team.
+# see also AUTHORS and README if provided.
 # 
-# This file is part of ProteinDF.
+# This file is a part of the ProteinDF software package.
 # 
-# ProteinDF is free software: you can redistribute it and/or modify
+# The ProteinDF is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 # 
-# ProteinDF is distributed in the hope that it will be useful,
+# The ProteinDF is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
@@ -26,13 +26,13 @@ from distutils.core import setup
 #    os.makedirs('scripts')
 shutil.copyfile('scripts/pdfcmd.py', 'scripts/pdf')
 
-setup(name='pdfutils',
+setup(name='ProteinDF_pytools',
       version='0.1',
-      description='ProteinDF python scripts',
+      description='python scripts for ProteinDF package',
       author='Toshiyuki HIRANO',
-      author_email='t-hirano@iis.u-tokyo.ac.jp',
-      url='http://satolab.iis.u-tokyo.ac.jp/',
-      packages=['pdf'],
+      author_email='hiracchi@gmail.com',
+      url='http://proteindf.github.io/',
+      packages=['pdfpytools'],
       scripts=[
         'scripts/yml2mpac.py',
         'scripts/pdf',
