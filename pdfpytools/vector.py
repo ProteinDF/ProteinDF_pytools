@@ -23,7 +23,7 @@ import os
 import struct
 import logging
 
-import bridge
+import pdfbridge as bridge
 
 class Vector(bridge.Vector):
     """
@@ -79,7 +79,7 @@ class Vector(bridge.Vector):
         fout.write(header)
         
         # write elements
-        body_struct = self.__get_header_struct(is_little_endian)
+        body_struct = self.__get_body_struct(is_little_endian)
         for i in range(size):
             value_str = struct.pack(body_struct, self[i])
             fout.write(value_str)

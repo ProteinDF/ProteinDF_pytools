@@ -31,7 +31,7 @@ try:
 except:
     import msgpack_pure as msgpack
 
-import bridge
+import pdfbridge as bridge
 import pdfpytools as pdf
 
 epsilon = 1.0E-10 # 計算機イプシロン

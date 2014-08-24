@@ -23,7 +23,7 @@ import os
 import struct
 import logging
 
-import bridge
+import pdfbridge as bridge
 
 class Matrix(bridge.Matrix):
     """

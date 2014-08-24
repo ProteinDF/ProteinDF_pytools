@@ -25,7 +25,7 @@ import copy
 import math
 import logging
 
-import bridge
+import pdfbridge as bridge
 import pdfpytools as pdf
 
 class PdfSim(object):

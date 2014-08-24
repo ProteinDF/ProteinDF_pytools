@@ -23,7 +23,7 @@ import os
 import re
 import logging
 
-import bridge
+import pdfbridge as bridge
 import pdfpytools as pdf
 
 class Basis2(object):

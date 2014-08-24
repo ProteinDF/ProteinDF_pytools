@@ -23,7 +23,7 @@ import array
 import logging
 import math
 
-import bridge
+import pdfbridge as bridge
 import pdfpytools as pdf
 
 

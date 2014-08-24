@@ -27,7 +27,7 @@ import math
 import copy
 import pprint
 
-import bridge
+import pdfbridge as bridge
 import pdfpytools as pdf
 
 class PdfParam(object):
