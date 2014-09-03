@@ -838,9 +838,10 @@ class PdfParam(object):
     # --------------------------------------------------------------------------
     def set_by_raw_data(self, odict):
         odict = self._alias_conversion(odict)
-    
-        self.TEs = odict.get('TEs', {})
-        del odict['TEs']
+
+        if 'TEs' in odict:
+            self.TEs = odict.get('TEs', {})
+            del odict['TEs']
 
         self._basissets = {}
         if 'basis_set' in odict:
