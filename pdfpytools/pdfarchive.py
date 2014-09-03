@@ -22,6 +22,7 @@
 import array
 import logging
 import math
+import sqlite3
 
 import pdfbridge as bridge
 import pdfpytools as pdf
@@ -568,7 +569,7 @@ class PdfArchive(object):
         if check_record:
             self._db.update(table_name,
                             contents={'size':len(v),
-                                      'data':v.get_buffer()},
+                                      'data':sqlite3.Binary(v.get_buffer())},
                             where=where_str)
         else:
             self._db.insert(table_name,
@@ -576,7 +577,7 @@ class PdfArchive(object):
                              'runtype':runtype,
                              'iteration':iteration,
                              'size':len(v),
-                             'data':v.get_buffer()})
+                             'data':sqlite3.Binary(v.get_buffer())})
 
     def _get_vector(self, dtype, runtype, iteration):
         """
@@ -625,7 +626,7 @@ class PdfArchive(object):
                             contents={'rows':m.rows,
                                       'cols':m.cols,
                                       'format':m.type,
-                                      'data':m.get_buffer()
+                                      'data':sqlite3.Binary(m.get_buffer())
                                       },
                             where=where_str)
         else:
@@ -636,7 +637,7 @@ class PdfArchive(object):
                              'rows':m.rows,
                              'cols':m.cols,
                              'format':m.type,
-                             'data':m.get_buffer()})
+                             'data':sqlite3.Binary(m.get_buffer())})
             
     def _get_matrix(self, dtype, runtype, iteration):
         """
