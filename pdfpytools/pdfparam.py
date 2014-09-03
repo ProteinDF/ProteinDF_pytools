@@ -1022,8 +1022,6 @@ class PdfParam(object):
                 answer['xc_functional'] = v
             elif k == 'max-iteration':
                 answer['max_iteration'] = v
-            elif k == 'TE':
-                answer['TEs'] = v
             else:
                 answer[k] = v
 
