@@ -556,9 +556,9 @@ class PdfArchive(object):
         """
         ベクトルを保存する
         """
-        assert(isinstance(dtype, str))
+        dtype = str(dtype)
         dtype = dtype.upper()
-        assert(isinstance(runtype, str))
+        runtype = str(runtype)
         runtype = runtype.upper()
         iteration = int(iteration)
 
@@ -583,9 +583,9 @@ class PdfArchive(object):
         """
         ベクトルを取得する
         """
-        assert(isinstance(dtype, str))
+        dtype = str(dtype)
         dtype = dtype.upper()
-        assert(isinstance(runtype, str))
+        runtype = str(runtype)
         runtype = runtype.upper()
         iteration = int(iteration)
 
@@ -610,9 +610,9 @@ class PdfArchive(object):
         """
         行列を設定する
         """
-        assert(isinstance(dtype, str))
+        dtype = str(dtype)
         dtype = dtype.upper()
-        assert(isinstance(runtype, str))
+        runtype = str(runtype)
         runtype = runtype.upper()
         iteration = int(iteration)
         assert(isinstance(m, bridge.Matrix))
@@ -643,9 +643,9 @@ class PdfArchive(object):
         """
         行列を取得する
         """
-        assert(isinstance(dtype, str))
+        dtype = str(dtype)
         dtype = dtype.upper()
-        assert(isinstance(runtype, str))
+        runtype = str(runtype)
         runtype = runtype.upper()
         iteration = int(iteration)
 
