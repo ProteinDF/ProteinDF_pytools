@@ -620,16 +620,17 @@ class PdfParam(object):
     # LO ===============================================================
     def _get_lo_satisfied(self):
         answer = self._data.get('lo/satisfied', False)
-        if isinstance(answer, str):
-            self._data['lo/satisfied'] = (answer.upper() == 'YES')
-            answer = self._data['lo/satisfied']
+        
+        if not isinstance(answer, bool):
+            answer = str(answer).upper()
+            answer = (answer == 'YES')
+            self._data['lo/satisfied'] = answer
         return answer
-
     lo_satisfied = property(_get_lo_satisfied)
 
     def _get_lo_num_of_iterations(self):
         return self._data.get('lo/num_of_iterations', None)
-    
+
     lo_num_of_iterations = property(_get_lo_num_of_iterations)
     
     # force ============================================================
@@ -838,9 +839,10 @@ class PdfParam(object):
     # --------------------------------------------------------------------------
     def set_by_raw_data(self, odict):
         odict = self._alias_conversion(odict)
-    
-        self.TEs = odict.get('TEs', {})
-        del odict['TEs']
+
+        if 'TEs' in odict:
+            self.TEs = odict.get('TEs', {})
+            del odict['TEs']
 
         self._basissets = {}
         if 'basis_set' in odict:
@@ -1022,8 +1024,6 @@ class PdfParam(object):
                 answer['xc_functional'] = v
             elif k == 'max-iteration':
                 answer['max_iteration'] = v
-            elif k == 'TE':
-                answer['TEs'] = v
             else:
                 answer[k] = v
 
