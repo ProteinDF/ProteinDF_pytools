@@ -956,7 +956,18 @@ class PdfParam(object):
         self.xc_functional = odict.get('xc_functional')
         del odict['xc_functional']
         
-
+        odict.setdefault('J_engine', self.j_engine)
+        self.j_engine = odict.get('J_engine')
+        del odict['J_engine']
+        
+        odict.setdefault('K_engine', self.k_engine)
+        self.k_engine = odict.get('K_engine')
+        del odict['K_engine']
+        
+        odict.setdefault('XC_engine', self.xc_engine)
+        self.xc_engine = odict.get('XC_engine')
+        del odict['XC_engine']
+        
         # 未入力部分をマージ
         self._data.update(odict)
 
