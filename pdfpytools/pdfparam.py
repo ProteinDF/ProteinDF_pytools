@@ -623,6 +623,7 @@ class PdfParam(object):
         
         if not isinstance(answer, bool):
             answer = str(answer).upper()
+        else:
             answer = (answer == 'YES')
             self._data['lo/satisfied'] = answer
         return answer
