@@ -141,26 +141,9 @@ def run_pdf(subcmd):
     cmdlist.extend(subcmd)
     module_logger.critical("run: {0}".format(cmdlist))
     
-    #try:
-    #    p = subprocess.Popen(cmdlist,
-    #                         stdout=subprocess.PIPE,
-    #                         stderr=subprocess.PIPE)
-    #    stdout, stderr = p.communicate()
-    #    if stdout:
-    #        sys.stdout.write(stdout)
-    #        logger.info(stdout)
-    #    if stderr:
-    #        sys.stderr.write(stderr)
-    #        logger.error(stderr)
-    #except:
-    #    print('-'*60)
-    #    traceback.print_exc(file=sys.stdout)
-    #    #print(traceback.format_exc())
-    #    print('-'*60)
-
-    subproc_args = {'stdin': None,
+    subproc_args = {'stdin': subprocess.PIPE,
                     'stdout': subprocess.PIPE,
-                    'stderr': subprocess.STDOUT,
+                    'stderr': subprocess.PIPE,
                     'shell': False,
                     'universal_newlines': True
                     }
@@ -180,13 +163,19 @@ def run_pdf(subcmd):
             module_logger.info(line)
         
     return_code = proc.wait()
-    (stdouterr, stdin) = (proc.stdout, proc.stdin)
-    module_logger.info('return code={}'.format(return_code))
+    stdout_lines = proc.stdout.readlines() 
+    stderr_lines = proc.stderr.readlines() 
+    for line in stdout_lines:
+        sys.stdout.write(line)
+    for line in stderr_lines:
+        sys.stderr.write(line)
+
+    module_logger.debug('return code={}'.format(return_code))
     if return_code != 0:
         print('Failed to execute command: %s' % cmdlist)
-        print('return code = '.format(return_code))
+        print('return code = {}'.format(return_code))
         module_logger.critical('Failed to execute command: %s' % cmdlist)
-        module_logger.critical('return code = '.format(return_code))
+        module_logger.critical('return code = {}'.format(return_code))
         raise
     
     
