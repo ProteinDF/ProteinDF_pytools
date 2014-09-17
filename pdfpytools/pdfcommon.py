@@ -54,20 +54,21 @@ def get_default_pdfparam():
     """
     defaultのpdfparamを返す
     """
-    print('get_default_pdfparam()')
-    # 一時ファイル名を取得する
-    tmpfile_fd, tmpfile_path = tempfile.mkstemp()
-    os.close(tmpfile_fd)
-    # 一時ファイルの初期化情報を読取る
-    pdf.run_pdf(['init-param', '-o', tmpfile_path])
-    f = open(tmpfile_path, "rb")
-    tmpdata = msgpack.unpackb(f.read())
-    tmpdata = bridge.Utils.byte2str(tmpdata)
-    f.close()
-    # remove
-    os.remove(tmpfile_path)
+    # make temp dir & filepath
+    tempfile_fd, tempfile_path = tempfile.mkstemp()
+    os.close(tempfile_fd)
     
-    pdfparam = pdf.PdfParam(tmpdata)
+    # 一時ファイルの初期化情報を読取る
+    pdf.run_pdf(['init-param', '-v', '-o', tempfile_path])
+    f = open(tempfile_path, "rb")
+    tempdata = msgpack.unpackb(f.read())
+    tempdata = bridge.Utils.byte2str(tempdata)
+    f.close()
+
+    # remove temp
+    os.remove(tempfile_path)
+    
+    pdfparam = pdf.PdfParam(tempdata)
     pdfparam.step_control = 'create integral guess scf'
 
     pdfparam.guess = 'harris'
