@@ -74,16 +74,12 @@ def main():
     use_shell = False
     if ext == '.sh':
         use_shell = True
-    subproc_args = {'stdin': None,
+    subproc_args = {'stdin': subprocess.PIPE,
                     'stdout': subprocess.PIPE,
-                    'stderr': subprocess.STDOUT,
+                    'stderr': subprocess.PIPE,
                     'shell': use_shell,
                     'universal_newlines': True
                     }
-    output_file = None
-    if output != '':
-        output_file = open(output, "a")
-        subproc_args['stdout'] = output_file
         
     try:
         proc = subprocess.Popen(args = subproc_cmd, **subproc_args)
@@ -93,22 +89,25 @@ def main():
         print(os.strerror(e.errno))
         raise e
 
-    if proc.stdout != None:
-        while True:
-            line = proc.stdout.readline()
-            if not line:
-                break
-            line = line.rstrip()
-            print(line)
-        
     return_code = proc.wait()
-    (stdouterr, stdin) = (proc.stdout, proc.stdin)
-    if debug:
-        print('return code={}'.format(return_code))
-    
-    if output_file != None:
+    stdout_lines = proc.stdout.readlines() 
+    stderr_lines = proc.stderr.readlines() 
+    for line in stdout_lines:
+        sys.stdout.write(line)
+    for line in stderr_lines:
+        sys.stderr.write(line)
+    if len(output) > 0:
+        output_file = open(output, "a")
+        for line in stdout_lines:
+            output_file.write(line + '\n')
+        for line in stderr_lines:
+            output_file.write(line + '\n')
         output_file.close()
-
+        
+    if return_code != 0:
+        sys.stderr.write('Failed to execute pdf command: {}\n'.format(subproc_cmd))
+        sys.stderr.write('return code = {}\n'.format(return_code))
+        
     return return_code
 
 def get_cmd(arg_array):
