@@ -88,8 +88,8 @@ class Basis2(object):
                         self._basis_xc[name] = basisset
                         name = None
                     else:
-                        print(name)
-                        sys.exit('ERROR!')
+                        print('basisset name is not found: {}'.format(name))
+                        raise
                     
     def _load_basis(self, fh):
         basisset = None
