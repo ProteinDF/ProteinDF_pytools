@@ -27,6 +27,14 @@ import pdfbridge as bridge
 import pdfpytools as pdf
 
 class Basis2(object):
+    _data = None
+
+    def __new__(cls, *args, **kwargs):
+        '''for singleton'''
+        if '_inst' not in vars(cls):
+            cls._inst = super(Basis2, cls).__new__(cls, *args, **kwargs)
+        return cls._inst
+
     def __init__(self):
         nullHandler = bridge.NullHandler()
         self._logger = logging.getLogger(__name__)
@@ -37,6 +45,11 @@ class Basis2(object):
     def _load(self):
         db_path = '%s/data/basis2' % (pdf.pdf_home())
 
+        self._data = {}
+        self._data['basis'] = {}
+        self._data['basis_j'] = {}
+        self._data['basis_xc'] = {}
+        
         self._line_count = 0
         basisset = None
         name = None
@@ -70,22 +83,22 @@ class Basis2(object):
                         
                         basisset = basisset.expand()
                         basisset.name = name
-                        if name in self._basis:
+                        if name in self._data['basis']:
                             self._logger.warning('duplicate basisset name: {0}'.format(name))
-                        self._basis[name] = basisset
+                        self._data['basis'][name] = basisset
                         name = None
                     elif (name[0] == 'A'):
                         #basisset = copy.deepcopy(self._load_basis_aux(f))
                         basisset = pdf.BasisSet(self._load_basis_aux(f))
                         basisset = basisset.expand()
                         basisset.name = name
-                        self._basis_j[name] = basisset
+                        self._data['basis_j'][name] = basisset
                         
                         #basisset = copy.deepcopy(self._load_basis_aux(f))
                         basisset = pdf.BasisSet(self._load_basis_aux(f))
                         basisset = basisset.expand()
                         basisset.name = name
-                        self._basis_xc[name] = basisset
+                        self._data['basis_xc'][name] = basisset
                         name = None
                     else:
                         print('basisset name is not found: {}'.format(name))
@@ -230,13 +243,13 @@ class Basis2(object):
         return basisset
                         
     def get_basisset(self, name):
-        return self._basis.get(name, pdf.BasisSet())
+        return self._data['basis'].get(name, pdf.BasisSet())
 
     def get_basisset_j(self, name):
-        return self._basis_j.get(name, pdf.BasisSet())
+        return self._data['basis_j'].get(name, pdf.BasisSet())
         
     def get_basisset_xc(self, name):
-        return self._basis_xc.get(name, pdf.BasisSet())
+        return self._data['basis_xc'].get(name, pdf.BasisSet())
 
     #@property
     #def basis(self):
@@ -253,14 +266,14 @@ class Basis2(object):
     def get_basis2(self):
         output = ''
         # basis
-        for name, basis in self._basis.items():
+        for name, basis in self._data['basis'].items():
             output += '# {}\n'.format(name)
             output += str(basis)
             output += '\n'
 
         # basis for J, XC
-        for name, basis_j in self._basis_j.items():
-            if name in self._basis_xc:
+        for name, basis_j in self._data['basis_j'].items():
+            if name in self._data['basis_xc']:
                 basis_xc = self._basis_xc[name]
                 output += name + '\n'
                 output += str(basis_j)
@@ -271,11 +284,9 @@ class Basis2(object):
         return output
     
     def _initialize(self):
-        self._basis = {}
-        self._basis_j = {}
-        self._basis_xc = {}
-
-        self._load()
+        if self._data == None:
+            self._load()
+        
         
 if __name__ == "__main__":
     #logging.basicConfig(level=logging.DEBUG)
