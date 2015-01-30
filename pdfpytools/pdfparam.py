@@ -360,7 +360,7 @@ class PdfParam(object):
         value = self._data.get('num_of_electrons', None)
         if (value == None):
             value = self.molecule.sum_of_atomic_number()
-            value += self.molecule.charge
+            value += self._get_charge_of_dummy_atoms(self.molecule)
             self.num_of_electrons = value
         return value
 
@@ -368,6 +368,15 @@ class PdfParam(object):
         self._data['num_of_electrons'] = value
 
     num_of_electrons = property(_get_num_of_electrons, _set_num_of_electrons)
+
+    def _get_charge_of_dummy_atoms(self, atomgroup):
+        charge = 0.0
+        for subgrp_key, subgrp in atomgroup.groups():
+            charge += self._get_charge_of_dummy_atoms(subgrp)
+        for atm_key, atm in atomgroup.atoms():
+            if atm.symbol == 'X':
+                charge += atm.charge
+        return charge
     
     # num_of_AOs
     def _get_num_of_AOs(self):
