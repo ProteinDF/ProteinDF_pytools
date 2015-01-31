@@ -558,28 +558,28 @@ class PdfParam(object):
         self._data['basisset_gridfree_name'][atomlabel] = bridge.Utils.byte2str(value)
 
     def get_basisset(self, atom_label):
-        return self._get_basisset_common(atom_label, 'basisset')
+        return self._get_basisset_common(atom_label, 'basis_set')
         
     def set_basisset(self, atom_label, basisset):
-        self._set_basisset_common(atom_label, basisset, 'basisset')
+        self._set_basisset_common(atom_label, basisset, 'basis_set')
 
     def get_basisset_j(self, atom_label):
-        return self._get_basisset_common(atom_label, 'basisset_j')
+        return self._get_basisset_common(atom_label, 'basis_set_j')
     
     def set_basisset_j(self, atom_label, basisset):
-        self._set_basisset_common(atom_label, basisset, 'basisset_j')
+        self._set_basisset_common(atom_label, basisset, 'basis_set_j')
 
     def get_basisset_xc(self, atom_label):
-        return self._get_basisset_common(atom_label, 'basisset_xc')
+        return self._get_basisset_common(atom_label, 'basis_set_xc')
     
     def set_basisset_xc(self, atom_label, basisset):
-        self._set_basisset_common(atom_label, basisset, 'basisset_xc')
+        self._set_basisset_common(atom_label, basisset, 'basis_set_xc')
 
     def get_basisset_gridfree(self, atom_label):
-        return self._get_basisset_common(atom_label, 'basisset_gridfree')
+        return self._get_basisset_common(atom_label, 'basis_set_gridfree')
     
     def set_basisset_gridfree(self, atom_label, basisset):
-        self._set_basisset_common(atom_label, basisset, 'basisset_gridfree')
+        self._set_basisset_common(atom_label, basisset, 'basis_set_gridfree')
 
     def _get_basisset_common(self, atom_label, key):
         """
