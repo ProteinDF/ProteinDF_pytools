@@ -505,15 +505,30 @@ class PdfParam(object):
 
     molecule = property(_get_molecule, _set_moleucule)
 
-    # basisset ---------------------------------------------------------
+    # basis set --------------------------------------------------------
+    # atom label list for basis set 
     def get_basisset_atomlabels(self):
+        return self._get_basis_set_atomlabels_common('basis_set')
+
+    def get_basisset_j_atomlabels(self):
+        return self._get_basis_set_atomlabels_common('basis_set_j')
+
+    def get_basisset_xc_atomlabels(self):
+        return self._get_basis_set_atomlabels_common('basis_set_xc')
+
+    def get_basisset_gridfree_atomlabels(self):
+        return self._get_basis_set_atomlabels_common('basis_set_gridfree')
+
+    def _get_basis_set_atomlabels_common(self, group):
         """
         原子(ラベル)名のリストを返す
         """
-        self._data.setdefault('basisset', {})
-        for i in self._data['basisset'].keys():
-            yield i
+        assert(group in ('basis_set', 'basis_set_j',
+                         'basis_set_xc', 'basis_set_gridfree'))
+        self._data.setdefault(group, {})
+        return self._data[group].keys()
 
+    # basis set name
     def get_basisset_name(self, atomlabel):
         atomlabel = bridge.Utils.byte2str(atomlabel)
         self._data.setdefault('basisset_name', {})
@@ -589,6 +604,7 @@ class PdfParam(object):
         answer = pdf.BasisSet()
         if key in self._data:
             answer = self._data[key].get(atom_label, pdf.BasisSet())
+        assert(isinstance(answer, pdf.BasisSet))
         return answer
 
     def _set_basisset_common(self, atom_label, basisset, key):
@@ -600,11 +616,17 @@ class PdfParam(object):
         if isinstance(basisset, str) == True:
             basis2 = pdf.Basis2()
             if (key == 'basis_set') or (key == 'basis_set_gridfree'):
-                self._data[key][atom_label] = basis2.get_basisset(basisset)
+                bs = basis2.get_basisset(basisset)
+                assert(isinstance(bs, pdf.BasisSet))
+                self._data[key][atom_label] = bs
             elif key == 'basis_set_j':
-                self._data[key][atom_label] = basis2.get_basisset_j(basisset)
+                bs = basis2.get_basisset_j(basisset)
+                assert(isinstance(bs, pdf.BasisSet))
+                self._data[key][atom_label] = bs
             elif key == 'basis_set_xc':
-                self._data[key][atom_label] = basis2.get_basisset_xc(basisset)
+                bs = basis2.get_basisset_xc(basisset)
+                assert(isinstance(bs, pdf.BasisSet))
+                self._data[key][atom_label] = bs
             else:
                 raise                              
                 
@@ -854,16 +876,17 @@ class PdfParam(object):
             self.TEs = odict.get('TEs', {})
             del odict['TEs']
 
-        self._basissets = {}
-        if 'basis_set' in odict:
-            if isinstance(odict['basis_set'], dict):
-                for atom_label, basisset_raw_data in odict['basis_set'].items():
-                    assert(isinstance(basisset_raw_data, dict))
-                    basisset = pdf.BasisSet(basisset_raw_data)
-                    assert(isinstance(basisset.name, str))
-                    self.set_basisset(atom_label, basisset)
-            del odict['basis_set']
-            
+        basisset_kinds = ['basis_set', 'basis_set_j', 'basis_set_xc', 'basis_set_gridfree']
+        for bsk in basisset_kinds:
+            if bsk in odict:
+                if isinstance(odict[bsk], dict):
+                    for atom_label, basisset_raw_data in odict[bsk].items():
+                        assert(isinstance(basisset_raw_data, dict))
+                        basisset = pdf.BasisSet(basisset_raw_data)
+                        assert(isinstance(basisset.name, str))
+                        self._set_basisset_common(atom_label, basisset, bsk)
+                del odict[bsk]
+
         # control
         self._data.setdefault('control', {})
         self._data['control'].setdefault('file_base_name', {})
@@ -906,7 +929,7 @@ class PdfParam(object):
                 for atom_raw in data['atoms']:
                     atom = bridge.Atom()
                     atom.symbol = atom_raw.get('symbol', 'X')
-                    atom.position = bridge.Position(atom_raw.get('xyz'))
+                    atom.xyz = bridge.Position(atom_raw.get('xyz'))
                     atom.charge = atom_raw.get('charge', 0.0)
                     atom.name = atom_raw.get('label', '')
                     answer.set_atom(index, atom)
@@ -990,8 +1013,9 @@ class PdfParam(object):
             odict['basis_set'][atomlabel] = self.get_basisset(atomlabel).get_raw_data()
 
         odict['basis_set_j'] = {}
-        for atomlabel in self.get_basisset_atomlabels():
-            odict['basis_set_j'][atomlabel] = self.get_basisset_j(atomlabel).get_raw_data()
+        for atomlabel in self.get_basisset_j_atomlabels():
+            bs = self.get_basisset_j(atomlabel)
+            odict['basis_set_j'][atomlabel] = bs.get_raw_data()
             
         odict['basis_set_xc'] = {}
         for atomlabel in self.get_basisset_atomlabels():
