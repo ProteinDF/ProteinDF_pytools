@@ -35,6 +35,13 @@ class Matrix(bridge.Matrix):
 
     def __init__(self, *args, **kwargs):
         self._logger = logging.getLogger(__name__)
+        if kwargs.get('debug'):
+            self._logger.addHandler(logging.StreamHandler())
+            self._logger.setLevel(logging.DEBUG)
+        else:
+            self._logger.addHandler(logging.NullHandler())
+            self._logger.setLevel(logging.INFO)
+
         super(Matrix, self).__init__(*args, **kwargs)
 
     @classmethod
