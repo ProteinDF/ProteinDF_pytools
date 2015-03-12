@@ -616,6 +616,15 @@ class PdfArchive(object):
         runtype = runtype.upper()
         iteration = int(iteration)
         assert(isinstance(m, bridge.Matrix))
+
+        if m.rows <= 0:
+            self._logger.warn('The row size of the input matrix is too small.: {}'.format(m.rows))
+            self._logger.warn('cannnot register the matrix.')
+            return
+        if m.cols <= 0:
+            self._logger.warn('The col size of the input matrix is too small.: {}'.format(m.cols))
+            self._logger.warn('cannnot register the matrix.')
+            return
         
         table_name = 'matrices'
         where_str = 'dtype = "%s" and runtype = "%s" and iteration = %d' % (
