@@ -27,6 +27,8 @@ from .pdfcommon import epsilon, error
 from .pdfcommon import pdf_home, get_default_pdfparam, set_basisset, run_pdf
 from .pdfcommon import mpac2py, load_pdfparam
 
+from .process import Process
+
 from .pdfarchive import PdfArchive
 from .pdfgraph import *
 

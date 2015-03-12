@@ -28,12 +28,10 @@ ProteinDF コマンドを実行する
 import sys
 import os.path
 import argparse
-import shlex
-import subprocess
-import types
-import errno
 import pprint
 
+import pdfpytools as pdf
+    
 def main():
     # parse args
     parser = argparse.ArgumentParser(description='ProteinDF command helper')
@@ -62,48 +60,18 @@ def main():
     if pdfcmd_dirname[-4:] == '/bin':
         pdf_home = pdfcmd_dirname[0:-5]
     if debug:
-        print('PDF_HOME environment variable is set to \'%s\'' % (pdf_home))
+        sys.stderr.write('PDF_HOME environment variable is set to \'{}\'\n'.format(pdf_home))
     os.environ['PDF_HOME'] = pdf_home
 
     (pdfcmd, pdfargs, ext) = get_cmd(arg_array)
     subproc_cmd = " ".join([pdfcmd] + pdfargs)
-    subproc_cmd = shlex.split(subproc_cmd)
-    if debug:
-        print('cmd={}'.format(subproc_cmd))
-        
-    use_shell = False
-    if ext == '.sh':
-        use_shell = True
-    subproc_args = {'stdin': subprocess.PIPE,
-                    'stdout': subprocess.PIPE,
-                    'stderr': subprocess.PIPE,
-                    'shell': use_shell,
-                    'universal_newlines': True
-                    }
-        
-    try:
-        proc = subprocess.Popen(args = subproc_cmd, **subproc_args)
-    except OSError as e:
-        print('Failed to execute command: %s' % subproc_cmd)
-        print(errno.errorcode[e.errno])
-        print(os.strerror(e.errno))
-        raise e
 
-    return_code = proc.wait()
-    stdout_lines = proc.stdout.readlines() 
-    stderr_lines = proc.stderr.readlines() 
-    for line in stdout_lines:
-        sys.stdout.write(line)
-    for line in stderr_lines:
-        sys.stderr.write(line)
-    if len(output) > 0:
-        output_file = open(output, "a")
-        for line in stdout_lines:
-            output_file.write(line + '\n')
-        for line in stderr_lines:
-            output_file.write(line + '\n')
-        output_file.close()
-        
+    if debug:
+        sys.stderr.write('cmd={}\n'.format(subproc_cmd))
+
+    p = pdf.Process(logfile_path = output)
+    return_code = p.cmd(subproc_cmd).commit()
+    
     if return_code != 0:
         sys.stderr.write('Failed to execute pdf command: {}\n'.format(subproc_cmd))
         sys.stderr.write('return code = {}\n'.format(return_code))
@@ -115,7 +83,6 @@ def get_cmd(arg_array):
     引数で指定された文字列配列から'pdf-'で始まるコマンドを検索、
     コマンドとその引数(リスト)、拡張子をタプルにして返す
     """
-    #assert(isinstance(arg_array, types.ListType))
     assert(len(arg_array) > 0)
 
     current_path = os.path.abspath(os.path.dirname(sys.argv[0]))
@@ -139,7 +106,7 @@ def get_cmd(arg_array):
             break
     
     return (cmd, arg_array, ext)
-            
+
 if __name__ == '__main__':
     return_code = main()
     sys.exit(return_code)
