@@ -53,5 +53,5 @@ coverage.xml
 docs/_build/
 
 # ProteinDF_pytools cmd
-script/pdf
+scripts/pdf
 
