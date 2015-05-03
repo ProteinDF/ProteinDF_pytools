@@ -42,6 +42,14 @@ import pdfpytools as pdf
 # parameters
 PDF_INDEX_FILE = 'pdfindex.mpac'
 
+def mpac2py(path):
+    f = open(path, "rb")
+    contents = f.read()
+    data = msgpack.unpackb(contents)
+    f.close()
+
+    return data
+
 def make_orbinfo_table(pdfparam_path):
     """
     """
@@ -72,7 +80,7 @@ def make_orbinfo_table(pdfparam_path):
     ret = proc.wait()
     #sys.stdout.write('%s retrun code: %d\n' % (args[0], ret))
 
-    orbinfo = pdfbridge.mpac2py(orb_info_path);
+    orbinfo = mpac2py(orb_info_path);
     return orbinfo
 
 
@@ -183,7 +191,8 @@ def main():
     # ERI check
     error_count = 0
     total_count = 0
-    eri_data = pdfbridge.mpac2py(eri_mpac_file)
+    eri_data = mpac2py(eri_mpac_file)
+
     num_of_tests = len(eri_data)
     
     # make index list
