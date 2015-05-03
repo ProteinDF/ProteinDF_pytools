@@ -36,7 +36,7 @@ class DfGraph(object):
         plt.clf()
         self._fig = None
         self._ax = None
-        
+
         self._make_default_subplots()
 
         
@@ -138,6 +138,14 @@ class DfGraph(object):
         return self._yticks
     yticks = property(_get_yticks, _set_yticks)
 
+    def _set_legend(self, yn):
+        self._legend = bool(yn)
+    def _get_legend(self):
+        if not '_legend' in self.__dict__:
+            self._legend = False
+        return self._legend
+    legend = property(_get_legend, _set_legend)
+    
     # ==========================================================================
     # method
     # ==========================================================================
@@ -162,7 +170,10 @@ class DfGraph(object):
 
         if self.aspect != None:
             self._ax.set_aspect(self.aspect)
-        
+
+        if self.legend != None:
+            self._ax.legend()
+            
     def _draw_data(self):
         pass
 
@@ -304,9 +315,149 @@ class DfEnergyLevelHistoryGraphV(DfEnergyLevelHistoryGraphH):
             self._ax.bar(left, height, width, bottom,
                          edgecolor=c, color=c)
 
+            
+class DfLineChart(DfGraph):
+    def __init__(self):
+        DfGraph.__init__(self)
+        self._data = []
+        
+    def add_data(self, X, Y):
+        d = (X, Y)
+        self._data.append(d)
+        
+    def _draw_data(self):
+        # print('data size=', len(self._data))
+        # print(self._data)
+        for i, (X, Y) in enumerate(self._data):
+            self._ax.plot(X, Y, linewidth=1.0, linestyle="-", label='{}'.format(i))
+            
+            
 class DfMatrixGraph(DfGraph):
     def __init__(self, matrix, is_diverging = True):
         assert(isinstance(matrix, bridge.Matrix))
+        DfGraph.__init__(self)
+        self._matrix = matrix
+        self._is_diverging = is_diverging
+
+        self.title = 'Matrix Value'
+        self.xlabel = ''
+        self.ylabel = ''
+        self.is_draw_grid = True
+
+        if self._is_diverging:
+            self._cmap = cm.coolwarm
+        else:
+            self._cmap = cm.bone_r
+        
+    def _draw_data(self):
+        data = self._matrix.data
+        if not self._is_diverging:
+            data = numpy.absolute(data)
+        
+        cax = self._ax.imshow(data,
+                              cmap=self._cmap,
+                              interpolation='none',
+                              norm=None,
+                              #vmax=1.0,
+                              #vmin=0.0,
+                              origin='upper')
+
+        # self._ax.tick_params(axis='x', labeltop='on', labelbottom='off')
+        self._ax.tick_params(axis='x', labeltop='off', labelbottom='on')
+
+        # self._fig.colorbar(cax, ticks=[ 0, 1], shrink=0.92)
+        self._fig.colorbar(cax, shrink=0.92)
+
+
+class DfDistanceVsElementGraph(DfGraph):
+    def __init__(self, log = False):
+         DfGraph.__init__(self)
+         self._log = log
+         
+         self.xlabel = 'distance'
+         self.ylabel = 'magnitude'
+         
+    def _make_default_subplots(self):
+        left, width = 0.1, 0.65
+        bottom, height = 0.1, 0.65
+        bottom_h = left_h = left+width+0.02
+
+        rect_scatter = [left, bottom, width, height]
+        rect_hist_x = [left, bottom_h, width, 0.2]
+        rect_hist_y = [left_h, bottom, 0.2, height]
+
+        self._fig = plt.figure(1)
+
+        self._ax_scatter = plt.axes(rect_scatter)
+        self._ax_hist_x = plt.axes(rect_hist_x)
+        self._ax_hist_y = plt.axes(rect_hist_y)
+
+        nullfmt = matplotlib.ticker.NullFormatter()
+        #self._ax_hist_x.xaxis.set_major_formatter(nullfmt)
+        #self._ax_hist_y.yaxis.set_major_formatter(nullfmt)
+        
+        
+    def load(self, path):
+        self._data_x = []
+        self._data_y = []
+        data_x = []
+        data_y = []
+        
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                d = line.split(',')
+
+                x = float(d[0])
+                y = float(d[1])
+                y = math.fabs(y)
+                
+                data_x.append(x)
+                data_y.append(y)
+
+        self._data_x = numpy.array(data_x, 'd')
+        self._data_y = numpy.array(data_y, 'd')
+
+    def _draw(self):
+        self._draw_data()
+        self._ax_scatter.set_xlabel(self.xlabel)
+        self._ax_scatter.set_ylabel(self.ylabel)
+        self._ax_scatter.grid(self.is_draw_grid)
+        
+    def _draw_data(self):
+        self._ax_scatter.scatter(self._data_x, self._data_y)
+        if self._log:
+            self._ax_scatter.set_ylim(1.0E-8, 100.0)
+            self._ax_scatter.set_yscale('log')
+
+        self._draw_histx()
+        self._draw_histy()
+
+
+    def _draw_histx(self):
+        self._ax_hist_x.hist(self._data_x)
+        self._ax_hist_x.set_xlim(self._ax_scatter.get_xlim())
+
+        (y_min, y_max) = self._ax_hist_x.get_ylim()
+        range_y = y_max - y_min
+        width_y = range_y / 2
+        self._ax_hist_x.set_yticks(numpy.arange(y_min, y_max, width_y))
+        
+        
+    def _draw_histy(self):
+        self._ax_hist_y.hist(self._data_y, orientation='horizontal', log=self._log)
+        self._ax_hist_y.set_ylim(self._ax_scatter.get_ylim())
+        if self._log:
+            self._ax_hist_y.set_yscale('log')
+
+        (x_min, x_max) = self._ax_hist_y.get_xlim()
+        range_x = x_max - x_min
+        width_x = range_x / 2
+        self._ax_hist_y.set_xticks(numpy.arange(x_min, x_max, width_x))
+        
+        
+class DfLineChart(DfGraph):
+    def __init__(self):
         DfGraph.__init__(self)
         self._matrix = matrix
         self._is_diverging = is_diverging

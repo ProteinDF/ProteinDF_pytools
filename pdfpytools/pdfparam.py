@@ -633,6 +633,7 @@ class PdfParam(object):
                 assert(isinstance(bs, pdf.BasisSet))
                 self._data[key][atom_label] = bs
             else:
+                print('unknown key: {}'.format(key))
                 raise                              
                 
         elif isinstance(basisset, pdf.BasisSet) == True:

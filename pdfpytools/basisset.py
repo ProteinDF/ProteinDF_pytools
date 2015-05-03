@@ -24,6 +24,8 @@ import array
 import copy
 import math
 
+import pdfpytools as pdf
+
 class PrimitiveGTO(object):
     """
     >>> pgto = PrimitiveGTO(2.80806400E+03, 2.01783000E-03)
@@ -67,6 +69,43 @@ class PrimitiveGTO(object):
 
     coef = property(__get_coef, __set_coef)
 
+    # normalize --------------------------------------------------------
+    def normalize(self, shell_type):
+        shell_type = shell_type.upper()
+        max_angular = 0
+        l = m = n = 0
+        
+        if shell_type == 'S':
+            l = m = n = 0
+            max_angular = 0
+        elif shell_type == 'P':
+            l = 1
+            m = n = 0
+            max_angular = 1
+        elif shell_type == 'D':
+            l = m = 1
+            n = 0
+            max_angular = 2
+        elif shell_type == 'F':
+            l = m = n = 1
+            max_angular = 3
+        elif shell_type == 'G':
+            l = 2
+            m = n = 1
+            max_angular = 4
+        else:
+            sys.stderr.write('not support: {}\n'.format(shell_type))
+
+        pwr = float(l + m + n)
+        answer = math.pow(2.0, pwr)
+        answer *= math.pow(pdf.Math.dbfact(2*l-1) *
+                           pdf.Math.dbfact(2*m-1) *
+                           pdf.Math.dbfact(2*n-1), -1.0/2.0);
+        answer *= math.pow(2.0 / math.pi, 3.0 / 4.0);
+        answer *= math.pow(self.exp, (pwr + 3.0/2.0) / 2.0);
+
+        return answer
+        
     # ==================================================================
     # raw data
     # ==================================================================
@@ -173,7 +212,58 @@ class ContractedGTO(list):
 
     scale_factor = property(_get_scale_factor, _set_scale_factor)
 
-    # ------------------------------------------------------------------
+    # normalize ----------------------------------------------------------------
+    def normalize(self):
+        shell_type = self.shell_type.upper()
+        max_angular = 0
+        l = m = n = 0
+
+        if shell_type == 'S':
+            l = m = n = 0
+            max_angular = 0
+        elif shell_type == 'P':
+            l = 1
+            m = n = 0
+            max_angular = 1
+        elif shell_type == 'D':
+            l = m = 1
+            n = 0
+            max_angular = 2
+        elif shell_type == 'F':
+            l = m = n = 1
+            max_angular = 3
+        elif shell_type == 'G':
+            l = 2
+            m = n = 1
+            max_angular = 4
+        else:
+            sys.stderr.write('not support: {}\n'.format(shell_type))
+
+        pwr = float(l + m + n) + 3.0 / 2.0
+        answer = 0.0
+        for a in range(len(self)):
+            coef_a = self[a].coef
+            norm_a = self[a].normalize(self.shell_type)
+            exp_a = self[a].exp
+
+            for b in range(len(self)):
+                coef_b = self[b].coef
+                norm_b = self[b].normalize(self.shell_type)
+                exp_b = self[b].exp
+
+                trm = coef_a * coef_b
+                trm *= norm_a * norm_b
+                trm *= math.pow(exp_a + exp_b, -1.0 * pwr)
+                answer += trm
+
+        answer *= pdf.Math.dbfact(2*l-1) * pdf.Math.dbfact(2*m-1) * pdf.Math.dbfact(2*n-1)
+        answer *= math.pow(2.0, -1.0 * float(l + m + n))
+        answer *= math.pow(math.pi,  3.0 / 2.0)
+        answer = math.sqrt(1.0 / answer)
+
+        return answer
+    
+    # --------------------------------------------------------------------------
     @classmethod
     def get_supported_shell_types(cls):
         return cls._shell_types

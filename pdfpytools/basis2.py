@@ -223,7 +223,7 @@ class Basis2(object):
                 PGTO_index = 0
             else:
                 values = line.split()
-                assert(len(values) == 1)
+                assert(len(values) > 0)
                 exponent = float(values[0])
                 coefficient = 1.0
                 #print("PGTO_index=%d" % (PGTO_index))

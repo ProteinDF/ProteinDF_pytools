@@ -40,6 +40,7 @@ from .basisset import PrimitiveGTO, ContractedGTO, BasisSet
 from .orbinfo import OrbInfo
 from .basis2 import Basis2
 
+from .pdfmath import Math
 from .vector import Vector
 from .matrix import Matrix, SymmetricMatrix
 
