@@ -27,6 +27,11 @@ import math
 import copy
 import pprint
 
+try:
+    import msgpack
+except:
+    import msgpack_pure as msgpack
+
 import pdfbridge as bridge
 import pdfpytools as pdf
 

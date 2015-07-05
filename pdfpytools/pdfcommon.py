@@ -87,7 +87,7 @@ def get_default_pdfparam():
     pdfparam.xc_functional = "b3lyp"
     pdfparam.j_engine = "CD"
     pdfparam.k_engine = "CD"
-    pdfparam.xc_engine = "gridfree_CD"
+    pdfparam.xc_engine = "grid"
     pdfparam.gridfree_orthogonalize_method = "canonical"
 
     return pdfparam
