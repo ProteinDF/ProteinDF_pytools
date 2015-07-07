@@ -28,6 +28,28 @@ import fcntl
 import select
 
 class Process(object):
+    '''
+    create Process object.
+    >>> p = Process()
+
+    register command.
+    >>> p.cmd('echo "Hello world!"')
+    ... #doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    <__main__.Process object at 0x...>
+
+    use pipe.
+    >>> p.pipe('sed -e "s/world/python/"')
+    ... #doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    <__main__.Process object at 0x...>
+
+    execute command.
+    >>> return_code = p.commit()
+    ... #doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    Hello python!
+    
+    ...
+    '''
+
     def __init__(self, logfile_path = ''):
         self._procs = []
         self._logfile_path = str(logfile_path)
@@ -96,6 +118,7 @@ class Process(object):
                     stdout_eof = True
                 else:
                     sys.stdout.write(stdout_chunk)
+                    sys.stdout.flush()
                     if logfile != None:
                         logfile.write(stdout_chunk)
                     #stdout_data.append(stdout_chunk)
@@ -105,6 +128,7 @@ class Process(object):
                     stderr_eof = True
                 else:
                     sys.stderr.write(stderr_chunk)
+                    sys.stderr.flush()
                     if logfile != None:
                         logfile.write(stdout_chunk)
                     #stderr_data.append(stderr_chunk)
@@ -134,4 +158,5 @@ class Process(object):
             fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.FNDELAY)
     
 if __name__ == '__main__':
-    pass
+    import doctest
+    doctest.testmod()
