@@ -59,16 +59,17 @@ class Process(object):
             'stdin': None,
             'stdout': subprocess.PIPE,
             'stderr': subprocess.PIPE,
-            'shell': False
         }
+        p_args['shell'] = self._is_shell_script(cmd)
+        
         return self._exec(cmd, p_args)
 
     def pipe(self, cmd):
         p_args = {
             'stdout': subprocess.PIPE,
             'stderr': subprocess.PIPE,
-            'shell': False
         }
+        p_args['shell'] = self._is_shell_script(cmd)
 
         if len(self._procs) == 0:
             p_args['stdin'] = None
@@ -85,7 +86,8 @@ class Process(object):
             new_proc = subprocess.Popen(shlex.split(cmd), **p_args)
         except OSError as e:
             sys.stderr.write('Failed to execute command: {}\n'.format(cmd))
-            raise e
+            raise
+            # raise e
         except:
             raise
 
@@ -156,7 +158,19 @@ class Process(object):
             fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
         except AttributeError:
             fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.FNDELAY)
-    
+
+    def _is_shell_script(self, cmd):
+        answer = False
+
+        cmd_list = shlex.split(cmd)
+        if len(cmd_list) > 0:
+            name, ext = os.path.splitext(cmd_list[0])
+            if ext == '.sh':
+                answer = True
+
+        return answer
+            
+            
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
