@@ -81,9 +81,12 @@ class Process(object):
     def _exec(self, cmd, p_args):
         p_args['bufsize'] = -1
 
+        if p_args.get('shell', False) == False:
+            cmd = shlex.split(cmd)
+            
         new_proc = None
         try:
-            new_proc = subprocess.Popen(shlex.split(cmd), **p_args)
+            new_proc = subprocess.Popen(cmd, **p_args)
         except OSError as e:
             sys.stderr.write('Failed to execute command: {}\n'.format(cmd))
             raise
