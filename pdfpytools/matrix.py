@@ -75,7 +75,7 @@ class Matrix(bridge.Matrix):
             col = header[2]
             if (matrix_type == 0):
                 answer = True
-        return (answer, row, col)
+        return answer
 
     def load(self, file_path, is_little_endian = True):
         if os.path.isfile(file_path):
@@ -168,7 +168,7 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
             col = header[2]
             if (matrix_type == 2):
                 answer = True
-        return (answer, row, col)
+        return answer
 
     def load(self, file_path, is_little_endian = True):
         if os.path.isfile(file_path):
