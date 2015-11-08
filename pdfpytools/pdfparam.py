@@ -196,7 +196,32 @@ class PdfParam(object):
 
     method = property(_get_method, _set_method)
 
-    # guess
+    # accuracy -----------------------------------------------------------------
+    def _get_cut_value(self):
+        return self._data.get('cut_value', 1.0E-10)
+    def _set_cut_value(self, value):
+        if value != None:
+            value = float(value)
+            self._data['cut_value'] = value
+    cut_value = property(_get_cut_value, _set_cut_value)
+
+    def _get_CDAM_tau(self):
+        return self._data.get('CDAM_tau', 1.0E-10)
+    def _set_CDAM_tau(self, value):
+        if value != None:
+            value = float(value)
+            self._data['CDAM_tau'] = value
+    CDAM_tau = property(_get_CDAM_tau, _set_CDAM_tau)
+    
+    def _get_CD_epsilon(self):
+        return self._data.get('CD_epsilon', 1.E-4)
+    def _set_CD_epsilon(self, value):
+        if value != None:
+            value = float(value)
+            self._data['CD_epsilon'] = value
+    CD_epsilon = property(_get_CD_epsilon, _set_CD_epsilon)
+    
+    # guess --------------------------------------------------------------------
     def _get_guess(self):
         return self._data.get('guess', None)
 
@@ -442,30 +467,27 @@ class PdfParam(object):
     # convergence_threshold_energy
     def _get_convergence_threshold_energy(self):
         return self._data.get('convergence_threshold_energy', 1.0E-4)
-
     def _set_convergence_threshold_energy(self, value):
-        self._data['convergence_threshold_energy'] = float(value)
-
+        if value != None:
+            self._data['convergence_threshold_energy'] = float(value)
     convergence_threshold_energy = property(_get_convergence_threshold_energy,
                                             _set_convergence_threshold_energy)
 
     # convergence_threshold
     def _get_convergence_threshold(self):
         return self._data.get('convergence_threshold', 1.0E-3)
-
     def _set_convergence_threshold(self, value):
-        self._data['convergence_threshold'] = float(value)
-
+        if value != None:
+            self._data['convergence_threshold'] = float(value)
     convergence_threshold = property(_get_convergence_threshold,
                                      _set_convergence_threshold)
    
     # convergence_type
     def _get_convergence_type(self):
         return self._data.get('convergence_type', 'density')
-
     def _set_convergence_type(self, value):
-        self._data['convergence_type'] = str(value)
-
+        if value != None:
+            self._data['convergence_type'] = str(value)
     convergence_type = property(_get_convergence_type,
                                 _set_convergence_type)
 
@@ -705,15 +727,18 @@ class PdfParam(object):
         """
         output = ""
         output += ">>>>MAIN\n"
-        output += "    step-control = [%s]\n" % (self.step_control)
+        output += "    step_control = [%s]\n" % (self.step_control)
         output += "\n"
         output += ">>>>MODEL\n"
-        output += "    scf-start-guess = %s\n" % (self.guess)
+        output += "    cut_value = {0}\n".format(self.cut_value)
+        output += "    CDAM_tau = {0}\n".format(self.CDAM_tau)
+        output += "    CD_epsilon = {0}\n".format(self.CD_epsilon)
+        output += "    scf_start_guess = %s\n" % (self.guess)
         output += "    method = %s\n" % (self.method)
         if self.method == 'rks':
-            output += "    method/nsp/electron-number = %d\n" % (
+            output += "    method/rks/electrons = %d\n" % (
                 self.num_of_electrons)
-            output += "    method/nsp/occlevel = %s\n" % (
+            output += "    method/rks/occlevel = %s\n" % (
                 self.occupation_level)
         else:
             raise
