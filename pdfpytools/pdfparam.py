@@ -211,8 +211,9 @@ class PdfParam(object):
         return self._data.get('orbital_independence_threshold', 0.007)
 
     def _set_orbital_independence_threshold(self, value):
-        value = float(value)
-        self._data['orbital_independence_threshold'] = value
+        if value != None:
+            value = float(value)
+            self._data['orbital_independence_threshold'] = value
 
     orbital_independence_threshold = property(_get_orbital_independence_threshold,
                                               _set_orbital_independence_threshold)
@@ -222,8 +223,9 @@ class PdfParam(object):
         return self._data.get('orbital_independence_threshold_canonical', 0.007)
 
     def _set_orbital_independence_threshold_canonical(self, value):
-        value = float(value)
-        self._data['orbital_independence_threshold_canonical'] = value
+        if value != None:
+            value = float(value)
+            self._data['orbital_independence_threshold_canonical'] = value
 
     orbital_independence_threshold_canonical = property(_get_orbital_independence_threshold_canonical,
                                                         _set_orbital_independence_threshold_canonical)
@@ -233,8 +235,9 @@ class PdfParam(object):
         return self._data.get('orbital_independence_threshold_lowdin', 0.007)
 
     def _set_orbital_independence_threshold_lowdin(self, value):
-        value = float(value)
-        self._data['orbital_independence_threshold_lowdin'] = value
+        if value != None:
+            value = float(value)
+            self._data['orbital_independence_threshold_lowdin'] = value
 
     orbital_independence_threshold_lowdin = property(_get_orbital_independence_threshold_lowdin,
                                                      _set_orbital_independence_threshold_lowdin)
@@ -908,6 +911,13 @@ class PdfParam(object):
                 del odict['control']['scf_converged']
         del odict['control']
 
+        self.orbital_independence_threshold = odict.get('orbital_independence_threshold', None)
+        del odict['orbital_independence_threshold']
+        self.orbital_independence_threshold_canonical = odict.get('orbital_independence_threshold/canonical', None)
+        del odict['orbital_independence_threshold/canonical']
+        self.orbital_independence_threshold_lowdin = odict.get('orbital_independence_threshold/lowdin', None)
+        del odict['orbital_independence_threshold/lowdin']
+        
         odict.setdefault('scf_acceleration',
                          self.scf_acceleration)
         self.scf_acceleration = odict.get('scf_acceleration')
