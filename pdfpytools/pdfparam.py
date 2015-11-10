@@ -272,8 +272,9 @@ class PdfParam(object):
         return self._data.get('scf_acceleration', 'damping')
 
     def _set_scf_acceleration(self, value):
-        value = str(value)
-        self._data['scf_acceleration'] = value
+        if value != None:
+            value = str(value)
+            self._data['scf_acceleration'] = value
 
     scf_acceleration = property(_get_scf_acceleration,
                                 _set_scf_acceleration)
@@ -283,8 +284,9 @@ class PdfParam(object):
         return self._data.get('scf_acceleration_damping_damping_factor', 0.85)
 
     def _set_scf_acceleration_damping_damping_factor(self, value):
-        value = float(value)
-        self._data['scf_acceleration_damping_damping_factor'] = value
+        if value != None:
+            value = float(value)
+            self._data['scf_acceleration_damping_damping_factor'] = value
 
     scf_acceleration_damping_damping_factor = property(_get_scf_acceleration_damping_damping_factor,
                                                        _set_scf_acceleration_damping_damping_factor)
@@ -301,11 +303,36 @@ class PdfParam(object):
         return value
 
     def _set_scf_acceleration_damping_damping_type(self, target):
-        self._data['scf_acceleration_damping_damping_type'] = target
+        if target != None:
+            self._data['scf_acceleration_damping_damping_type'] = target
 
     scf_acceleration_damping_damping_type = property(_get_scf_acceleration_damping_damping_type,
                                                      _set_scf_acceleration_damping_damping_type)
 
+    # scf_acceleration/anderson/start_number
+    def _get_scf_acceleration_anderson_start_number(self):
+        return self._data['scf_acceleration_anderson_start_number']
+
+    def _set_scf_acceleration_anderson_start_number(self, value):
+        if value != None:
+            value = int(value)
+            self._data['scf_acceleration_anderson_start_number'] = value
+
+    scf_acceleration_anderson_start_number = property(_get_scf_acceleration_anderson_start_number,
+                                                      _set_scf_acceleration_anderson_start_number)
+    
+    # scf_acceleration/anderson/damping_factor
+    def _get_scf_acceleration_anderson_damping_factor(self):
+        return self._data['scf_acceleration_anderson_damping_factor']
+
+    def _set_scf_acceleration_anderson_damping_factor(self, value):
+        if value != None:
+            value = float(value)
+            self._data['scf_acceleration_anderson_damping_factor'] = value
+
+    scf_acceleration_anderson_damping_factor = property(_get_scf_acceleration_anderson_damping_factor,
+                                                        _set_scf_acceleration_anderson_damping_factor)
+    
     # xc_functional ----------------------------------------------------
     def _get_xc_functional(self):
         return self._data.get('xc_functional', 'SVWN')
@@ -464,15 +491,6 @@ class PdfParam(object):
 
     max_iterations = property(_get_max_iterations, _set_max_iterations)
 
-    # convergence_threshold_energy
-    def _get_convergence_threshold_energy(self):
-        return self._data.get('convergence_threshold_energy', 1.0E-4)
-    def _set_convergence_threshold_energy(self, value):
-        if value != None:
-            self._data['convergence_threshold_energy'] = float(value)
-    convergence_threshold_energy = property(_get_convergence_threshold_energy,
-                                            _set_convergence_threshold_energy)
-
     # convergence_threshold
     def _get_convergence_threshold(self):
         return self._data.get('convergence_threshold', 1.0E-3)
@@ -490,6 +508,15 @@ class PdfParam(object):
             self._data['convergence_type'] = str(value)
     convergence_type = property(_get_convergence_type,
                                 _set_convergence_type)
+
+    # convergence_threshold_energy
+    def _get_convergence_threshold_energy(self):
+        return self._data.get('convergence_threshold_energy', 1.0E-4)
+    def _set_convergence_threshold_energy(self, value):
+        if value != None:
+            self._data['convergence_threshold_energy'] = float(value)
+    convergence_threshold_energy = property(_get_convergence_threshold_energy,
+                                            _set_convergence_threshold_energy)
 
     # level_shift
     def _get_level_shift(self):
@@ -746,12 +773,14 @@ class PdfParam(object):
         output += "    orbital_independence_threshold  = {0}\n".format(self.orbital_independence_threshold)
         output += "    orbital_independence_threshold/canonical = {0}\n".format(self.orbital_independence_threshold_canonical)
         output += "    orbital_independence_threshold/lowdin = {0}\n".format(self.orbital_independence_threshold_lowdin)
-        output += "    scf_acceleration = {0}\n".format(self.scf_acceleration)
-        output += "    scf_acceleration/damping/damping_type = {0}\n".format(self.scf_acceleration_damping_damping_type)
-        output += "    scf_acceleration/damping/damping_factor = {0}\n".format(self.scf_acceleration_damping_damping_factor)
         output += "    convergence/threshold_energy = {0}\n".format(self.convergence_threshold_energy)
         output += "    convergence/threshold = {0}\n".format(self.convergence_threshold)
         output += "    convergence/type = {0}\n".format(self.convergence_type)
+        output += "    scf_acceleration = {0}\n".format(self.scf_acceleration)
+        output += "    scf_acceleration/damping/damping_type = {0}\n".format(self.scf_acceleration_damping_damping_type)
+        output += "    scf_acceleration/damping/damping_factor = {0}\n".format(self.scf_acceleration_damping_damping_factor)
+        output += "    scf_acceleration/anderson/start_number = {0}\n".format(self.scf_acceleration_anderson_start_number)
+        output += "    scf_acceleration/anderson/damping_factor = {0}\n".format(self.scf_acceleration_anderson_damping_factor)
         output += "    xc_functional = {0}\n".format(self.xc_functional)
         output += "    J_engine = {0}\n".format(self.j_engine)
         output += "    K_engine = {0}\n".format(self.k_engine)
@@ -942,21 +971,33 @@ class PdfParam(object):
         del odict['orbital_independence_threshold/canonical']
         self.orbital_independence_threshold_lowdin = odict.get('orbital_independence_threshold/lowdin', None)
         del odict['orbital_independence_threshold/lowdin']
-        
-        odict.setdefault('scf_acceleration',
-                         self.scf_acceleration)
-        self.scf_acceleration = odict.get('scf_acceleration')
+
+        # scf acceleration
+        self.scf_acceleration = odict.get('scf_acceleration', None)
         del odict['scf_acceleration']
 
-        odict.setdefault('scf_acceleration/damping/damping_factor',
-                         self.scf_acceleration_damping_damping_factor)
-        self.scf_acceleration_damping_damping_factor = odict.get('scf_acceleration/damping/damping_factor')
+        self.scf_acceleration_damping_damping_factor = odict.get('scf_acceleration/damping/damping_factor', None)
         del odict['scf_acceleration/damping/damping_factor']
 
-        odict.setdefault('scf_acceleration/damping/damping_type',
-                         self.scf_acceleration_damping_damping_type)
-        self.scf_acceleration_damping_damping_type = odict.get('scf_acceleration/damping/damping_type')
+        self.scf_acceleration_damping_damping_type = odict.get('scf_acceleration/damping/damping_type', None)
         del odict['scf_acceleration/damping/damping_type']
+
+        self.scf_acceleration_anderson_start_number = odict.get('scf_acceleration/anderson/start_number', None)
+        del odict['scf_acceleration/anderson/start_number']
+
+        self.scf_acceleration_anderson_damping_factor = odict.get('scf_acceleration/anderson/damping_factor', None)
+        del odict['scf_acceleration/anderson/damping_factor']
+        
+        # convergence
+        self.convergence_threshold = odict.get('convergence/threshold', None)
+        del odict['convergence/threshold']
+
+        self.convergence_type = odict.get('convergence/type', None)
+        del odict['convergence/type']
+
+        self.convergence_threshold_energy = odict.get('convergence/threshold_energy', None)
+        del odict['convergence/threshold_energy']
+
         
         # coordinates
         def setup_coordinates(data):
