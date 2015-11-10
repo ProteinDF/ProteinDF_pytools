@@ -1024,14 +1024,7 @@ class PdfParam(object):
             self.molecule = setup_coordinates(odict['coordinates'])
             del odict['coordinates']
 
-        # force
-        if 'force' in odict:
-            force_dat = odict.get('force')
-            for atom_index in range(len(force_dat)):
-                force = force_dat[atom_index]
-                self.set_force(atom_index, force[0], force[1], force[2])
-            del odict['force']
-
+        # guess
         self.guess = odict.get('guess', self.guess)
         del odict['guess']
 
@@ -1083,6 +1076,14 @@ class PdfParam(object):
         self.xc_engine = odict.get('XC_engine')
         del odict['XC_engine']
         
+        # force
+        if 'force' in odict:
+            force_dat = odict.get('force')
+            for atom_index in range(len(force_dat)):
+                force = force_dat[atom_index]
+                self.set_force(atom_index, force[0], force[1], force[2])
+            del odict['force']
+
         # 未入力部分をマージ
         self._data.update(odict)
 
