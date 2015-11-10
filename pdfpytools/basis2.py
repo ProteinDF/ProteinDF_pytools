@@ -101,7 +101,7 @@ class Basis2(object):
                         self._data['basis_xc'][name] = basisset
                         name = None
                     else:
-                        print('basisset name is not found: {}'.format(name))
+                        self._logger.critical('basisset name is not found: {}'.format(name))
                         raise
                     
     def _load_basis(self, fh):

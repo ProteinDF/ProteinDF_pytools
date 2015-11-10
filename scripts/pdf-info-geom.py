@@ -67,6 +67,9 @@ def main():
     elif args.param:
         pdfparam = pdf.load_pdfparam(args.param)
         atomgroup = pdfparam.molecule
+
+    # a.u. to angstrom
+    atomgroup *= 0.5291772108
     
     output = atomgroup.get_xyz()
     print(output)
