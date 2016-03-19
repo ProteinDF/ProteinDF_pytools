@@ -128,7 +128,7 @@ def run_pdf(subcmd):
     """
     run ProteinDF command
     """
-    module_logger.info("run_pdf({})".format(subcmd))
+    module_logger.debug("run_pdf({})".format(subcmd))
 
     try:
         if isinstance(subcmd, list):

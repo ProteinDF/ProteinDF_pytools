@@ -174,8 +174,8 @@ class Pdf2Db(object):
                 if m.is_loadable(path, self.is_little_endian):
                     m.load(path, self.is_little_endian)
                     entry.set_lcao(runtype, itr, m)
-                
-    
+
+            
 if __name__ == '__main__':
     logconfig_file = 'logconfig.ini'
     if os.path.exists(logconfig_file):

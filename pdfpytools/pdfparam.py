@@ -157,7 +157,11 @@ class PdfParam(object):
         filename = self._get_file_base_name('Clo_matrix')
         filename = filename.replace('%s', '{}{}'.format(runtype, itr))
         return os.path.join(self.work_path, filename)
-        
+
+    def get_gradient_matrix_path(self):
+        filename = self._get_file_base_name('gradient')
+        return os.path.join(self.work_path, filename)
+
     def _get_file_base_name(self, key):
         self._data.setdefault('control', {})
         self._data['control'].setdefault('file_base_name', {})
@@ -380,31 +384,69 @@ class PdfParam(object):
 
     xc_engine = property(_get_xc_engine, _set_xc_engine)
     
-    # gridfree/dedicated_basis -----------------------------------------
-    def _get_gridfree_dedicated_basis(self):
-        return self._data.get('gridfree_dedicated_basis', 'no')
+    # gridfree/dual_level -----------------------------------------------
+    def _get_gridfree_dual_level(self):
+        return self._data.get('gridfree_dual_level', False)
 
-    def _set_gridfree_dedicated_basis(self, value):
-        value = bool(value)
-        if value == True:
-            value = 'yes'
-        else:
-            value = 'no'
-        self._data['gridfree_dedicated_basis'] = value
+    def _set_gridfree_dual_level(self, value):
+        if isinstance(value, str):
+            value = value.upper()
+            if value in ['YES', 'TRUE', '1']:
+                value = True
+            else:
+                value = False
+        self._data['gridfree_dual_level'] = bool(value)
 
-    gridfree_dedicated_basis = property(_get_gridfree_dedicated_basis,
-                                        _set_gridfree_dedicated_basis)
+    gridfree_dual_level = property(_get_gridfree_dual_level,
+                                   _set_gridfree_dual_level)
         
     # gridfree/orthogonalize_method ------------------------------------
     def _get_gridfree_orthogonalize_method(self):
         return self._data.get('gridfree_orthogonalize_method', 'canonical')
 
     def _set_gridfree_orthogonalize_method(self, value):
-        value = str(value)
-        self._data['gridfree_orthogonalize_method'] = value
+        if value != None:
+            value = str(value)
+            self._data['gridfree_orthogonalize_method'] = value
 
     gridfree_orthogonalize_method = property(_get_gridfree_orthogonalize_method,
                                              _set_gridfree_orthogonalize_method)
+
+    # gridfree/CDAM_tau ------------------------------------------------
+    def _get_gridfree_CDAM_tau(self):
+        return self._data.get('gridfree_CDAM_tau', 1.0E-10)
+
+    def _set_gridfree_CDAM_tau(self, value):
+        if value != None:
+            value = float(value)
+            self._data['gridfree_CDAM_tau'] = value
+
+    gridfree_CDAM_tau = property(_get_gridfree_CDAM_tau,
+                                 _set_gridfree_CDAM_tau)
+
+    # gridfree/CD_epsilon ----------------------------------------------
+    def _get_gridfree_CD_epsilon(self):
+        return self._data.get('gridfree_CD_epsilon', 1.0E-4)
+
+    def _set_gridfree_CD_epsilon(self, value):
+        if value != None:
+            value = float(value)
+            self._data['gridfree_CD_epsilon'] = value
+
+    gridfree_CD_epsilon = property(_get_gridfree_CD_epsilon,
+                                   _set_gridfree_CD_epsilon)
+
+    # extra_keywords ---------------------------------------------------
+    def _get_extra_keywords(self):
+        return self._data.get('extra_keywords', {})
+        
+    def _set_extra_keywords(self, value):
+        if value != None:
+            value = dict(value)
+            self._data['extra_keywords'] = value
+        
+    extra_keywords = property(_get_extra_keywords,
+                              _set_extra_keywords)
     
     # num_of_atoms -----------------------------------------------------
     def _get_num_of_atoms(self):
@@ -723,29 +765,29 @@ class PdfParam(object):
 
     lo_num_of_iterations = property(_get_lo_num_of_iterations)
     
-    # force ============================================================
-    def get_force(self, atom_index):
+    # gradient =================================================================
+    def get_gradient(self, atom_index):
         atom_index = int(atom_index)
         assert(0 <= atom_index < self.num_of_atoms)
 
-        force_mat = self._data.get('force', None)
-        force = None
-        if force_mat != None:
-            if atom_index < len(force_mat):
-                force = force_mat[atom_index]
-                assert(len(force) == 3)
+        gradient_mat = self._data.get('gradient', None)
+        gradient = None
+        if gradient_mat != None:
+            if atom_index < len(gradient_mat):
+                gradient = gradient_mat[atom_index]
+                assert(len(gradient) == 3)
 
-        return force
+        return gradient
             
 
-    def set_force(self, atom_index, fx, fy, fz):
+    def set_gradient(self, atom_index, fx, fy, fz):
         atom_index = int(atom_index)
         fx = float(fx)
         fy = float(fy)
         fz = float(fz)
         assert(0 <= atom_index < self.num_of_atoms)
-        self._data.setdefault('force', [[] for x in range(self.num_of_atoms)])
-        self._data['force'][atom_index] = [fx, fy, fz]
+        self._data.setdefault('gradient', [[] for x in range(self.num_of_atoms)])
+        self._data['gradient'][atom_index] = [fx, fy, fz]
 
     # --------------------------------------------------------------------------
     def get_inputfile_contents(self):
@@ -785,11 +827,15 @@ class PdfParam(object):
         output += "    J_engine = {0}\n".format(self.j_engine)
         output += "    K_engine = {0}\n".format(self.k_engine)
         output += "    XC_engine = {0}\n".format(self.xc_engine)
-        output += "    gridfree/dedicated_basis = {0}\n".format(self.gridfree_dedicated_basis)
+        output += "    gridfree/dual_level = {0}\n".format('yes' if self.gridfree_dual_level else 'no')
         output += "    gridfree/orthogonalize_method = {0}\n".format(self.gridfree_orthogonalize_method)
-        output += "    level_shift = {0}\n".format(self.level_shift)
+        output += "    level_shift = {0}\n".format('yes' if self.level_shift else 'no')
         output += "    level_shift/start_iteration = {0}\n".format(self.level_shift_start_iteration)
         output += "    level_shift/virtual_mo = {0}\n".format(self.level_shift_virtual_mo)
+        output += "    \n"
+        output += "    # === extras === \n"
+        for k, v in self.extra_keywords.iteritems():
+            output += "    {} = {}\n".format(k, v)
         output += "\n"
         output += ">>>>MOLECULE\n"
         output += "    geometry/cartesian/unit = angstrom\n"
@@ -972,6 +1018,23 @@ class PdfParam(object):
         self.orbital_independence_threshold_lowdin = odict.get('orbital_independence_threshold/lowdin', None)
         del odict['orbital_independence_threshold/lowdin']
 
+        # gridfree
+        if 'gridfree/orthogonalize_method' in odict:
+            self.gridfree_orthogonalize_method = odict.get('gridfree/orthogonalize_method')
+            del odict['gridfree/orthogonalize_method']
+
+        if 'gridfree/CDAM_tau' in odict:
+            self.gridfree_CDAM_tau = odict.get('gridfree/CDAM_tau')
+            del odict['gridfree/CDAM_tau']
+
+        if 'gridfree/CD_epsilon' in odict:
+            self.gridfree_CD_epsilon = odict.get('gridfree/CD_epsilon')
+            del odict['gridfree/CD_epsilon']
+
+        if 'gridfree/dual_level' in odict:
+            self.gridfree_dual_level = odict.get('gridfree/dual_level')
+            del odict['gridfree/dual_level']
+
         # scf acceleration
         self.scf_acceleration = odict.get('scf_acceleration', None)
         del odict['scf_acceleration']
@@ -1076,13 +1139,13 @@ class PdfParam(object):
         self.xc_engine = odict.get('XC_engine')
         del odict['XC_engine']
         
-        # force
-        if 'force' in odict:
-            force_dat = odict.get('force')
-            for atom_index in range(len(force_dat)):
-                force = force_dat[atom_index]
-                self.set_force(atom_index, force[0], force[1], force[2])
-            del odict['force']
+        # gradient
+        if 'gradient' in odict:
+            gradient_dat = odict.get('gradient')
+            for atom_index in range(len(gradient_dat)):
+                gradient = gradient_dat[atom_index]
+                self.set_gradient(atom_index, gradient[0], gradient[1], gradient[2])
+            del odict['gradient']
 
         # 未入力部分をマージ
         self._data.update(odict)

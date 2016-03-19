@@ -194,6 +194,7 @@ class ContractedGTO(list):
 
     def _set_shell_type(self, shell_type):
         self._shell_type_id = None
+        shell_type = shell_type.lower()
         for index, st in enumerate(self._shell_types):
             if st == shell_type:
                 self._shell_type_id = index
@@ -469,7 +470,7 @@ class BasisSet(list):
         self.sort()
         
         output = ""
-        output += "name:%s\n" % (self.name)
+        output += "%s\n" % (self.name)
 
         for shell_type in ContractedGTO.get_supported_shell_types():
             num_of_CGTOs = self.get_num_of_CGTOs(shell_type)

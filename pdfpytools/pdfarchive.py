@@ -44,7 +44,7 @@ class PdfArchive(object):
         self._logger = logging.getLogger(__name__)
         self._logger.addHandler(nullHandler)
 
-        self._pdf_id = 'NONE'
+        self._pdf_id = "0"
         self._db = bridge.DbManager(db_path)
         user_version = self._db.get_user_version()
         if user_version > PdfArchive._format_version:
@@ -58,15 +58,15 @@ class PdfArchive(object):
             self._set_pdfparam_conditions(pdfparam)
             self._set_pdfparam_coordinates(pdfparam)
             self._set_pdfparam_basisset(pdfparam)
-            self._set_pdfparram_total_energies(pdfparam)
-            self._set_pdfparam_force(pdfparam)
+            self._set_pdfparam_total_energies(pdfparam)
+            self._set_pdfparam_gradient(pdfparam)
             
     # private ------------------------------------------------------------------
     def _create_tables(self):
         self._create_table_conditions()
         self._create_table_vectors()
         self._create_table_matrices()
-        self._create_table_force()
+        self._create_table_gradient()
         
     def _create_table_conditions(self):
         """
@@ -126,11 +126,11 @@ class PdfArchive(object):
                                    'runtype',
                                    'iteration'])
             
-    def _create_table_force(self):
+    def _create_table_gradient(self):
         """
-        力情報のDBを作成
+        gradient情報のDBを作成
         """
-        table_name = 'force'
+        table_name = 'gradient'
         if not self._db.has_table(table_name):
             self._db.create_table(table_name,
                                   ['atom_id',
@@ -151,7 +151,7 @@ class PdfArchive(object):
         assert(isinstance(pdfparam, pdf.PdfParam))
         table_name = 'conditions'
 
-        self._pdf_id = pdfparam.digest()
+        # self._pdf_id = pdfparam.digest()
         comment = pdfparam.comment
         num_of_atoms = pdfparam.num_of_atoms
         num_of_AOs = pdfparam.num_of_AOs
@@ -328,7 +328,7 @@ class PdfArchive(object):
                                          'exp': exp
                                         })
                         
-    def _set_pdfparram_total_energies(self, pdfparam):
+    def _set_pdfparam_total_energies(self, pdfparam):
         assert(isinstance(pdfparam, pdf.PdfParam))
         table_name = 'total_energies'
         if not self._db.has_table(table_name):
@@ -351,15 +351,15 @@ class PdfArchive(object):
                                     {'iteration':iteration,
                                      'energy':energy})
 
-    def _set_pdfparam_force(self, pdfparam):
+    def _set_pdfparam_gradient(self, pdfparam):
         assert(isinstance(pdfparam, pdf.PdfParam))
-        table_name = 'force'
+        table_name = 'gradient'
         if not self._db.has_table(table_name):
-            self._create_table_force()
+            self._create_table_gradient()
 
         num_of_atoms = pdfparam.num_of_atoms
         for atom_index in range(num_of_atoms):
-            v = pdfparam.get_force(atom_index)
+            v = pdfparam.get_gradient(atom_index)
             if v != None:
                 data = {'atom_id':atom_index,
                         'x':v[0],
@@ -725,24 +725,24 @@ class PdfArchive(object):
     iterations = property(_get_iterations)
     scf_converged = property(_get_scf_converged)
 
-    # force --------------------------------------------------------------------
-    def get_force(self, atom_id):
+    # gradient --------------------------------------------------------------------
+    def get_gradient(self, atom_id):
         atom_id = int(atom_id)
-        force = None
-        table_name = 'force'
+        gradient = None
+        table_name = 'gradient'
         if self._db.has_table(table_name):
             results = self._db.select(table_name,fields=['x', 'y', 'z'], where={'atom_id': atom_id})
             if len(results) > 0:
-                force = [results[0]['x'], results[0]['y'], results[0]['z']]
-        return force
+                gradient = [results[0]['x'], results[0]['y'], results[0]['z']]
+        return gradient
         
-    def get_force_RMS(self):
+    def get_gradient_rms(self):
         """
-        forceのRMSを返す
+        gradientのRMSを返す
         """
         rms = 0.0
         for atom_index in range(self.num_of_atoms):
-            v = self.get_force(atom_index)
+            v = self.get_gradient(atom_index)
             if v != None:
                 rms += v[0]*v[0] + v[1]*v[1] + v[2]*v[2]
             else:
