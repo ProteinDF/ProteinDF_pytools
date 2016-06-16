@@ -22,8 +22,6 @@ import sys, os
 import shutil
 from distutils.core import setup
 
-#if not os.path.exists('scripts'):
-#    os.makedirs('scripts')
 shutil.copyfile('scripts/pdfcmd.py', 'scripts/pdf')
 
 setup(name='ProteinDF_pytools',
@@ -34,21 +32,25 @@ setup(name='ProteinDF_pytools',
       url='http://proteindf.github.io/',
       packages=['pdfpytools'],
       scripts=[
-        'scripts/pdf',
-        'scripts/pdf-archive.py',
-        'scripts/pdf-env.py',
-	'scripts/pdf-info-geom.py',
-        'scripts/pdf-info-orb.py',
-	'scripts/pdf-info-xyz.py',
-        'scripts/pdf-plot-basisset.py',
-        'scripts/pdf-plot-elevel.py',
-        'scripts/pdf-plot-mat.py',
-        'scripts/pdf-plot-decaymat.py',
-        'scripts/pdf-report.py',
-	'scripts/pdf-reg-harris.py',
-        'scripts/pdf-test.py',
-        'scripts/pdf-test-eri.py',
-        'scripts/g0xeri2mpac.py',
-        ]
-      )
+          'scripts/pdf',
+          'scripts/pdf-archive.py',
+          'scripts/pdf-env.py',
+	  'scripts/pdf-info-geom.py',
+          'scripts/pdf-info-orb.py',
+	  'scripts/pdf-info-xyz.py',
+          'scripts/pdf-make-basis2.py',
+          'scripts/pdf-plot-basisset.py',
+          'scripts/pdf-plot-elevel.py',
+          'scripts/pdf-plot-mat.py',
+          'scripts/pdf-plot-decaymat.py',
+          'scripts/pdf-report.py',
+	  'scripts/pdf-reg-harris.py',
+          'scripts/pdf-test.py',
+          'scripts/pdf-test-eri.py',
+          'scripts/g0xeri2mpac.py',
+      ],
+      data_files=[
+          ('data', ['data/basis2.cache'])
+      ]
+)
 
