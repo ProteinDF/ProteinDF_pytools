@@ -126,7 +126,20 @@ class PrimitiveGTO(object):
         output = "    {0: e} {1: e}\n".format(self.exp, self.coef)
         return output
 
-        
+    # operator
+    def __eq__(self, rhs):
+        answer = False
+        if isinstance(rhs, PrimitiveGTO):
+            if (math.fabs(self.exp - rhs.exp) < 1.0E-5 and
+                math.fabs(self.coef - rhs.coef) < 1.0E-5):
+                answer = True
+
+        return answer
+
+    def __ne__(self, rhs):
+        return not self.__eq__(rhs)
+
+    
 class ContractedGTO(list):
     """
     >>> cgto = ContractedGTO('p', 3)
@@ -358,6 +371,25 @@ class ContractedGTO(list):
             output += str(pgto)
         return output
 
+    # operator
+    def __eq__(self, rhs):
+        answer = False
+        if isinstance(rhs, ContractedGTO):
+            if ((self.shell_type == rhs.shell_type) and
+                (len(self) == len(rhs))):
+                is_same_CGTO = True
+                for i in range(len(self)):
+                    if self[i] != rhs[i]:
+                        is_same_CGTO = False
+                        break
+                    answer = is_same_CGTO
+        
+        return answer
+
+    def __ne__(self, rhs):
+        return not self.__eq__(rhs)
+
+    
 class BasisSet(list):
     """
     >>> bs = BasisSet('sample', 3)
@@ -508,6 +540,23 @@ class BasisSet(list):
 
     def __str__(self):
         return self.get_basis2()
+    
+    # operator
+    def __eq__(self, rhs):
+        answer = False
+        if isinstance(rhs, BasisSet):
+            if len(self) == len(rhs):
+                is_same_BS = True
+                for i in range(len(self)):
+                    if self[i] != rhs[i]:
+                        is_same_BS = False
+                        break
+                answer = is_same_BS
+
+        return answer
+
+    def __ne__(self, rhs):
+        return not self.__eq__(rhs)
     
     
 if __name__ == "__main__":

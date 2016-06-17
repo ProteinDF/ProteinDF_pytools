@@ -14,24 +14,27 @@ import pdfpytools as pdf
 
 
 class MakeBasis2(object):
-    def __init__(self, cache_path=None, output_path=None, verbose=False, header=""):
+    def __init__(self, cache_path=None, output_path=None,
+                 uncontract_shells='spd',
+                 verbose=False, header=""):
         self._cache = {}
         self._cache_path = cache_path
-        
-        self._load_cache()
-        self.run(output_path, verbose, header)
-        
-    def run(self, output_path=None, verbose=False, header=""):
-        stdout = sys.stdout
+
+        self._stdout = sys.stdout
         if output_path != None:
-            stdout = open(output_path, 'w')
-
-        stderr = open(os.devnull, 'w')
+            self._stdout = open(output_path, 'w')
+        self._stderr = open(os.devnull, 'w')
         if verbose:
-            stderr = sys.stderr
+            self._stderr = sys.stderr
 
+        self._load_cache()
+        self.run(output_path=output_path,
+                 uncontract_shells=uncontract_shells,
+                 header=header)
+        
+    def run(self, output_path=None, uncontract_shells='spd', header=""):
         # output header
-        stdout.write(header + '\n')
+        self._stdout.write(header + '\n')
 
         # make basis set
         bs_index = self._get_basissets_index()
@@ -44,48 +47,53 @@ class MakeBasis2(object):
             if (bs_index[bs_name]['status'] == 'published' and
                 bs_index[bs_name]['type'] == 'orbital') :
                 if bs_name not in self._cache['Gaussian94']:
-                    stderr.write("# {count}/{max_count}> get: {name} ({status}; {bs_type})\n".format(count=count,
-                                                                                                     max_count=num_of_items,
-                                                                                                     name=bs_name,
-                                                                                                     status=bs_index[bs_name]['status'],
-                                                                                                     bs_type=bs_index[bs_name]['type']))
+                    self._stderr.write("# {count}/{max_count}> get: {name} ({status}; {bs_type})\n".format(count=count,
+                                                                                                           max_count=num_of_items,
+                                                                                                           name=bs_name,
+                                                                                                           status=bs_index[bs_name]['status'],
+                                                                                                           bs_type=bs_index[bs_name]['type']))
                     bs_content = self._get_bs_data(bs_name,
                                                    bs_index[bs_name]['url'],
                                                    bs_index[bs_name]['elements'])
                     self._cache['Gaussian94'][bs_name] = bs_content
                     self._save_cache()
 
-                stderr.write("# {count}/{max_count}> reg: {name} ({status}; {bs_type})\n".format(count=count,
-                                                                                                 max_count=num_of_items,
-                                                                                                 name=bs_name,
-                                                                                                 status=bs_index[bs_name]['status'],
-                                                                                                 bs_type=bs_index[bs_name]['type']))
+                self._stderr.write("# {count}/{max_count}> reg: {name} ({status}; {bs_type})\n".format(count=count,
+                                                                                                       max_count=num_of_items,
+                                                                                                       name=bs_name,
+                                                                                                       status=bs_index[bs_name]['status'],
+                                                                                                       bs_type=bs_index[bs_name]['type']))
                 bs_content = self._cache['Gaussian94'][bs_name]
 
+                # make basissets & basis2
                 bsp = pdf.BasisSetParser()
                 basissets = bsp.parse(bs_content)
-
-                basis2 = ''
-                for atom_symbol, bs in basissets.items():
-                    bs.name = bs_name + '.' + atom_symbol
-                    if bs.max_shell_type in ('s', 'p', 'd', 'f', 'g'):
-                        basis2 += str(bs) + '\n'
-                    else:
-                        stderr.write('# {bs_name} is not supported, because the max shell type is "{shell_type}"\n'.format(bs_name=bs.name,
-                                                                                                                         shell_type=bs.max_shell_type))
-                    
+                basis2 = self._get_basis2(bs_name, basissets)
                 self._cache['ProteinDF'][bs_name] = basis2
                 self._save_cache()
+                self._stdout.write('# {} -------------\n'.format(bs_name))
+                self._stdout.write(basis2 + '\n')
 
-                stdout.write('# {} -------------\n'.format(bs_name))
-                stdout.write(basis2 + '\n')
+                # uncontract shell basis set for Gridfree MRD
+                if len(uncontract_shells) > 0:
+                    for i in range(len(uncontract_shells)):
+                        uncontract_shell = uncontract_shells[0:i+1]
+                        uncontract_basissets = {}
+                        for atom_symbol, bs in basissets.items():
+                            uncontract_bs = self._bs2MRD(bs, uncontract_shell)
+                            uncontract_basissets[atom_symbol] = uncontract_bs
+                        uncontract_basis_name = bs_name + '-{}'.format(uncontract_shell)
+                        uncontract_basis2 = self._get_basis2(uncontract_basis_name, uncontract_basissets)
+                        self._cache['ProteinDF'][uncontract_basis_name] = uncontract_basis2
+                        self._save_cache()
+                        self._stdout.write(uncontract_basis2 + '\n')
                 
             else:
-                stderr.write("# {count}/{max_count}> pass: {name} ({status}; {bs_type})\n".format(count=count,
-                                                                                                max_count=num_of_items,
-                                                                                                name=bs_name,
-                                                                                                status=bs_index[bs_name]['status'],
-                                                                                                bs_type=bs_index[bs_name]['type']))
+                self._stderr.write("# {count}/{max_count}> pass: {name} ({status}; {bs_type})\n".format(count=count,
+                                                                                                        max_count=num_of_items,
+                                                                                                        name=bs_name,
+                                                                                                        status=bs_index[bs_name]['status'],
+                                                                                                        bs_type=bs_index[bs_name]['type']))
                 
             count += 1
 
@@ -176,15 +184,53 @@ class MakeBasis2(object):
         
         return text
 
+
+    def _bs2MRD(self, basisset, uncontract_shell='spd'):
+        assert isinstance(basisset, pdf.BasisSet)
+            
+        new_cgtos = []
+        for cgto in basisset:
+            shell_type = cgto.shell_type
+            if shell_type in uncontract_shell:
+                for pgto in cgto:
+                    cgto1 = pdf.ContractedGTO(shell_type, 1)
+                    cgto1[0] = pdf.PrimitiveGTO(pgto.exp, 1.0)
+                    if cgto1 not in new_cgtos:
+                        new_cgtos.append(cgto1)
+            else:
+                new_cgtos.append(pdf.ContractedGTO(cgto))
+
+        new_name = '-{}.'.format(uncontract_shell).join(basisset.name.rsplit('.', 1)) # reverse replace!
+        answer = pdf.BasisSet(new_name, len(new_cgtos))
+        for i in range(len(new_cgtos)):
+            answer[i] = new_cgtos[i]
+
+        return answer
+
+    def _get_basis2(self, basissets_name, basissets):
+        assert isinstance(basissets, dict)
+        basis2 = ''
+        for atom_symbol, bs in basissets.items():
+            bs.name = basissets_name + '.' + atom_symbol
+            if bs.max_shell_type in 'spdfg':
+                basis2 += str(bs) + '\n'
+            else:
+                self._stderr.write('# {bs_name} is not supported: (max shell type: "{shell_type}")\n'.format(bs_name=bs.name,
+                                                                                                             shell_type=bs.max_shell_type))
+                    
+        return basis2
+
     
 def main():
-    #default_cache_path = os.path.join(os.path.dirname(sys.modules['pdfpytools'].__file__),
-    #                                  'basis2.cache')
     default_cache_path = os.path.join(os.environ['PDF_HOME'],
                                       'data',
                                       'basis2.cache')
     
     parser = argparse.ArgumentParser(description='make basis2 file')
+    parser.add_argument('-u', '--uncontract',
+                        nargs=1,
+                        default=['spd'],
+                        help='uncontract shells for gridfree')
     parser.add_argument('-c', '--cache',
                         nargs=1,
                         default=[default_cache_path],
@@ -200,13 +246,15 @@ def main():
 
     cache_path = args.cache[0]
     output_path = args.output[0]
+    uncontract_shells = args.uncontract[0]
     verbose = args.verbose
-    
+
     header = '# basis2 file created by {}.\n'.format(parser.prog)
     header += '#' * 80
     header += '\n'
     bs2 = MakeBasis2(cache_path=cache_path,
                      output_path=output_path,
+                     uncontract_shells=uncontract_shells,
                      verbose=verbose,
                      header=header)
     
