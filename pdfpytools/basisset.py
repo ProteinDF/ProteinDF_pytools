@@ -126,7 +126,20 @@ class PrimitiveGTO(object):
         output = "    {0: e} {1: e}\n".format(self.exp, self.coef)
         return output
 
-        
+    # operator
+    def __eq__(self, rhs):
+        answer = False
+        if isinstance(rhs, PrimitiveGTO):
+            if (math.fabs(self.exp - rhs.exp) < 1.0E-5 and
+                math.fabs(self.coef - rhs.coef) < 1.0E-5):
+                answer = True
+
+        return answer
+
+    def __ne__(self, rhs):
+        return not self.__eq__(rhs)
+
+    
 class ContractedGTO(list):
     """
     >>> cgto = ContractedGTO('p', 3)
@@ -138,7 +151,7 @@ class ContractedGTO(list):
     >>> len(cgto)
     3
     """
-    _shell_types = ['s', 'p', 'd', 'f', 'g']
+    _shell_types = ['s', 'p', 'd', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm']
     _orb_types = ['s', 'px', 'py', 'pz', 'dxy', 'dyz', 'dzx', 'dxx-yy', 'dzz',
                   'z3', 'xz2', 'yz2', '3x2y-y3', 'x3-3xy2', 'xyz', 'x2z-y2z']
 
@@ -182,23 +195,21 @@ class ContractedGTO(list):
         
     # shell_type_id ------------------------------------------------------------
     def _get_shell_type_id(self):
+        if not '_shell_type_id' in self.__dict__:
+            raise
         return self._shell_type_id
 
-    shell_type_id = property(_get_shell_type_id)
+    def _set_shell_type_id(self, id):
+        self._shell_type_id = id
+    
+    shell_type_id = property(_get_shell_type_id, _set_shell_type_id)
 
     # shell_type ---------------------------------------------------------------
     def _get_shell_type(self):
-        if not '_shell_type' in self.__dict__:
-            self._shell_type = 's'
-        return self._shell_types[self._shell_type_id]
+        return self.get_shell_type(self.shell_type_id)
 
     def _set_shell_type(self, shell_type):
-        self._shell_type_id = None
-        shell_type = shell_type.lower()
-        for index, st in enumerate(self._shell_types):
-            if st == shell_type:
-                self._shell_type_id = index
-                break
+        self.shell_type_id = self.get_shell_type_id(shell_type)
 
     shell_type = property(_get_shell_type, _set_shell_type)
 
@@ -276,13 +287,21 @@ class ContractedGTO(list):
 
         s: 0, p: 1, d: 2
         """
-        answer = -1
+        answer = None
         for i, st in enumerate(cls._shell_types):
             if shell_type == st:
                 answer = i
                 break
+        if answer == None:
+            print(shell_type)
+            raise
         return answer
 
+    @classmethod
+    def get_shell_type(cls, id):
+        return cls._shell_types[id]
+        
+    
     @classmethod
     def get_basis_type(cls, shell_type_id, basis_id):
         """
@@ -352,6 +371,25 @@ class ContractedGTO(list):
             output += str(pgto)
         return output
 
+    # operator
+    def __eq__(self, rhs):
+        answer = False
+        if isinstance(rhs, ContractedGTO):
+            if ((self.shell_type == rhs.shell_type) and
+                (len(self) == len(rhs))):
+                is_same_CGTO = True
+                for i in range(len(self)):
+                    if self[i] != rhs[i]:
+                        is_same_CGTO = False
+                        break
+                    answer = is_same_CGTO
+        
+        return answer
+
+    def __ne__(self, rhs):
+        return not self.__eq__(rhs)
+
+    
 class BasisSet(list):
     """
     >>> bs = BasisSet('sample', 3)
@@ -405,6 +443,22 @@ class BasisSet(list):
         self._name = str(name)
 
     name = property(_get_name, _set_name)
+
+    # max_shell_type_id ------------------------------------------------
+    def _get_max_shell_type_id(self):
+        max_shell_type_id = 0
+        for cgto in self:
+            max_shell_type_id = max(max_shell_type_id, cgto.shell_type_id)
+        return max_shell_type_id
+
+    max_shell_type_id = property(_get_max_shell_type_id)
+
+    # max_shell_type ---------------------------------------------------
+    def _get_max_shell_type(self):
+        return ContractedGTO.get_shell_type(self.max_shell_type_id)
+
+    max_shell_type = property(_get_max_shell_type)
+    
     # ------------------------------------------------------------------
     
     def get_number_of_AOs(self):
@@ -466,7 +520,7 @@ class BasisSet(list):
     # ==================================================================
     # debug
     # ==================================================================
-    def __str__(self):
+    def get_basis2(self):
         self.sort()
         
         output = ""
@@ -484,6 +538,26 @@ class BasisSet(list):
         
         return output
 
+    def __str__(self):
+        return self.get_basis2()
+    
+    # operator
+    def __eq__(self, rhs):
+        answer = False
+        if isinstance(rhs, BasisSet):
+            if len(self) == len(rhs):
+                is_same_BS = True
+                for i in range(len(self)):
+                    if self[i] != rhs[i]:
+                        is_same_BS = False
+                        break
+                answer = is_same_BS
+
+        return answer
+
+    def __ne__(self, rhs):
+        return not self.__eq__(rhs)
+    
     
 if __name__ == "__main__":
     import doctest

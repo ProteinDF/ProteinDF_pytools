@@ -37,6 +37,7 @@ from .pdfparam import PdfParam
 from .gauparam import GaussianParam
 
 from .basisset import PrimitiveGTO, ContractedGTO, BasisSet
+from .basisset_parser import BasisSetParser
 from .orbinfo import OrbInfo
 from .basis2 import Basis2
 
