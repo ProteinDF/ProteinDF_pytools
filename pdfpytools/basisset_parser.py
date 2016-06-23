@@ -46,12 +46,14 @@ class BasisSetParser(object):
 
     def parse(self, lines):
         lines = lines.splitlines()
-        basissets = self._parse_gaussian94(lines)
-
-        return basissets
+        basissets, basissets_density, basissets_xc = self._parse_gaussian94(lines)
+        
+        return (basissets, basissets_density, basissets_xc)
         
     def _parse_gaussian94(self, lines):
         basissets = {}
+        basissets_density = {}
+        basissets_xc = {}
         
         basisset_blocks = []
         atom_block = []
@@ -69,9 +71,16 @@ class BasisSetParser(object):
         for atom_block in basisset_blocks:
             (atom, bs) = self._parse_block_gaussian94(atom_block)
             if atom != None:
-                basissets[atom] = bs
+                if atom not in basissets:
+                    basissets[atom] = bs
+                elif atom not in basissets_density:
+                    basissets_density[atom] = bs
+                elif atom not in basissets_xc:
+                    basissets_xc[atom] = bs
+                else:
+                    sys.stderr.write('too many setup basis: {}\n{}'.format(atom, repr(bs)))
 
-        return basissets
+        return (basissets, basissets_density, basissets_xc)
 
     def _parse_block_gaussian94(self, lines):
         # [atom] 0
@@ -79,6 +88,7 @@ class BasisSetParser(object):
         if matchObj == None:
             return (None, None)
         atom = matchObj.group(1)
+        atom = atom.capitalize()
         
         line_index = 1
         cgtos = []

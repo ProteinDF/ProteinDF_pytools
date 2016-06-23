@@ -3,6 +3,7 @@
 
 import os
 import sys
+import codecs
 import argparse
 import requests
 import re
@@ -10,13 +11,18 @@ import pprint
 import pickle
 
 from bs4 import BeautifulSoup
+import pdfbridge
 import pdfpytools as pdf
 
 
 class MakeBasis2(object):
     def __init__(self, cache_path=None, output_path=None,
                  uncontract_shells='spd',
-                 verbose=False, header=""):
+                 verbose=False, header="",
+                 debug=False):
+        self._uncontract_shells = uncontract_shells
+        self._debug = debug
+        
         self._cache = {}
         self._cache_path = cache_path
 
@@ -29,10 +35,9 @@ class MakeBasis2(object):
 
         self._load_cache()
         self.run(output_path=output_path,
-                 uncontract_shells=uncontract_shells,
                  header=header)
         
-    def run(self, output_path=None, uncontract_shells='spd', header=""):
+    def run(self, output_path=None, header=""):
         # output header
         self._stdout.write(header + '\n')
 
@@ -44,60 +49,103 @@ class MakeBasis2(object):
         num_of_items = len(bs_index.keys())
         count = 1
         for bs_name in bs_index.keys():
-            if (bs_index[bs_name]['status'] == 'published' and
-                bs_index[bs_name]['type'] == 'orbital') :
-                if bs_name not in self._cache['Gaussian94']:
-                    self._stderr.write("# {count}/{max_count}> get: {name} ({status}; {bs_type})\n".format(count=count,
-                                                                                                           max_count=num_of_items,
-                                                                                                           name=bs_name,
-                                                                                                           status=bs_index[bs_name]['status'],
-                                                                                                           bs_type=bs_index[bs_name]['type']))
-                    bs_content = self._get_bs_data(bs_name,
-                                                   bs_index[bs_name]['url'],
-                                                   bs_index[bs_name]['elements'])
-                    self._cache['Gaussian94'][bs_name] = bs_content
-                    self._save_cache()
+            self._stderr.write('### {0:>4}/{1:>4}\n'.format(count, num_of_items))
+            
+            is_parsed = False
+            if bs_index[bs_name]['status'] == 'published':
+                if bs_index[bs_name]['type'] == 'orbital':
+                    self._run_for_orbital(bs_index, bs_name)
+                    is_parsed = True
+                elif bs_index[bs_name]['type'] == 'dftorb':
+                    self._run_for_dftorb(bs_index, bs_name)
+                    is_parsed = True
+                else:
+                    self._run_for_others(bs_index, bs_name)
 
-                self._stderr.write("# {count}/{max_count}> reg: {name} ({status}; {bs_type})\n".format(count=count,
-                                                                                                       max_count=num_of_items,
-                                                                                                       name=bs_name,
-                                                                                                       status=bs_index[bs_name]['status'],
-                                                                                                       bs_type=bs_index[bs_name]['type']))
-                bs_content = self._cache['Gaussian94'][bs_name]
-
-                # make basissets & basis2
-                bsp = pdf.BasisSetParser()
-                basissets = bsp.parse(bs_content)
-                basis2 = self._get_basis2(bs_name, basissets)
-                self._cache['ProteinDF'][bs_name] = basis2
-                self._save_cache()
-                self._stdout.write('# {} -------------\n'.format(bs_name))
-                self._stdout.write(basis2 + '\n')
-
-                # uncontract shell basis set for Gridfree MRD
-                if len(uncontract_shells) > 0:
-                    for i in range(len(uncontract_shells)):
-                        uncontract_shell = uncontract_shells[0:i+1]
-                        uncontract_basissets = {}
-                        for atom_symbol, bs in basissets.items():
-                            uncontract_bs = self._bs2MRD(bs, uncontract_shell)
-                            uncontract_basissets[atom_symbol] = uncontract_bs
-                        uncontract_basis_name = bs_name + '-{}'.format(uncontract_shell)
-                        uncontract_basis2 = self._get_basis2(uncontract_basis_name, uncontract_basissets)
-                        self._cache['ProteinDF'][uncontract_basis_name] = uncontract_basis2
-                        self._save_cache()
-                        self._stdout.write(uncontract_basis2 + '\n')
-                
-            else:
-                self._stderr.write("# {count}/{max_count}> pass: {name} ({status}; {bs_type})\n".format(count=count,
-                                                                                                        max_count=num_of_items,
-                                                                                                        name=bs_name,
-                                                                                                        status=bs_index[bs_name]['status'],
-                                                                                                        bs_type=bs_index[bs_name]['type']))
+            if not is_parsed:
+                self._stderr.write("# pass: {name} ({status}; {bs_type})\n".format(name=bs_name,
+                                                                                   status=bs_index[bs_name]['status'],
+                                                                                   bs_type=bs_index[bs_name]['type']))
                 
             count += 1
 
-            
+    def _run_for_orbital(self, bs_index, bs_name):
+        bs_content = self._download_gaussian94(bs_index, bs_name)
+        self._stderr.write("# reg: {name} ({status}; {bs_type})\n".format(name=bs_name,
+                                                                          status=bs_index[bs_name]['status'],
+                                                                          bs_type=bs_index[bs_name]['type']))
+        if self._debug:
+            filepath = '{}-orbital.txt'.format(bs_name)
+            filepath = filepath.replace(os.sep, '_')
+            with open(filepath, 'wb') as f:
+                # f = codecs.EncodedFile(f, 'utf-8')
+                f.write(pdfbridge.Utils.to_bytes(bs_content))
+
+        # make basissets & basis2
+        bsp = pdf.BasisSetParser()
+        (basissets, basissets_density, basissets_xc) = bsp.parse(bs_content)
+        basis2 = self._get_basis2('O-' + bs_name, basissets)
+        self._cache['ProteinDF'][bs_name] = basis2
+        self._save_cache()
+        self._stdout.write('# {} -------------\n'.format(bs_name))
+        self._stdout.write(basis2 + '\n')
+
+        # uncontract shell basis set for Gridfree MRD
+        if len(self._uncontract_shells) > 0:
+            for i in range(len(self._uncontract_shells)):
+                uncontract_shell = self._uncontract_shells[0:i+1]
+                uncontract_basissets = {}
+                for atom_symbol, bs in basissets.items():
+                    uncontract_bs = self._bs2MRD(bs, uncontract_shell)
+                    uncontract_basissets[atom_symbol] = uncontract_bs
+                    uncontract_basis_name = 'O-' + bs_name + '-{}'.format(uncontract_shell)
+                    uncontract_basis2 = self._get_basis2(uncontract_basis_name, uncontract_basissets)
+                    self._cache['ProteinDF'][uncontract_basis_name] = uncontract_basis2
+                    self._save_cache()
+                    self._stdout.write(uncontract_basis2 + '\n')
+                
+    def _run_for_dftorb(self, bs_index, bs_name):
+        bs_content = self._download_gaussian94(bs_index, bs_name)
+        self._stderr.write("# reg: {name} ({status}; {bs_type})\n".format(name=bs_name,
+                                                                          status=bs_index[bs_name]['status'],
+                                                                          bs_type=bs_index[bs_name]['type']))
+        if self._debug:
+            filepath = '{}-dftorb.txt'.format(bs_name)
+            filepath = filepath.replace(os.sep, '_')
+            with open(filepath, 'wb') as f:
+                f.write(bs_content)
+        
+        # make basissets & basis2
+        bsp = pdf.BasisSetParser()
+        (basissets, basissets_density, basissets_xc) = bsp.parse(bs_content)
+        basis2 = self._get_basis2('O-' + bs_name, basissets)
+        basis2 += self._get_basis2('A-' + bs_name, basissets_density, basissets_xc)
+        self._cache['ProteinDF'][bs_name] = basis2
+        self._save_cache()
+        self._stdout.write('# {} -------------\n'.format(bs_name))
+        self._stdout.write(basis2 + '\n')
+
+    def _run_for_others(self, bs_index, bs_name):
+        bs_content = self._download_gaussian94(bs_index, bs_name)
+        self._stderr.write("# reg: {name} ({status}; {bs_type})\n".format(name=bs_name,
+                                                                          status=bs_index[bs_name]['status'],
+                                                                          bs_type=bs_index[bs_name]['type']))
+
+        
+    def _download_gaussian94(self, bs_index, bs_name):
+        if bs_name not in self._cache['Gaussian94']:
+            self._stderr.write("# get: {name} ({status}; {bs_type})\n".format(name=bs_name,
+                                                                              status=bs_index[bs_name]['status'],
+                                                                              bs_type=bs_index[bs_name]['type']))
+            bs_content = self._get_bs_data(bs_name,
+                                           bs_index[bs_name]['url'],
+                                           bs_index[bs_name]['elements'])
+            self._cache['Gaussian94'][bs_name] = bs_content
+            self._save_cache()
+        return self._cache['Gaussian94'][bs_name]
+        
+    
+    
     def _load_cache(self):
         if os.path.exists(self._cache_path):
             with open(self._cache_path, mode='rb') as f:
@@ -113,6 +161,7 @@ class MakeBasis2(object):
         if cache_key not in self._cache:
             response = requests.get(url, params=params)
             html = response.text.encode(response.encoding)
+            html = pdfbridge.Utils.to_unicode(html)
             self._cache[cache_key] = html
             self._save_cache()
         
@@ -207,16 +256,36 @@ class MakeBasis2(object):
 
         return answer
 
-    def _get_basis2(self, basissets_name, basissets):
+    def _get_basis2(self, basissets_name, basissets, basissets2=None):
         assert isinstance(basissets, dict)
+        max_shell_type = 'spdfg'
+
+        # escape and remove strings for basis set name
+        basissets_name = basissets_name.replace('(DFT Orbital)', '')
+        basissets_name = re.sub('\(Dunning.*\)', '', basissets_name)
+        basissets_name = basissets_name.replace(' + ', '+')
+        basissets_name = re.sub(' +$', '', basissets_name)
+        basissets_name = basissets_name.replace(' ', '_')
+        
         basis2 = ''
         for atom_symbol, bs in basissets.items():
             bs.name = basissets_name + '.' + atom_symbol
-            if bs.max_shell_type in 'spdfg':
-                basis2 += str(bs) + '\n'
+            if (basissets2 != None) and (atom_symbol in basissets2):
+                # for aux basis
+                bs2 = basissets2[atom_symbol]
+                if ((bs.max_shell_type in max_shell_type) and
+                    (bs2.max_shell_type in max_shell_type)):
+                    basis2 += str(bs) + '\n' + str(bs2) + '\n'
+                else:
+                    self._stderr.write('# {bs_name} is not supported: (max shell type: "{shell_type}")\n'.format(bs_name=bs.name,
+                                                                                                                 shell_type=bs.max_shell_type))
             else:
-                self._stderr.write('# {bs_name} is not supported: (max shell type: "{shell_type}")\n'.format(bs_name=bs.name,
-                                                                                                             shell_type=bs.max_shell_type))
+                # for orbital basis
+                if bs.max_shell_type in max_shell_type:
+                    basis2 += str(bs) + '\n'
+                else:
+                    self._stderr.write('# {bs_name} is not supported: (max shell type: "{shell_type}")\n'.format(bs_name=bs.name,
+                                                                                                                 shell_type=bs.max_shell_type))
                     
         return basis2
 
@@ -242,21 +311,32 @@ def main():
     parser.add_argument('-v', '--verbose',
                         action='store_true',
                         help='show verbosely')
+    parser.add_argument('-d', '--debug',
+                        action='store_true',
+                        help='debug use')
     args = parser.parse_args()
 
     cache_path = args.cache[0]
     output_path = args.output[0]
     uncontract_shells = args.uncontract[0]
     verbose = args.verbose
+    debug = args.debug
 
-    header = '# basis2 file created by {}.\n'.format(parser.prog)
+    if verbose:
+        sys.stderr.write('cache: {}\n'.format(cache_path))
+        sys.stderr.write('output: {}\n'.format(output_path))
+        sys.stderr.write('uncontract_shells: {}\n'.format(uncontract_shells))
+        sys.stderr.write('debug: {}\n'.format(debug))
+    
+    header = '##### basis2 file created by {}. #####\n'.format(parser.prog)
     header += '#' * 80
     header += '\n'
     bs2 = MakeBasis2(cache_path=cache_path,
                      output_path=output_path,
                      uncontract_shells=uncontract_shells,
                      verbose=verbose,
-                     header=header)
+                     header=header,
+                     debug=debug)
     
 if __name__ == '__main__':
     main()
