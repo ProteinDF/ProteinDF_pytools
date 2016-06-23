@@ -562,10 +562,16 @@ class PdfParam(object):
 
     # level_shift
     def _get_level_shift(self):
-        return self._data.get('level_shift', False)
+        return bridge.Utils.str_to_bool(self._data.get('level_shift', False))
 
     def _set_level_shift(self, value):
-        self._data['level_shift'] = bool(value)
+        value = value.to_upper()
+        v = False
+        if (value == 'YES' or
+            value == 'TRUE' or
+            value == 1):
+            v = True
+        self._data['level_shift'] = v
 
     level_shift = property(_get_level_shift, _set_level_shift)
 
@@ -629,47 +635,47 @@ class PdfParam(object):
 
     # basis set name
     def get_basisset_name(self, atomlabel):
-        atomlabel = bridge.Utils.byte2str(atomlabel)
+        atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_name', {})
         return self._data['basisset_name'].get(atomlabel, '')
 
     def set_basisset_name(self, atomlabel, value):
-        atomlabel = bridge.Utils.byte2str(atomlabel)
+        atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_name', {})
-        self._data['basisset_name'][atomlabel] = bridge.Utils.byte2str(value)
+        self._data['basisset_name'][atomlabel] = bridge.Utils.to_unicode(value)
 
 
     def get_basisset_j_name(self, atomlabel):
-        atomlabel = bridge.Utils.byte2str(atomlabel)
+        atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_j_name', {})
         return self._data['basisset_j_name'].get(atomlabel, '')
 
     def set_basisset_j_name(self, atomlabel, value):
-        atomlabel = bridge.Utils.byte2str(atomlabel)
+        atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_j_name', {})
-        self._data['basisset_j_name'][atomlabel] = bridge.Utils.byte2str(value)
+        self._data['basisset_j_name'][atomlabel] = bridge.Utils.to_unicode(value)
 
 
     def get_basisset_xc_name(self, atomlabel):
-        atomlabel = bridge.Utils.byte2str(atomlabel)
+        atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_xc_name', {})
         return self._data['basisset_xc_name'].get(atomlabel, '')
 
     def set_basisset_xc_name(self, atomlabel, value):
-        atomlabel = bridge.Utils.byte2str(atomlabel)
+        atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_xc_name', {})
-        self._data['basisset_xc_name'][atomlabel] = bridge.Utils.byte2str(value)
+        self._data['basisset_xc_name'][atomlabel] = bridge.Utils.to_unicode(value)
 
 
     def get_basisset_gridfree_name(self, atomlabel):
-        atomlabel = bridge.Utils.byte2str(atomlabel)
+        atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_gridfree_name', {})
         return self._data['basisset_gridfree_name'].get(atomlabel, '')
 
     def set_basisset_gridfree_name(self, atomlabel, value):
-        atomlabel = bridge.Utils.byte2str(atomlabel)
+        atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_gridfree_name', {})
-        self._data['basisset_gridfree_name'][atomlabel] = bridge.Utils.byte2str(value)
+        self._data['basisset_gridfree_name'][atomlabel] = bridge.Utils.to_unicode(value)
 
     def get_basisset(self, atom_label):
         return self._get_basisset_common(atom_label, 'basis_set')
@@ -699,7 +705,7 @@ class PdfParam(object):
         """
         原子(ラベル)名のBasisSetがあれば、そのBasisSetオブジェクトを返す
         """
-        atom_label = bridge.Utils.byte2str(atom_label)
+        atom_label = bridge.Utils.to_unicode(atom_label)
         answer = pdf.BasisSet()
         if key in self._data:
             answer = self._data[key].get(atom_label, pdf.BasisSet())
@@ -710,7 +716,7 @@ class PdfParam(object):
         """
         原子(ラベル)名にBasisSetオブジェクトを設定する
         """
-        atom_label = bridge.Utils.byte2str(atom_label)
+        atom_label = bridge.Utils.to_unicode(atom_label)
         self._data.setdefault(key, {})
         if isinstance(basisset, str) == True:
             basis2 = pdf.Basis2()

@@ -66,7 +66,7 @@ def get_default_pdfparam():
     pdf.run_pdf(['init-param', '-v', '-o', tempfile_path])
     f = open(tempfile_path, "rb")
     tempdata = msgpack.unpackb(f.read())
-    tempdata = bridge.Utils.byte2str(tempdata)
+    tempdata = bridge.Utils.to_unicode_dict(tempdata)
     f.close()
 
     # remove temp
@@ -161,7 +161,7 @@ def mpac2py(path):
 
     f = open(path, "rb")
     contents = f.read()
-    data = bridge.Utils.byte2str(msgpack.unpackb(contents))
+    data = bridge.Utils.to_unicode_dict(msgpack.unpackb(contents))
     f.close()
 
     return data
