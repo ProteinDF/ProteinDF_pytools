@@ -27,6 +27,8 @@ import subprocess
 import fcntl
 import select
 
+import pdfbridge
+
 class Process(object):
     '''
     create Process object.
@@ -119,6 +121,7 @@ class Process(object):
             ready = select.select(to_check, [], [])
             if stdout_fd in ready[0]:
                 stdout_chunk = stdout.read()
+                stdout_chunk = pdfbridge.Utils.to_unicode(stdout_chunk)
                 if stdout_chunk == '':
                     stdout_eof = True
                 else:
@@ -129,6 +132,7 @@ class Process(object):
                     #stdout_data.append(stdout_chunk)
             if stderr_fd in ready[0]:
                 stderr_chunk = stderr.read()
+                stderr_chunk = pdfbridge.Utils.to_unicode(stderr_chunk)
                 if stderr_chunk == '':
                     stderr_eof = True
                 else:
