@@ -840,7 +840,7 @@ class PdfParam(object):
         output += "    level_shift/virtual_mo = {0}\n".format(self.level_shift_virtual_mo)
         output += "    \n"
         output += "    # === extras === \n"
-        for k, v in self.extra_keywords.iteritems():
+        for k, v in self.extra_keywords.items():
             output += "    {} = {}\n".format(k, v)
         output += "\n"
         output += ">>>>MOLECULE\n"
