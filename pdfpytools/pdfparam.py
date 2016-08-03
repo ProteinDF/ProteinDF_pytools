@@ -1020,12 +1020,15 @@ class PdfParam(object):
                 del odict['control']['scf_converged']
         del odict['control']
 
-        self.orbital_independence_threshold = odict.get('orbital_independence_threshold', None)
-        del odict['orbital_independence_threshold']
-        self.orbital_independence_threshold_canonical = odict.get('orbital_independence_threshold/canonical', None)
-        del odict['orbital_independence_threshold/canonical']
-        self.orbital_independence_threshold_lowdin = odict.get('orbital_independence_threshold/lowdin', None)
-        del odict['orbital_independence_threshold/lowdin']
+        if 'orbital_independence_threshold' in odict:
+            self.orbital_independence_threshold = odict.get('orbital_independence_threshold', None)
+            del odict['orbital_independence_threshold']
+        if 'orbital_independence_threshold/canonical' in odict:
+            self.orbital_independence_threshold_canonical = odict.get('orbital_independence_threshold/canonical', None)
+            del odict['orbital_independence_threshold/canonical']
+        if 'orbital_independence_threshold/lowdin' in odict:
+            self.orbital_independence_threshold_lowdin = odict.get('orbital_independence_threshold/lowdin', None)
+            del odict['orbital_independence_threshold/lowdin']
 
         # gridfree
         if 'gridfree/orthogonalize_method' in odict:
@@ -1045,30 +1048,38 @@ class PdfParam(object):
             del odict['gridfree/dual_level']
 
         # scf acceleration
-        self.scf_acceleration = odict.get('scf_acceleration', None)
-        del odict['scf_acceleration']
+        if 'scf_acceleration' in odict:
+            self.scf_acceleration = odict.get('scf_acceleration', None)
+            del odict['scf_acceleration']
 
-        self.scf_acceleration_damping_damping_factor = odict.get('scf_acceleration/damping/damping_factor', None)
-        del odict['scf_acceleration/damping/damping_factor']
+        if 'scf_acceleration/damping/damping_factor' in odict:
+            self.scf_acceleration_damping_damping_factor = odict.get('scf_acceleration/damping/damping_factor', None)
+            del odict['scf_acceleration/damping/damping_factor']
 
-        self.scf_acceleration_damping_damping_type = odict.get('scf_acceleration/damping/damping_type', None)
-        del odict['scf_acceleration/damping/damping_type']
+        if 'scf_acceleration/damping/damping_type' in odict:
+            self.scf_acceleration_damping_damping_type = odict.get('scf_acceleration/damping/damping_type', None)
+            del odict['scf_acceleration/damping/damping_type']
 
-        self.scf_acceleration_anderson_start_number = odict.get('scf_acceleration/anderson/start_number', None)
-        del odict['scf_acceleration/anderson/start_number']
+        if 'scf_acceleration/anderson/start_number' in odict:
+            self.scf_acceleration_anderson_start_number = odict.get('scf_acceleration/anderson/start_number', None)
+            del odict['scf_acceleration/anderson/start_number']
 
-        self.scf_acceleration_anderson_damping_factor = odict.get('scf_acceleration/anderson/damping_factor', None)
-        del odict['scf_acceleration/anderson/damping_factor']
+        if 'scf_acceleration/anderson/damping_factor' in odict:
+            self.scf_acceleration_anderson_damping_factor = odict.get('scf_acceleration/anderson/damping_factor', None)
+            del odict['scf_acceleration/anderson/damping_factor']
         
         # convergence
-        self.convergence_threshold = odict.get('convergence/threshold', None)
-        del odict['convergence/threshold']
+        if 'convergence/threshold' in odict:
+            self.convergence_threshold = odict.get('convergence/threshold', None)
+            del odict['convergence/threshold']
 
-        self.convergence_type = odict.get('convergence/type', None)
-        del odict['convergence/type']
+        if 'convergence/type' in odict:
+            self.convergence_type = odict.get('convergence/type', None)
+            del odict['convergence/type']
 
-        self.convergence_threshold_energy = odict.get('convergence/threshold_energy', None)
-        del odict['convergence/threshold_energy']
+        if 'convergence/threshold_energy' in odict:
+            self.convergence_threshold_energy = odict.get('convergence/threshold_energy', None)
+            del odict['convergence/threshold_energy']
 
         
         # coordinates
