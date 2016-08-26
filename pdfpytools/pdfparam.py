@@ -20,6 +20,7 @@
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import logging
 import hashlib
 import pickle
 import types
@@ -40,6 +41,8 @@ class PdfParam(object):
     ProteinDF parameter file (pdfparam)を扱うクラス
     """
     def __init__(self, rhs = None):
+        self._logger = logging.getLogger(__name__)
+
         self._data = {}
         if isinstance(rhs, PdfParam):
             self._data = copy.deepcopy(rhs._data)
@@ -1152,6 +1155,14 @@ class PdfParam(object):
                 gradient = gradient_dat[atom_index]
                 self.set_gradient(atom_index, gradient[0], gradient[1], gradient[2])
             del odict['gradient']
+        elif 'force' in odict:
+            self._logger.warning('parameter "force" is ABSOLUTE.')
+            gradient_dat = odict.get('force')
+            for atom_index in range(len(gradient_dat)):
+                gradient = gradient_dat[atom_index]
+                self.set_gradient(atom_index, gradient[0], gradient[1], gradient[2])
+            del odict['force']
+            
 
         # 未入力部分をマージ
         self._data.update(odict)

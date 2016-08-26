@@ -429,6 +429,7 @@ class PdfArchive(object):
                 value = values[0]['iterations']
         return value
 
+    
     def _get_scf_converged(self):
         value = None
         table_name = 'conditions'
@@ -751,6 +752,22 @@ class PdfArchive(object):
         
             
     # compare ------------------------------------------------------------------
+    def compare_simple(self, other):
+        answer = True
+        answer = answer & self._check(self.num_of_AOs, other.num_of_AOs,
+                                      'num_of_AOs')
+        answer = answer & self._check(self.num_of_MOs, other.num_of_MOs,
+                                      'num_of_MOs')
+        answer = answer & self._check(self.scf_converged, other.scf_converged,
+                                      'scf_converged')
+        
+        TE_self = self.get_total_energy(self.iterations)
+        TE_other = other.get_total_energy(other.iterations)
+        answer = answer & self._check(TE_self, TE_other,
+                                      'TE')
+
+        return answer
+        
     def __eq__(self, other):
         answer = True
         answer = answer & self._check(self.num_of_AOs, other.num_of_AOs,

@@ -42,6 +42,9 @@ def main():
     parser.add_argument('FILE2',
                         nargs=1,
                         help='ProteinDF parameter file2')
+    parser.add_argument('-s', '--simple',
+                        action='store_true',
+                        default=False)
     parser.add_argument('-v', '--verbose',
                         action='store_true',
                         default=False)
@@ -50,8 +53,10 @@ def main():
                         default=False)
     args = parser.parse_args()
 
+    do_simple = args.simple
     verbose = args.verbose
     logging.basicConfig()
+    logger = logging.getLogger(__name__)
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
     else:
@@ -67,13 +72,21 @@ def main():
 
     data1 = pdf.PdfArchive(path1)
     data2 = pdf.PdfArchive(path2)
-    
-    if data1 == data2:
-        logging.debug('ProteinDF results are OK.')
-        sys.exit(0)
+
+    if do_simple:
+        if data1.compare_simple(data2):
+            logger.info('check simple: results are OK.')
+            sys.exit(0)
+        else:
+            logger.error('ProteinDF results are not consistent.')
+            sys.exit(1)
     else:
-        logging.error('ProteinDF results are not consistent.')
-        sys.exit(1)
+        if data1 == data2:
+            logger.debug('ProteinDF results are OK.')
+            sys.exit(0)
+        else:
+            logger.error('ProteinDF results are not consistent.')
+            sys.exit(1)
 
         
 if __name__ == '__main__':
