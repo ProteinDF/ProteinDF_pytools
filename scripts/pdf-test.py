@@ -42,19 +42,40 @@ def main():
     parser.add_argument('FILE2',
                         nargs=1,
                         help='ProteinDF parameter file2')
-    parser.add_argument('-s', '--simple',
-                        action='store_true',
-                        default=False)
     parser.add_argument('-v', '--verbose',
                         action='store_true',
                         default=False)
     parser.add_argument('-d', '--debug',
                         action='store_true',
                         default=False)
+    parser.add_argument('-s', '--simple',
+                        action='store_true',
+                        default=False,
+                        help='compare "TE"')
+    parser.add_argument('--compare-energy',
+                        action='store_true',
+                        help='check TE',
+                        default=False)
+    parser.add_argument('--compare-pop',
+                        action='store_true',
+                        help='check population',
+                        default=False)
+    parser.add_argument('--compare-grad',
+                        action='store_true',
+                        help='check gradient',
+                        default=False)
     args = parser.parse_args()
 
-    do_simple = args.simple
     verbose = args.verbose
+    debug = args.debug
+
+    compare_energy = False
+    if args.simple:
+        compare_energy = True
+    compare_energy = args.compare_energy
+    compare_pop = args.compare_pop
+    compare_grad = args.compare_grad
+    
     logging.basicConfig()
     logger = logging.getLogger(__name__)
     if args.debug:
@@ -62,6 +83,9 @@ def main():
     else:
         logging.basicConfig(level=logging.WARNING)
 
+    if debug:
+        print('compare grad: {}'.format(compare_grad))
+        
     path1 = args.FILE1[0]
     path2 = args.FILE2[0]
 
@@ -73,21 +97,28 @@ def main():
     data1 = pdf.PdfArchive(path1)
     data2 = pdf.PdfArchive(path2)
 
-    if do_simple:
-        if data1.compare_simple(data2):
-            logger.info('check simple: results are OK.')
-            sys.exit(0)
-        else:
-            logger.error('ProteinDF results are not consistent.')
-            sys.exit(1)
-    else:
-        if data1 == data2:
-            logger.debug('ProteinDF results are OK.')
-            sys.exit(0)
-        else:
-            logger.error('ProteinDF results are not consistent.')
-            sys.exit(1)
 
+    # check ------------------------------------------------------------
+    answer = True
+    if compare_energy:
+        answer = answer & data1.compare_energy(data2)
+        logger.debug('check TE: {}', answer)
+
+    if compare_pop:
+        answer = answer & data1.compare_pop(data2)
+        logger.debug('check pop: {}', answer)
+        
+    if compare_grad:
+        answer = data1.compare_grad(data2)
+        logger.debug('check grad: {}', answer)
+
+    # output -----------------------------------------------------------
+    if answer:
+        logger.info('check OK')
+        sys.exit(0)
+    else:
+        logger.error('ProteinDF results are not consistent.')
+        sys.exit(1)
         
 if __name__ == '__main__':
     main()
