@@ -25,7 +25,7 @@ from __future__ import absolute_import
 from .pdfcommon import epsilon, error
 #from pdfcommon import NullHandler
 from .pdfcommon import pdf_home, get_default_pdfparam, set_basisset, run_pdf
-from .pdfcommon import mpac2py, load_pdfparam
+from .pdfcommon import mpac2py, load_pdfparam, save_pdfparam
 
 from .process import Process
 

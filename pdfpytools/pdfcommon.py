@@ -171,3 +171,11 @@ def load_pdfparam(pdfparam_path='pdfparam.mpac'):
     param = pdf.PdfParam(data)
 
     return param
+
+def save_pdfparam(pdfparam_data, pdfparam_path):
+    assert(isinstance(pdfparam_path, str))
+    raw_data = pdfparam_data.get_raw_data()
+    data = msgpack.packb(raw_data)
+    
+    with open(pdfparam_path, 'wb') as f:
+        f.write(data)
