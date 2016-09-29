@@ -9,12 +9,9 @@ try:
 except:
     import msgpack_pure as msgpack
 import math
-import copy
-
+    
 import pdfbridge as bridge
 import pdfpytools as pdf
-
-import sklearn.linear_model as lm
 
 class ESP_charge(object):
     def get_RRMS(self, mpac_path, atoms):
@@ -73,85 +70,123 @@ class ESP_charge(object):
 
         return esp
 
+   
 
-class Ridge(object):
-    def __init__(self, alpha=1.0):
-        self._alpha = alpha
-        self._coef = None
+class Resp(object):
+    def __init__(self, alpha=0.0005, beta=0.1, refs=None, max_iter=1000, tol=0.0001):
+        self._alpha = float(alpha)
+        self._beta = float(beta)
+        self._refs = refs
+        self._max_iter = int(max_iter)
+        self._iter = 0
         
-    def fit(self, X, y):
-        '''
-        X: design matrix (n x b)
-        '''
-        n = X.rows
-        b = X.cols
-        assert(y.size() == n)
+        self._conv_threshold = float(tol)
+        self._num_of_converged = 0
+        self._is_converged = False
+        self._coef = None
 
-        tX = pdf.Matrix(X)
-        tX.transpose()
-        tXX = tX * X
-
-        rI = bridge.identity_matrix(b)
-        rI *= self._alpha
-
-        M = (tXX + rI)
-        Minv = M.inverse();
-
-        MinvX = Minv * tX
-        self._coef = MinvX * y
-
-    def fit_lagrangian(self, X, y):
-        '''
-        X: design matrix (n x b)
-        '''
-        print('>>> lagrangian')
-        n = X.rows
-        b = X.cols
-        assert(y.size() == n)
-
-        tX = pdf.Matrix(X)
-        tX.transpose()
-        tXX = tX * X
-
-        rI = bridge.identity_matrix(b)
-        rI.set(b -1, b -1, 0.0)
-        rI *= self._alpha
-
-        # 一般化逆行列を使う方法
-        M = (tXX + rI)
-        Minv = M.inverse();
-
-        MinvX = Minv * tX
-        self._coef = MinvX * y
-
-    def fit_atomic_charges(self, X, y):
-        '''
-        X: design matrix (n x n)
-        電荷計算用に特化したもの(最後のモデル変数が総電荷用lambda)
-        '''
-        print('>>> fit ridge atomic charges')
-        n = X.rows
-        assert(n == X.cols)
-        assert(y.size() == n)
-
-        rI = bridge.identity_matrix(n)
-        rI.set(n -1, n -1, 0.0)
-        rI *= self._alpha
-
-        M = X + rI
-        Minv = M.inverse()
-        self._coef = Minv * y
-
+    @property
+    def iterations(self):
+        return self._iter
+        
+    @property
+    def is_converged(self):
+        return self._is_converged
         
     @property
     def coef(self):
         return self._coef
+        
+    def _is_convergence(self, iter, x, prev_x):
+        answer = False
+        if iter > 1:
+            dim = len(x)
+            
+            diff_x = x - prev_x
+            max_diff = max(abs(diff_x.max), abs(diff_x.min))
+            rms_diff = diff_x * diff_x / dim
+            print("#{} MAX delta: {} MAX RMS: {}".format(iter, max_diff, rms_diff))
+            
+            if (max_diff < self._conv_threshold * 0.1):
+                self._num_of_converged += 1
+                if self._num_of_converged >= 2:
+                    answer = True
+            else:
+                self._num_of_converged = 0
+            
+        return answer
 
+    def fit_q(self, model_mat, predicted):
+        print('>>> fit RESP charges')
+        dim = model_mat.rows
+        assert(dim == model_mat.cols)
+        assert(predicted.size() == dim)
+
+        # initial guess
+        coef = bridge.Vector(dim)
+        prev_coef = bridge.Vector(coef)
+        if self._refs == None:
+            self._refs = bridge.Vector(dim)
+        
+        for self._iter in range(1, self._max_iter +1):
+            A = bridge.Matrix(model_mat)
+            y = bridge.Vector(predicted)
+            for i in range(dim -1):
+                v = A.get(i, i)
+                A.set(i, i, v - 2.0 * A.self._alpha * (coef[i] - self._refs[i]))
+
+            invA = A.inverse()
+            coef = invA * y
+
+            if self._is_convergence(self._iter, coef, prev_coef):
+                self._is_converged = True
+                break
+            prev_coef = bridge.Vector(coef)
+        
+        self._coef = coef
+
+
+    def fit_h(self, model_mat, predicted):
+        print('>>> fit RESP charges (hyperbolic)')
+        dim = model_mat.rows
+        assert(dim == model_mat.cols)
+        assert(predicted.size() == dim)
+
+        # initial guess
+        coef = bridge.Vector(dim)
+        prev_coef = bridge.Vector(coef)
+        if self._refs == None:
+            self._refs = bridge.Vector(dim)
+
+        b = self._beta
+        b2 = b * b
+        for self._iter in range(1, self._max_iter +1):
+            A = bridge.Matrix(model_mat)
+            y = bridge.Vector(predicted)
+            for i in range(dim -1):
+                v = A.get(i, i)
+                q = coef[i]
+                q2 = q * q
+                v += self._alpha * math.sqrt(q2 + b2)
+                A.set(i, i, v)
+
+            invA = A.inverse()
+            coef = invA * y
+
+            if self._is_convergence(self._iter, coef, prev_coef):
+                self._is_converged = True
+                break
+            prev_coef = bridge.Vector(coef)
+        
+        self._coef = coef
+        
+        
 def get_charge(x):
     charge = 0.0
     for i in range(len(x) -1):
         charge += x[i]
     return charge
+
 
 def set_atomlist(atom_charges, atomlist):
     q_total = 0.0
@@ -162,10 +197,10 @@ def set_atomlist(atom_charges, atomlist):
         print(atomlist[i])
     print('charge={:.3f}'.format(q_total))
 
-    
+
 def main():
     # parse args
-    parser = argparse.ArgumentParser(description='ridge')
+    parser = argparse.ArgumentParser(description='lasso')
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-d', '--db',
@@ -179,20 +214,35 @@ def main():
                        const='pdfparam.mpac',
                        help='ProteinDF parameter file')
 
+    parser.add_argument("-m", "--max_iterations",
+                        type=int,
+                        nargs=1,
+                        action='store',
+                        default=['1000'],
+                        help="ridge alpha")
+    parser.add_argument("-t", "--tolerance",
+                        type=float,
+                        nargs=1,
+                        action='store',
+                        default=['0.0001'],
+                        help="ridge alpha")
     parser.add_argument("--alpha",
                         type=float,
                         nargs=1,
                         action='store',
-                        default=['1.0'],
+                        default=['0.0005'],
+                        help="RESP alpha")
+    parser.add_argument("--beta",
+                        type=float,
+                        nargs=1,
+                        action='store',
+                        default=['0.1'],
                         help="ridge alpha")
     parser.add_argument("-e", "--espdat",
                         nargs=1,
                         action='store',
                         default=['grid-esp.mpac'],
-                        help="ESP values on grids by msgpack format")
-    parser.add_argument("-s", "--use_scikit_learn",
-                        action='store_true',
-                        help="use scikit-learn module")
+                        help="ridge alpha")
     parser.add_argument("--csv",
                         type=str,
                         nargs=1,
@@ -215,12 +265,14 @@ def main():
     design_matrix_path = args.design_matrix_path
     target_vector_path = args.target_vector_path
     output_csv_path = args.csv[0]
-    use_scikit_learn = args.use_scikit_learn
     verbose = args.verbose
-    tol = 1.0e-3
+    max_iter = args.max_iterations[0]
+    tol = args.tolerance[0] # 0.0001
     alpha = float(args.alpha[0])
+    beta = float(args.beta[0])
     if verbose:
         print("alpha={}".format(alpha))
+        print("beta={}".format(beta))
     esp_data_path = args.espdat[0]
     
     atomlist = []
@@ -232,7 +284,7 @@ def main():
         for k, atom in atomgroup.atoms():
             if atom.symbol != 'X':
                 atomlist.append(atom)
-
+    
     # load design matrix
     # design matrix size = (atom +1) * (atom +1): +1 for lagurange parameter of MK
     X = pdf.Matrix()
@@ -248,36 +300,12 @@ def main():
     y.load(target_vector_path)
 
     atom_charges = []
-    if use_scikit_learn:
-        print('use scikit-learn module')
-        print('alpha={}'.format(alpha))
-        import sklearn.linear_model as lm
-        ridge = lm.Ridge(alpha=alpha, fit_intercept=False)
-        X.resize(X.rows -1, X.cols -1)
-        y.resize(len(y) -1)
-        ridge.fit(X.get_ndarray(), y.get_ndarray())
-        # print(ridge.coef_)
-        # print('charge={:.6f}'.format(get_charge(ridge.coef_)))
-        # atom_charges = ridge.coef_[:-1]
-        atom_charges = ridge.coef_[:]
-        set_atomlist(atom_charges, atomlist)
-    else:    
-        ridge = Ridge(alpha=alpha)
-
-        ridge.fit_atomic_charges(X, y)
-        atom_charges = ridge.coef[:-1]
-        set_atomlist(atom_charges, atomlist)
-        
-        # debug
-        #X.resize(X.rows -1, X.cols -1)
-        #y.resize(len(y) -1)
-        #ridge.fit(X, y) # same as scikit-learn
-        #atom_charges = ridge.coef[:]
-        #set_atomlist(atom_charges, atomlist)
-        
-        #ridge.fit_atomic_charges(X, y)
-        #atom_charges = ridge.coef[:-1]
-        #set_atomlist(atom_charges, atomlist)
+    resp = Resp(alpha=alpha, beta=beta, refs=None, max_iter=max_iter, tol=tol)
+    resp.fit_h(X, y)
+    print(resp.iterations)
+    print(resp.is_converged)
+    atom_charges = resp.coef[:-1]
+    set_atomlist(atom_charges, atomlist)
 
     # RRMS
     esp_charge = ESP_charge()

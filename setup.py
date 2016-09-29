@@ -49,7 +49,11 @@ setup(name='ProteinDF_pytools',
           'scripts/pdf-test-eri.py',
           'scripts/g0xeri2mpac.py',
           'scripts/pdf-pop-lasso.py',
-          'scripts/pdf-pop-ridge.py'
+          'scripts/pdf-pop-ridge.py',
+          'scripts/pdf-pop-elasticnet.py',
+          'scripts/pdf-pop-resp.py',
+          'scripts/pdf-pop-rrms.py',
+          'scripts/pdf-set-charges.py'
       ],
       data_files=[
           ('data', ['data/basis2.cache'])

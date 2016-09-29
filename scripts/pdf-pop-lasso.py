@@ -80,9 +80,14 @@ class Lasso(object):
         self._iter = 0
         
         self._conv_threshold = tol
+        self._num_of_converged = 0
         self._is_converged = False
         self._coef = None
         # self._intercept = None
+
+    @property
+    def iterations(self):
+        return self._iter
         
     @property
     def is_converged(self):
@@ -127,6 +132,8 @@ class Lasso(object):
                 self._is_converged = True
                 break
 
+            #print(self._iter)
+            #print(beta)
             prev_beta = pdf.Vector(beta)
 
         self._coef = beta
@@ -136,23 +143,35 @@ class Lasso(object):
         raise
         
     def _soft_thresholding_operator(self, x, lambda_):
-        if abs(x) <= lambda_:
-            return 0
-        elif x > lambda_:
+        if x > 0 and lambda_ < abs(x):
             return x - lambda_
-        else:
+        elif x < 0 and lambda_ < abs(x):
             return x + lambda_
-        
+        else:
+            return 0
+        #if abs(x) <= lambda_:
+        #    return 0
+        #elif x > lambda_:
+        #    return x - lambda_
+        #else:
+        #    return x + lambda_
+       
     def _is_convergence(self, iter, x, prev_x):
         answer = False
         if iter > 1:
             dim = len(x)
             
             diff_x = x - prev_x
-            max_diff = diff_x.max
-
-            if (max_diff < self._conv_threshold):
-                answer = True
+            max_diff = max(abs(diff_x.max), abs(diff_x.min))
+            rms_diff = diff_x * diff_x / dim
+            print("#{} MAX delta: {} MAX RMS: {}".format(iter, max_diff, rms_diff))
+            
+            if (max_diff < self._conv_threshold * 0.1):
+                self._num_of_converged += 1
+                if self._num_of_converged >= 2:
+                    answer = True
+            else:
+                self._num_of_converged = 0
             
         return answer
 
@@ -181,13 +200,49 @@ class Lasso(object):
                 self._is_converged = True
                 print("iter={}".format(self._iter))
                 break
+
+    def fit_TH(self, X, y):
+        print('>>> fit lasso atomic charges')
+        n = X.rows
+        assert(n == X.cols)
+        assert(y.size() == n)
+
+        # initial guess
+        coef = bridge.Vector(n)
+        prev_coef = bridge.Vector(coef)
+
+        for self._iter in range(1, self._max_iter +1):
+            rI = bridge.SymmetricMatrix(n)
+            for i in range(n -1):
+                rI.set(i, i, abs(coef[i]))
+            rI *= self._alpha
+
+            M = X + rI
+            Minv = M.inverse()
+            coef = Minv * y
+
+            if self._is_convergence(self._iter, coef, prev_coef):
+                self._is_converged = True
+                break
+            prev_coef = bridge.Vector(coef)
         
+        self._coef = coef
     
 def get_charge(x):
     charge = 0.0
     for i in range(len(x) -1):
         charge += x[i]
     return charge
+
+
+def set_atomlist(atom_charges, atomlist):
+    q_total = 0.0
+    for i in range(len(atom_charges)):
+        q = atom_charges[i];
+        atomlist[i].charge = q;
+        q_total += q
+        print(atomlist[i])
+    print('charge={:.3f}'.format(q_total))
 
 
 def main():
@@ -206,6 +261,18 @@ def main():
                        const='pdfparam.mpac',
                        help='ProteinDF parameter file')
 
+    parser.add_argument("-m", "--max_iterations",
+                        type=int,
+                        nargs=1,
+                        action='store',
+                        default=['1000'],
+                        help="ridge alpha")
+    parser.add_argument("-t", "--tolerance",
+                        type=float,
+                        nargs=1,
+                        action='store',
+                        default=['0.0001'],
+                        help="ridge alpha")
     parser.add_argument("--alpha",
                         type=float,
                         nargs=1,
@@ -244,7 +311,8 @@ def main():
     output_csv_path = args.csv[0]
     use_scikit_learn = args.use_scikit_learn
     verbose = args.verbose
-    tol = 1.0e-3
+    max_iter = args.max_iterations[0]
+    tol = args.tolerance[0] # 0.0001
     alpha = float(args.alpha[0])
     if verbose:
         print("alpha={}".format(alpha))
@@ -260,6 +328,8 @@ def main():
             if atom.symbol != 'X':
                 atomlist.append(atom)
     
+    # load design matrix
+    # design matrix size = (atom +1) * (atom +1): +1 for lagurange parameter of MK
     X = pdf.Matrix()
     if pdf.Matrix.is_loadable(design_matrix_path):
         X.load(design_matrix_path)
@@ -275,28 +345,34 @@ def main():
     atom_charges = []
     if use_scikit_learn:
         print('use scikit-learn module')
+        print('alpha={}'.format(alpha))
         import sklearn.linear_model as lm
-        lasso = lm.Lasso(alpha=alpha, fit_intercept=False, max_iter=1000, tol=tol)
+        lasso = lm.Lasso(alpha=alpha, fit_intercept=False, max_iter=max_iter, tol=tol)
+        X.resize(X.rows -1, X.cols -1)
+        y.resize(len(y) -1)
         lasso.fit(X.get_ndarray(), y.get_ndarray())
         # print(lasso.intercept_)
-        atom_charges = lasso.coef_[:-1]
+        # atom_charges = lasso.coef_[:-1]
+        atom_charges = lasso.coef_[:]
+        set_atomlist(atom_charges, atomlist)
     else:
-        lasso = Lasso(alpha=alpha, max_iter=1000, tol=tol)
-        # lasso.fit(X=X, y=y)
-        lasso.fit_atomic_charges(X=X, y=y)
-        # print(lasso.is_converged)
-        # print(lasso.intercept)
+        lasso = Lasso(alpha=alpha, max_iter=max_iter, tol=tol)
+        lasso.fit_TH(X=X, y=y)
+        print(lasso.iterations)
+        print(lasso.is_converged)
         atom_charges = lasso.coef[:-1]
-    
-    # set atomic charge to atom list
-    q_total = 0.0
-    for i in range(len(atomlist)):
-        q = atom_charges[i];
-        atomlist[i].charge = q;
-        q_total += q
-        print(atomlist[i])
-    print('charge={:.3f}'.format(q_total))
+        set_atomlist(atom_charges, atomlist)
 
+        # debug
+        #X.resize(X.rows -1, X.cols -1)
+        #y.resize(len(y) -1)
+        #lasso.fit(X=X, y=y) # same as scikit-learn
+        #print(lasso.iterations)
+        #print(lasso.is_converged)
+        #atom_charges = lasso.coef[:]
+        #set_atomlist(atom_charges, atomlist)
+        
+        
     # RRMS
     esp_charge = ESP_charge()
     rrms = esp_charge.get_RRMS(esp_data_path, atomlist)
