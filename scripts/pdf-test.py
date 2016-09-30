@@ -78,13 +78,20 @@ def main():
     
     logging.basicConfig()
     logger = logging.getLogger(__name__)
+    handler = logging.StreamHandler()
     if args.debug:
-        logging.basicConfig(level=logging.DEBUG)
+        #handler.setLevel(logging.DEBUG)
+        logger.setLevel(logging.DEBUG)
+        #logging.basicConfig(level=logging.DEBUG)
     else:
-        logging.basicConfig(level=logging.WARNING)
+        #handler.setLevel(logging.WARNING)
+        logger.setLevel(logging.INFO)
+        #logging.basicConfig(level=logging.WARNING)
+    #logger.addHandler(handler)
 
-    if debug:
-        print('compare grad: {}'.format(compare_grad))
+    logger.debug('checking TE: {}'.format(compare_energy))
+    logger.debug('checking pop: {}'.format(compare_pop))
+    logger.debug('checking grad: {}'.format(compare_grad))
         
     path1 = args.FILE1[0]
     path2 = args.FILE2[0]
@@ -102,15 +109,15 @@ def main():
     answer = True
     if compare_energy:
         answer = answer & data1.compare_energy(data2)
-        logger.debug('check TE: {}', answer)
+        logger.debug('check TE: {}'.format(answer))
 
     if compare_pop:
         answer = answer & data1.compare_pop(data2)
-        logger.debug('check pop: {}', answer)
+        logger.debug('check pop: {}'.format(answer))
         
     if compare_grad:
         answer = data1.compare_grad(data2)
-        logger.debug('check grad: {}', answer)
+        logger.debug('check grad: {}'.format(answer))
 
     # output -----------------------------------------------------------
     if answer:

@@ -845,7 +845,7 @@ class PdfArchive(object):
         answer = True
 
         TE_self = self.get_total_energy(self.iterations)
-        TE_other = other.get_total_energy(other.iterations)
+        TE_other = rhs.get_total_energy(rhs.iterations)
         answer = answer & self._check(TE_self, TE_other,
                                       'TE')
 
@@ -864,15 +864,23 @@ class PdfArchive(object):
         pop1 = self.get_population('mulliken', itr1)
         pop2 = rhs.get_population('mulliken', itr2)
 
-        answer = answer & self._check(pop1.rows,
-                                      pop2.rows,
-                                      'pop rows')
-        answer = answer & self._check(pop1.cols,
-                                      pop2.cols,
-                                      'pop cols')
-        answer = answer & self._check(pop1, pop2,
-                                      'pop matrix')
-        
+        if isinstance(pop1, bridge.Matrix):
+            if isinstance(pop2, bridge.Matrix):
+                answer = answer & self._check(pop1.rows,
+                                              pop2.rows,
+                                              'pop rows')
+                answer = answer & self._check(pop1.cols,
+                                              pop2.cols,
+                                              'pop cols')
+                answer = answer & self._check(pop1, pop2,
+                                              'pop matrix')
+            else:
+                self._logger.warning('type mismatch(rhs): POP not found')
+                answer = False
+        else:
+            self._logger.warning('type mismatch(lhs): POP not found')
+            answer = False
+            
         return answer
     
     def compare_grad(self, rhs):
