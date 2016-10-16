@@ -88,7 +88,8 @@ class MakeBasis2(object):
         self._cache['ProteinDF'][bs_name] = basis2
         self._save_cache()
         self._stdout.write('# {} -------------\n'.format(bs_name))
-        self._stdout.write(basis2 + '\n')
+        if len(basis2) > 0:
+            self._stdout.write(basis2 + '\n')
 
         # uncontract shell basis set for Gridfree MRD
         if len(self._uncontract_shells) > 0:
@@ -102,7 +103,8 @@ class MakeBasis2(object):
                     uncontract_basis2 = self._get_basis2(uncontract_basis_name, uncontract_basissets)
                     self._cache['ProteinDF'][uncontract_basis_name] = uncontract_basis2
                     self._save_cache()
-                    self._stdout.write(uncontract_basis2 + '\n')
+                    if len(uncontract_basis2) > 0:
+                        self._stdout.write(uncontract_basis2 + '\n')
                 
     def _run_for_dftorb(self, bs_index, bs_name):
         bs_content = self._download_gaussian94(bs_index, bs_name)
@@ -286,7 +288,7 @@ class MakeBasis2(object):
                 else:
                     self._stderr.write('# {bs_name} is not supported: (max shell type: "{shell_type}")\n'.format(bs_name=bs.name,
                                                                                                                  shell_type=bs.max_shell_type))
-                    
+
         return basis2
 
     
