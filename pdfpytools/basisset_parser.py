@@ -22,6 +22,8 @@
 import os
 import re
 import argparse
+import logging
+logger = logging.getLogger(__name__)
 
 import pdfpytools as pdf
 
@@ -79,13 +81,22 @@ class BasisSetParser(object):
                     basissets_xc[atom] = bs
                 else:
                     sys.stderr.write('too many setup basis: {}\n{}'.format(atom, repr(bs)))
+            else:
+                logger.debug("not parse basisset block: {}".format(atom_block))
 
         return (basissets, basissets_density, basissets_xc)
 
     def _parse_block_gaussian94(self, lines):
+        # remove empty lines
+        while True:
+            if len(lines[0].rstrip()) != 0:
+                break
+            lines.pop(0)
+
         # [atom] 0
         matchObj = self._re_atom_line.match(lines[0])
         if matchObj == None:
+            logger.debug("not match regex: {}".format(lines[0]))
             return (None, None)
         atom = matchObj.group(1)
         atom = atom.capitalize()
