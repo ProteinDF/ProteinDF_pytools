@@ -10,34 +10,54 @@ import re
 import pprint
 import pickle
 
+import logging.config
+from logging import getLogger, DEBUG, INFO
+logger = getLogger(__name__)
+
 from bs4 import BeautifulSoup
 import pdfbridge
 import pdfpytools as pdf
 
 
 class MakeBasis2(object):
-    def __init__(self, cache_path=None, output_path=None,
+    def __init__(self,
+                 alias_path=None,
+                 cache_path=None,
+                 output_path=None,
                  uncontract_shells='spd',
-                 verbose=False, header="",
+                 force_download = False,
+                 verbose=False,
                  debug=False):
         self._uncontract_shells = uncontract_shells
+        self._force_download = force_download
         self._debug = debug
+
+        self._load_alias(alias_path)
         
         self._cache = {}
         self._cache_path = cache_path
 
         self._stdout = sys.stdout
         if output_path != None:
-            self._stdout = open(output_path, 'w')
-        self._stderr = open(os.devnull, 'w')
-        if verbose:
-            self._stderr = sys.stderr
+            self._stdout = open(output_path, 'a')
+        # self._stderr = open(os.devnull, 'a')
+        #if verbose:
+        #    self._stderr = sys.stderr
 
         self._load_cache()
-        self.run(output_path=output_path,
-                 header=header)
+
+    def _alias2real(self, alias):
+        real_name = alias
+        if alias in self._alias.keys():
+            real_name = self._alias[alias]
+        return real_name
         
-    def run(self, output_path=None, header=""):
+    def show_list(self):
+        bs_index = self._get_basissets_index()
+        for bs in bs_index.keys():
+            self._stdout.write(bs + "\n")
+        
+    def run(self, basisset_list=[], header=""):
         # output header
         self._stdout.write(header + '\n')
 
@@ -46,36 +66,54 @@ class MakeBasis2(object):
 
         self._cache.setdefault('Gaussian94', {})
         self._cache.setdefault('ProteinDF', {})
-        num_of_items = len(bs_index.keys())
-        count = 1
-        for bs_name in bs_index.keys():
-            self._stderr.write('### {0:>4}/{1:>4}\n'.format(count, num_of_items))
-            
+
+        if len(basisset_list) == 0:
+            basisset_list = bs_index.keys()
+
+        num_of_items = len(basisset_list)
+        count = 0
+        for bs_name in basisset_list:
+            logger.info('### {0:>4}/{1:>4}'.format(count +1, num_of_items))
+            self._run_basisset(bs_index, bs_name)
+            count += 1
+        assert(num_of_items == count)
+
+
+    def _run_basisset(self, bs_index, alias):
+        bs_name = self._alias2real(alias)
+
+        logger.debug("run getting basisset: {}".format(bs_name))
+        if bs_name in bs_index:
             is_parsed = False
             if bs_index[bs_name]['status'] == 'published':
                 if bs_index[bs_name]['type'] == 'orbital':
-                    self._run_for_orbital(bs_index, bs_name)
+                    self._run_for_orbital(bs_index, alias)
                     is_parsed = True
                 elif bs_index[bs_name]['type'] == 'dftorb':
-                    self._run_for_dftorb(bs_index, bs_name)
+                    self._run_for_dftorb(bs_index, alias)
                     is_parsed = True
                 else:
-                    self._run_for_others(bs_index, bs_name)
-
+                    self._run_for_others(bs_index, alias)
+        
             if not is_parsed:
-                self._stderr.write("# pass: {name} ({status}; {bs_type})\n".format(name=bs_name,
-                                                                                   status=bs_index[bs_name]['status'],
-                                                                                   bs_type=bs_index[bs_name]['type']))
-                
-            count += 1
+                logger.info(
+                    "# pass: {name} ({status}; {bs_type})".format(name=bs_name,
+                                                                  status=bs_index[bs_name]['status'],
+                                                                    bs_type=bs_index[bs_name]['type']))
+        else:
+            logger.error("basisset \"{}\" is not found. ".format(bs_name))
+        
+    
+    def _run_for_orbital(self, bs_index, alias):
+        bs_name = self._alias2real(alias)
+        logger.debug("orb: [{}] -> [{}]".format(alias, bs_name))
 
-    def _run_for_orbital(self, bs_index, bs_name):
         bs_content = self._download_gaussian94(bs_index, bs_name)
-        self._stderr.write("# reg: {name} ({status}; {bs_type})\n".format(name=bs_name,
-                                                                          status=bs_index[bs_name]['status'],
-                                                                          bs_type=bs_index[bs_name]['type']))
+        logger.info("# reg: {name} ({status}; {bs_type})".format(name=bs_name,
+                                                                 status=bs_index[bs_name]['status'],
+                                                                 bs_type=bs_index[bs_name]['type']))
         if self._debug:
-            filepath = '{}-orbital.txt'.format(bs_name)
+            filepath = '{}-orbital.txt'.format(alias)
             filepath = filepath.replace(os.sep, '_')
             with open(filepath, 'wb') as f:
                 # f = codecs.EncodedFile(f, 'utf-8')
@@ -87,7 +125,7 @@ class MakeBasis2(object):
         basis2 = self._get_basis2('O-' + bs_name, basissets)
         self._cache['ProteinDF'][bs_name] = basis2
         self._save_cache()
-        self._stdout.write('# {} -------------\n'.format(bs_name))
+        self._stdout.write('# {} -------------\n'.format(alias))
         if len(basis2) > 0:
             self._stdout.write(basis2 + '\n')
 
@@ -106,16 +144,22 @@ class MakeBasis2(object):
                     if len(uncontract_basis2) > 0:
                         self._stdout.write(uncontract_basis2 + '\n')
                 
-    def _run_for_dftorb(self, bs_index, bs_name):
+    def _run_for_dftorb(self, bs_index, alias):
+        bs_name = self._alias2real(alias)
+        logger.debug("dft: alias[{}] -> {}".format(alias, bs_name))
+        
         bs_content = self._download_gaussian94(bs_index, bs_name)
-        self._stderr.write("# reg: {name} ({status}; {bs_type})\n".format(name=bs_name,
-                                                                          status=bs_index[bs_name]['status'],
-                                                                          bs_type=bs_index[bs_name]['type']))
+        logger.info(
+            "# reg: {name} ({status}; {bs_type})".format(name=bs_name,
+                                                         status=bs_index[bs_name]['status'],
+                                                         bs_type=bs_index[bs_name]['type']))
+        
         if self._debug:
-            filepath = '{}-dftorb.txt'.format(bs_name)
+            filepath = '{}-dftorb.txt'.format(alias)
             filepath = filepath.replace(os.sep, '_')
             with open(filepath, 'wb') as f:
-                f.write(bs_content)
+                # f = codecs.EncodedFile(f, 'utf-8')
+                f.write(pdfbridge.Utils.to_bytes(bs_content))
         
         # make basissets & basis2
         bsp = pdf.BasisSetParser()
@@ -124,21 +168,40 @@ class MakeBasis2(object):
         basis2 += self._get_basis2('A-' + bs_name, basissets_density, basissets_xc)
         self._cache['ProteinDF'][bs_name] = basis2
         self._save_cache()
-        self._stdout.write('# {} -------------\n'.format(bs_name))
+        self._stdout.write('# {} -------------\n'.format(alias))
         self._stdout.write(basis2 + '\n')
 
-    def _run_for_others(self, bs_index, bs_name):
+        # uncontract shell basis set for Gridfree MRD
+        if len(self._uncontract_shells) > 0:
+            for i in range(len(self._uncontract_shells)):
+                uncontract_shell = self._uncontract_shells[0:i+1]
+                uncontract_basissets = {}
+                for atom_symbol, bs in basissets.items():
+                    uncontract_bs = self._bs2MRD(bs, uncontract_shell)
+                    uncontract_basissets[atom_symbol] = uncontract_bs
+                    uncontract_basis_name = 'O-' + bs_name + '-{}'.format(uncontract_shell)
+                    uncontract_basis2 = self._get_basis2(uncontract_basis_name, uncontract_basissets)
+                    self._cache['ProteinDF'][uncontract_basis_name] = uncontract_basis2
+                    self._save_cache()
+                    if len(uncontract_basis2) > 0:
+                        self._stdout.write(uncontract_basis2 + '\n')
+                
+        
+    def _run_for_others(self, bs_index, alias):
+        bs_name = self._alias2real(alias)
         bs_content = self._download_gaussian94(bs_index, bs_name)
-        self._stderr.write("# reg: {name} ({status}; {bs_type})\n".format(name=bs_name,
-                                                                          status=bs_index[bs_name]['status'],
-                                                                          bs_type=bs_index[bs_name]['type']))
+        logger.info(
+            "# reg: {name} ({status}; {bs_type})".format(name=bs_name,
+                                                         status=bs_index[bs_name]['status'],
+                                                         bs_type=bs_index[bs_name]['type']))
 
         
     def _download_gaussian94(self, bs_index, bs_name):
-        if bs_name not in self._cache['Gaussian94']:
-            self._stderr.write("# get: {name} ({status}; {bs_type})\n".format(name=bs_name,
-                                                                              status=bs_index[bs_name]['status'],
-                                                                              bs_type=bs_index[bs_name]['type']))
+        if (self._force_download == True) or (bs_name not in self._cache['Gaussian94']):
+            logger.info(
+                "# get: {name} ({status}; {bs_type})".format(name=bs_name,
+                                                             status=bs_index[bs_name]['status'],
+                                                             bs_type=bs_index[bs_name]['type']))
             bs_content = self._get_bs_data(bs_name,
                                            bs_index[bs_name]['url'],
                                            bs_index[bs_name]['elements'])
@@ -146,6 +209,28 @@ class MakeBasis2(object):
             self._save_cache()
         return self._cache['Gaussian94'][bs_name]
         
+
+    def _load_alias(self, path):
+        self._alias = {}
+        re_alias = re.compile("^\s*(\S.*?)\s*=\s*(\S.*?)\s*$")
+        
+        if path != None:
+            with open(path, mode='r') as f:
+                line = f.readline()
+                while line:
+                    line = line.rstrip()
+                    if (len(line) > 0) and (line[0] != '#'):
+                        re_result = re_alias.match(line)
+                        if re_result != None:
+                            alias_name, real_name = re_result.group(1, 2)
+                            self._alias[alias_name] = real_name
+                        else:
+                            logger.error("illegal alias format: {}".format(line))
+                    line = f.readline()
+
+        # debug out
+        for alias in self._alias.keys():
+            logger.debug("alias: [{}] -> [{}]".format(alias, self._alias[alias]))
     
     
     def _load_cache(self):
@@ -171,6 +256,11 @@ class MakeBasis2(object):
 
     
     def _get_basissets_index(self):
+        '''download basisset information
+
+        retval: basisset information dict.
+        '''
+        
         url = "https://bse.pnl.gov/bse/portal/user/anon/js_peid/11535052407933/panel/Main/template/content"
         index_html = self._get_content(url)
         
@@ -263,11 +353,15 @@ class MakeBasis2(object):
         max_shell_type = 'spdfg'
 
         # escape and remove strings for basis set name
-        basissets_name = basissets_name.replace('(DFT Orbital)', '')
-        basissets_name = re.sub('\(Dunning.*\)', '', basissets_name)
+        basissets_name_old = basissets_name
+        basissets_name = basissets_name.rstrip()
+        basissets_name = basissets_name.replace(' (DFT Orbital)', '')
+        basissets_name = re.sub(' \(Dunning.*\)', '', basissets_name)
         basissets_name = basissets_name.replace(' + ', '+')
         basissets_name = re.sub(' +$', '', basissets_name)
-        basissets_name = basissets_name.replace(' ', '_')
+        basissets_name = basissets_name.rstrip()
+        #basissets_name = basissets_name.replace(' ', '_')
+        logger.debug("_get_basis2(): [{}] => [{}]".format(basissets_name_old, basissets_name))
         
         basis2 = ''
         for atom_symbol, bs in basissets.items():
@@ -279,15 +373,15 @@ class MakeBasis2(object):
                     (bs2.max_shell_type in max_shell_type)):
                     basis2 += str(bs) + '\n' + str(bs2) + '\n'
                 else:
-                    self._stderr.write('# {bs_name} is not supported: (max shell type: "{shell_type}")\n'.format(bs_name=bs.name,
-                                                                                                                 shell_type=bs.max_shell_type))
+                    logger.warning('# {bs_name} is not supported: (max shell type: "{shell_type}")'.format(bs_name=bs.name,
+                                                                                                           shell_type=bs.max_shell_type))
             else:
                 # for orbital basis
                 if bs.max_shell_type in max_shell_type:
                     basis2 += str(bs) + '\n'
                 else:
-                    self._stderr.write('# {bs_name} is not supported: (max shell type: "{shell_type}")\n'.format(bs_name=bs.name,
-                                                                                                                 shell_type=bs.max_shell_type))
+                    logger.warning('# {bs_name} is not supported: (max shell type: "{shell_type}")'.format(bs_name=bs.name,
+                                                                                                           shell_type=bs.max_shell_type))
 
         return basis2
 
@@ -298,6 +392,13 @@ def main():
                                       'basis2.cache')
     
     parser = argparse.ArgumentParser(description='make basis2 file')
+    parser.add_argument('--list',
+                        action='store_true',
+                        help='show list')
+    parser.add_argument('-a', '--alias',
+                        nargs=1,
+                        default=[None],
+                        help='text file of alias list of basisset name')
     parser.add_argument('-u', '--uncontract',
                         nargs=1,
                         default=['spd'],
@@ -310,37 +411,64 @@ def main():
                         nargs=1,
                         default=[None],
                         help='output file path')
+    parser.add_argument('-f', '--force-download',
+                        action='store_true')
     parser.add_argument('-v', '--verbose',
                         action='store_true',
                         help='show verbosely')
     parser.add_argument('-d', '--debug',
                         action='store_true',
                         help='debug use')
+    parser.add_argument('basisset_name',
+                        nargs='*',
+                        help="basisset name")
     args = parser.parse_args()
 
+    is_show_list = args.list
+    basisset_list = args.basisset_name
+    alias_path = args.alias[0]
     cache_path = args.cache[0]
     output_path = args.output[0]
     uncontract_shells = args.uncontract[0]
+    force_download = args.force_download
     verbose = args.verbose
     debug = args.debug
 
     if verbose:
-        sys.stderr.write('cache: {}\n'.format(cache_path))
-        sys.stderr.write('output: {}\n'.format(output_path))
-        sys.stderr.write('uncontract_shells: {}\n'.format(uncontract_shells))
-        sys.stderr.write('debug: {}\n'.format(debug))
-    
-    header = '##### basis2 file created by {}. #####\n'.format(parser.prog)
+        logger.info('cache: {}'.format(cache_path))
+        logger.info('alias: {}'.format(alias_path))
+        logger.info('output: {}'.format(output_path))
+        logger.info('uncontract_shells: {}'.format(uncontract_shells))
+        logger.info('debug: {}'.format(debug))
+        if len(basisset_list) > 0:
+            logger.info('basisset: ')
+            for bs_name in basisset_list:
+                logger.info('{} '.format(bs_name))
+        
+
+    header = ""
+    # header += '##### basis2 file created by {}. #####\n'.format(parser.prog)
     header += '#' * 80
     header += '\n'
-    bs2 = MakeBasis2(cache_path=cache_path,
+    bs2 = MakeBasis2(alias_path=alias_path,
+                     cache_path=cache_path,
                      output_path=output_path,
                      uncontract_shells=uncontract_shells,
+                     force_download=force_download,
                      verbose=verbose,
-                     header=header,
                      debug=debug)
+
+    if is_show_list:
+        bs2.show_list()
+    else:
+        bs2.run(basisset_list=basisset_list,
+                header=header)
+    
     
 if __name__ == '__main__':
+    if os.path.exists("config.ini"):
+        logging.config.fileConfig("config.ini",
+                                  disable_existing_loggers=False)
     main()
         
 
