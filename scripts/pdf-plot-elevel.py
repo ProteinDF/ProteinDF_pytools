@@ -50,7 +50,7 @@ def main():
                         help='output graph path')
     parser.add_argument('-l', '--level',
                         nargs=1,
-                        default=0,
+                        default=['0'],
                         help='HOMO level')
     parser.add_argument("-v", "--verbose",
                         action="store_true",

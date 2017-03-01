@@ -138,6 +138,22 @@ class DfGraph(object):
         return self._yticks
     yticks = property(_get_yticks, _set_yticks)
 
+    def _set_xticklabels(self, labels):
+        self._xticklabels = labels
+    def _get_xticklabels(self):
+        if not '_xticklabels' in self.__dict__:
+            self._xticklabels = None
+        return self._xticklabels
+    xticklabels = property(_get_xticklabels, _set_xticklabels)
+
+    def _set_yticklabels(self, labels):
+        self._yticklabels = labels
+    def _get_yticklabels(self):
+        if not '_yticklabels' in self.__dict__:
+            self._yticklabels = None
+        return self._yticklabels
+    yticklabels = property(_get_yticklabels, _set_yticklabels)
+    
     def _set_legend(self, yn):
         self._legend = bool(yn)
     def _get_legend(self):
@@ -167,6 +183,10 @@ class DfGraph(object):
             self._ax.set_xticks(self.xticks)
         if self.yticks != None:
             self._ax.set_yticks(self.yticks)
+        if self.xticklabels != None:
+            self._ax.set_xticklabels(self.xticklabels)
+        if self.yticklabels != None:
+            self._ax.set_yticklabels(self.yticklabels)
 
         if self.aspect != None:
             self._ax.set_aspect(self.aspect)
@@ -315,6 +335,10 @@ class DfEnergyLevelHistoryGraphV(DfEnergyLevelHistoryGraphH):
             self._ax.bar(left, height, width, bottom,
                          edgecolor=c, color=c)
 
+            
+    def _draw(self):
+        self._ax.tick_params(labelleft="off")
+        super(DfEnergyLevelHistoryGraphV, self)._draw()
             
 class DfLineChart(DfGraph):
     def __init__(self):

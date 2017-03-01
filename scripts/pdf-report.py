@@ -23,6 +23,9 @@ import os
 import sys
 import argparse
 import logging
+import logging.config
+logger = logging.getLogger(__name__)
+
 try:
     import msgpack
 except:
@@ -73,7 +76,7 @@ def main():
     #plot_elapsed_time(pdfdata,
     #                  workdir + '/elapsed_time.png')
     
-    #contents = get_rst(pdfdata)
+    #contents = get_rst(entry)
     #print(contents)
 
     
@@ -134,6 +137,10 @@ def plot_convergence_energy_level(entry,
         graphV.select_iterations([itr])
     else:
         graphV.select_iterations([itr -1])
+    graphV.ylabel = ''
+    graphV.is_draw_grid = False
+    graphV.y_ticks = [-1]
+    graphV.y_ticklabels = [""]
     graphV.save(graphV_path)
     
     
@@ -269,5 +276,8 @@ def get_rst(pdfdata):
     
     
 if __name__ == '__main__':
+    if os.path.exists("config.ini"):
+        logging.config.fileConfig("config.ini",
+                                  disable_existing_loggers=False)
     main()
 
