@@ -103,7 +103,14 @@ class MakeBasis2(object):
         else:
             logger.error("basisset \"{}\" is not found. ".format(bs_name))
         
-    
+
+    def _sort_atom_symbols(self, atom_symbols):
+        atom_table = [ None ] * pdfbridge.PeriodicTable.get_num_of_atoms()
+        for atom_symbol in atom_symbols:
+            atom_num = pdfbridge.PeriodicTable.get_atomic_number(atom_symbol)
+            atom_table[atom_num] = atom_symbol
+        return [ x for x in atom_table if x != None ]
+            
     def _run_for_orbital(self, bs_index, alias):
         bs_name = self._alias2real(alias)
         logger.debug("orb: [{}] -> [{}]".format(alias, bs_name))
@@ -134,7 +141,8 @@ class MakeBasis2(object):
             for i in range(len(self._uncontract_shells)):
                 uncontract_shell = self._uncontract_shells[0:i+1]
                 uncontract_basissets = {}
-                for atom_symbol, bs in basissets.items():
+                for atom_symbol in self._sort_atom_symbols(basissets.keys()):
+                    bs = basissets[atom_symbol]
                     uncontract_bs = self._bs2MRD(bs, uncontract_shell)
                     uncontract_basissets[atom_symbol] = uncontract_bs
                     uncontract_basis_name = 'O-' + bs_name + '-{}'.format(uncontract_shell)
@@ -176,7 +184,8 @@ class MakeBasis2(object):
             for i in range(len(self._uncontract_shells)):
                 uncontract_shell = self._uncontract_shells[0:i+1]
                 uncontract_basissets = {}
-                for atom_symbol, bs in basissets.items():
+                for atom_symbol in self._sort_atom_symbols(basissets.keys()):
+                    bs = basissets[atom_symbol]
                     uncontract_bs = self._bs2MRD(bs, uncontract_shell)
                     uncontract_basissets[atom_symbol] = uncontract_bs
                     uncontract_basis_name = 'O-' + bs_name + '-{}'.format(uncontract_shell)
@@ -364,7 +373,8 @@ class MakeBasis2(object):
         logger.debug("_get_basis2(): [{}] => [{}]".format(basissets_name_old, basissets_name))
         
         basis2 = ''
-        for atom_symbol, bs in basissets.items():
+        for atom_symbol in self._sort_atom_symbols(basissets.keys()):
+            bs = basissets[atom_symbol]
             bs.name = basissets_name + '.' + atom_symbol
             if (basissets2 != None) and (atom_symbol in basissets2):
                 # for aux basis
