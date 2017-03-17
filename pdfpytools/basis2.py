@@ -134,6 +134,8 @@ class Basis2(object):
                     value = int(input_SPDFG[i])
                     SPDFG.append(value)
                     numOfCGTOs += value
+                SPDFG.extend([0] * (len(self._shell_chars) - len(input_SPDFG)))
+                assert(len(SPDFG) == len(self._shell_chars))
                 basisset = pdf.BasisSet("", numOfCGTOs)
             elif (numOfPGTOs == None):
                 numOfPGTOs = int(line)
