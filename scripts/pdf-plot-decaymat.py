@@ -100,14 +100,15 @@ def get_matrix(path, verbose = False):
 
 
     return mat
-            
+
+
 def distance_matrix(atomgroup, verbose = False):
     '''
     create distance matrix
     
     support flat-atomgroup only 
     '''
-    atomlist = get_atomlist(atomgroup)
+    atomlist = atomgroup.get_atom_list()
     num_of_atoms = len(atomlist)
     if verbose:
         sys.stderr.write("num of atoms: {}n".format(num_of_atoms))
@@ -120,13 +121,6 @@ def distance_matrix(atomgroup, verbose = False):
 
     return mat
             
-def get_atomlist(atomgroup):
-    answer = []
-    for subgrp_key, subgrp in atomgroup.groups():
-        answer.extend(get_atomlist(subgrp))
-    for atom_key, atom in atomgroup.atoms():
-        answer.append(atom)
-    return answer
 
 def dist_vs_matvalue(orb_info, distance_mat, mat, path, verbose = False):
     if verbose:

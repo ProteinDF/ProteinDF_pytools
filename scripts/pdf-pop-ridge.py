@@ -228,8 +228,8 @@ def main():
         entry = pdf.PdfArchive(args.db)
     elif args.param:
         pdfparam = pdf.load_pdfparam(args.param)
-        atomgroup = pdfparam.molecule.get_atomlist()
-        for k, atom in atomgroup.atoms():
+        atoms = pdfparam.molecule.get_atom_list()
+        for atom in atoms:
             if atom.symbol != 'X':
                 atomlist.append(atom)
 

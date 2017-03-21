@@ -122,16 +122,13 @@ def main():
     charges = load_charges(charge_csv_path)
 
     # atom 
-    # atomlist = []
     pdfparam = pdf.load_pdfparam(input_path)
-    atomgroup = pdfparam.molecule.get_atomlist()
-    count = 0
-    for k, atom in atomgroup.atoms():
+    atoms = pdfparam.molecule.get_atom_list()
+    assert(len(charges) >= len(atoms))
+    for atom in atoms:
         if atom.symbol != 'X':
             atom.charge = charges[count]
-            count += 1
     assert(len(charges) >= count)
-    pdfparam.molecule = atomgroup
     
     # output
     if verbose:
