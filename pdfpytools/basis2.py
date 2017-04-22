@@ -27,6 +27,7 @@ import pdfbridge as bridge
 import pdfpytools as pdf
 
 class Basis2(object):
+    _shell_chars = list("spdfghijklmnopqr")
     _data = None
 
     def __new__(cls, *args, **kwargs):
@@ -101,7 +102,7 @@ class Basis2(object):
                         self._data['basis_xc'][name] = basisset
                         name = None
                     else:
-                        print('basisset name is not found: {}'.format(name))
+                        self._logger.critical('basisset name is not found: {}'.format(name))
                         raise
                     
     def _load_basis(self, fh):
@@ -121,32 +122,33 @@ class Basis2(object):
                 continue
 
             #self._logger.debug('%6d: %s' % (self._line_count, line))
-
             if (SPDFG == None):
-                SPDFG = [0, 0, 0, 0, 0]
+                SPDFG = []
                 input_SPDFG = line.split()
+                if len(input_SPDFG) > len(self._shell_chars):
+                    self._logger.warning(
+                        "not support shell: {} > {}".format(len(input_SPDFG),
+                                                            len(self._shell_chars)))
                 numOfCGTOs = 0
                 for i in range(len(input_SPDFG)):
                     value = int(input_SPDFG[i])
-                    SPDFG[i] = value
+                    SPDFG.append(value)
                     numOfCGTOs += value
+                SPDFG.extend([0] * (len(self._shell_chars) - len(input_SPDFG)))
+                assert(len(SPDFG) == len(self._shell_chars))
                 basisset = pdf.BasisSet("", numOfCGTOs)
             elif (numOfPGTOs == None):
                 numOfPGTOs = int(line)
                 shell_type = ''
-                if (SPDFG_order < SPDFG[0]):
-                    shell_type = 's'
-                elif (SPDFG_order < (SPDFG[0] + SPDFG[1])):
-                    shell_type = 'p'
-                elif (SPDFG_order < (SPDFG[0] + SPDFG[1] + SPDFG[2])):
-                    shell_type = 'd'
-                elif (SPDFG_order < (SPDFG[0] + SPDFG[1] + SPDFG[2] + SPDFG[3])):
-                    shell_type = 'f'
-                elif (SPDFG_order < (SPDFG[0] + SPDFG[1] + SPDFG[2] + SPDFG[3] + SPDFG[4])):
-                    shell_type = 'g'
-                else:
-                    abort()
-                #self._logger.debug("create CGTO SPD=%d shell_type=%s size=%d" % (SPD_order, shell_type, numOfPGTOs))
+
+                order = 0
+                for i in range(len(SPDFG)):
+                    if (order <= SPDFG_order) and (SPDFG_order < order + SPDFG[i]):
+                        shell_type = self._shell_chars[i]
+                        break
+                    order += SPDFG[i]
+                
+                # self._logger.debug("create CGTO SPD=%d shell_type=%s size=%d" % (SPD_order, shell_type, numOfPGTOs))
                 cgto = pdf.ContractedGTO(shell_type, numOfPGTOs)
                 assert(cgto.shell_type == shell_type)
                 assert(len(cgto) == numOfPGTOs)
@@ -192,38 +194,39 @@ class Basis2(object):
             if (line[0] == '#'):
                 continue
 
-            self._logger.debug('%6d: %s' % (self._line_count, line))
-                
+            #self._logger.debug('%6d: %s' % (self._line_count, line))
             if (SPDFG == None):
-                SPDFG = [0, 0, 0, 0, 0]
+                SPDFG = []
                 input_SPDFG = line.split()
+                if len(input_SPDFG) > len(self._shell_chars):
+                    self._logger.warning(
+                        "not support shell: {} > {}".format(len(input_SPDFG),
+                                                            len(self._shell_chars)))
                 numOfCGTOs = 0
                 for i in range(len(input_SPDFG)):
                     value = int(input_SPDFG[i])
-                    SPDFG[i] = value
+                    SPDFG.append(value)
                     numOfCGTOs += value
                 basisset = pdf.BasisSet("", numOfCGTOs)
             elif (numOfPGTOs == None):
                 numOfPGTOs = int(line)
                 shell_type = ''
-                if (SPDFG_order < SPDFG[0]):
-                    shell_type = 's'
-                elif (SPDFG_order < (SPDFG[0] + SPDFG[1])):
-                    shell_type = 'p'
-                elif (SPDFG_order < (SPDFG[0] + SPDFG[1] + SPDFG[2])):
-                    shell_type = 'd'
-                elif (SPDFG_order < (SPDFG[0] + SPDFG[1] + SPDFG[2] + SPDFG[3])):
-                    shell_type = 'f'
-                elif (SPDFG_order < (SPDFG[0] + SPDFG[1] + SPDFG[2] + SPDFG[3] + SPDFG[4])):
-                    shell_type = 'g'
-                else:
-                    abort()
+
+                order = 0
+                for i in range(len(SPDFG)):
+                    if (order <= SPDFG_order) and (SPDFG_order < order + SPDFG[i]):
+                        shell_type = self._shell_chars[i]
+                        break
+                    order += SPDFG[i]
+                
                 #print("create CGTO SPD=%d shell_type=%s size=%d" % (SPD_order, shell_type, numOfPGTOs))
                 cgto = pdf.ContractedGTO(shell_type, numOfPGTOs)
+                assert(cgto.shell_type == shell_type)
+                assert(len(cgto) == numOfPGTOs)
                 PGTO_index = 0
             else:
                 values = line.split()
-                assert(len(values) == 1)
+                assert(len(values) > 0)
                 exponent = float(values[0])
                 coefficient = 1.0
                 #print("PGTO_index=%d" % (PGTO_index))

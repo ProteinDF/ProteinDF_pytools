@@ -20,12 +20,18 @@
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import logging
 import hashlib
 import pickle
 import types
 import math
 import copy
 import pprint
+
+try:
+    import msgpack
+except:
+    import msgpack_pure as msgpack
 
 import pdfbridge as bridge
 import pdfpytools as pdf
@@ -35,6 +41,8 @@ class PdfParam(object):
     ProteinDF parameter file (pdfparam)を扱うクラス
     """
     def __init__(self, rhs = None):
+        self._logger = logging.getLogger(__name__)
+
         self._data = {}
         if isinstance(rhs, PdfParam):
             self._data = copy.deepcopy(rhs._data)
@@ -152,7 +160,11 @@ class PdfParam(object):
         filename = self._get_file_base_name('Clo_matrix')
         filename = filename.replace('%s', '{}{}'.format(runtype, itr))
         return os.path.join(self.work_path, filename)
-        
+
+    def get_gradient_matrix_path(self):
+        filename = self._get_file_base_name('gradient')
+        return os.path.join(self.work_path, filename)
+
     def _get_file_base_name(self, key):
         self._data.setdefault('control', {})
         self._data['control'].setdefault('file_base_name', {})
@@ -191,7 +203,32 @@ class PdfParam(object):
 
     method = property(_get_method, _set_method)
 
-    # guess
+    # accuracy -----------------------------------------------------------------
+    def _get_cut_value(self):
+        return self._data.get('cut_value', 1.0E-10)
+    def _set_cut_value(self, value):
+        if value != None:
+            value = float(value)
+            self._data['cut_value'] = value
+    cut_value = property(_get_cut_value, _set_cut_value)
+
+    def _get_CDAM_tau(self):
+        return self._data.get('CDAM_tau', 1.0E-10)
+    def _set_CDAM_tau(self, value):
+        if value != None:
+            value = float(value)
+            self._data['CDAM_tau'] = value
+    CDAM_tau = property(_get_CDAM_tau, _set_CDAM_tau)
+    
+    def _get_CD_epsilon(self):
+        return self._data.get('CD_epsilon', 1.E-4)
+    def _set_CD_epsilon(self, value):
+        if value != None:
+            value = float(value)
+            self._data['CD_epsilon'] = value
+    CD_epsilon = property(_get_CD_epsilon, _set_CD_epsilon)
+    
+    # guess --------------------------------------------------------------------
     def _get_guess(self):
         return self._data.get('guess', None)
 
@@ -206,8 +243,9 @@ class PdfParam(object):
         return self._data.get('orbital_independence_threshold', 0.007)
 
     def _set_orbital_independence_threshold(self, value):
-        value = float(value)
-        self._data['orbital_independence_threshold'] = value
+        if value != None:
+            value = float(value)
+            self._data['orbital_independence_threshold'] = value
 
     orbital_independence_threshold = property(_get_orbital_independence_threshold,
                                               _set_orbital_independence_threshold)
@@ -217,8 +255,9 @@ class PdfParam(object):
         return self._data.get('orbital_independence_threshold_canonical', 0.007)
 
     def _set_orbital_independence_threshold_canonical(self, value):
-        value = float(value)
-        self._data['orbital_independence_threshold_canonical'] = value
+        if value != None:
+            value = float(value)
+            self._data['orbital_independence_threshold_canonical'] = value
 
     orbital_independence_threshold_canonical = property(_get_orbital_independence_threshold_canonical,
                                                         _set_orbital_independence_threshold_canonical)
@@ -228,8 +267,9 @@ class PdfParam(object):
         return self._data.get('orbital_independence_threshold_lowdin', 0.007)
 
     def _set_orbital_independence_threshold_lowdin(self, value):
-        value = float(value)
-        self._data['orbital_independence_threshold_lowdin'] = value
+        if value != None:
+            value = float(value)
+            self._data['orbital_independence_threshold_lowdin'] = value
 
     orbital_independence_threshold_lowdin = property(_get_orbital_independence_threshold_lowdin,
                                                      _set_orbital_independence_threshold_lowdin)
@@ -239,8 +279,9 @@ class PdfParam(object):
         return self._data.get('scf_acceleration', 'damping')
 
     def _set_scf_acceleration(self, value):
-        value = str(value)
-        self._data['scf_acceleration'] = value
+        if value != None:
+            value = str(value)
+            self._data['scf_acceleration'] = value
 
     scf_acceleration = property(_get_scf_acceleration,
                                 _set_scf_acceleration)
@@ -250,8 +291,9 @@ class PdfParam(object):
         return self._data.get('scf_acceleration_damping_damping_factor', 0.85)
 
     def _set_scf_acceleration_damping_damping_factor(self, value):
-        value = float(value)
-        self._data['scf_acceleration_damping_damping_factor'] = value
+        if value != None:
+            value = float(value)
+            self._data['scf_acceleration_damping_damping_factor'] = value
 
     scf_acceleration_damping_damping_factor = property(_get_scf_acceleration_damping_damping_factor,
                                                        _set_scf_acceleration_damping_damping_factor)
@@ -268,11 +310,36 @@ class PdfParam(object):
         return value
 
     def _set_scf_acceleration_damping_damping_type(self, target):
-        self._data['scf_acceleration_damping_damping_type'] = target
+        if target != None:
+            self._data['scf_acceleration_damping_damping_type'] = target
 
     scf_acceleration_damping_damping_type = property(_get_scf_acceleration_damping_damping_type,
                                                      _set_scf_acceleration_damping_damping_type)
 
+    # scf_acceleration/anderson/start_number
+    def _get_scf_acceleration_anderson_start_number(self):
+        return self._data['scf_acceleration_anderson_start_number']
+
+    def _set_scf_acceleration_anderson_start_number(self, value):
+        if value != None:
+            value = int(value)
+            self._data['scf_acceleration_anderson_start_number'] = value
+
+    scf_acceleration_anderson_start_number = property(_get_scf_acceleration_anderson_start_number,
+                                                      _set_scf_acceleration_anderson_start_number)
+    
+    # scf_acceleration/anderson/damping_factor
+    def _get_scf_acceleration_anderson_damping_factor(self):
+        return self._data['scf_acceleration_anderson_damping_factor']
+
+    def _set_scf_acceleration_anderson_damping_factor(self, value):
+        if value != None:
+            value = float(value)
+            self._data['scf_acceleration_anderson_damping_factor'] = value
+
+    scf_acceleration_anderson_damping_factor = property(_get_scf_acceleration_anderson_damping_factor,
+                                                        _set_scf_acceleration_anderson_damping_factor)
+    
     # xc_functional ----------------------------------------------------
     def _get_xc_functional(self):
         return self._data.get('xc_functional', 'SVWN')
@@ -320,31 +387,69 @@ class PdfParam(object):
 
     xc_engine = property(_get_xc_engine, _set_xc_engine)
     
-    # gridfree/dedicated_basis -----------------------------------------
-    def _get_gridfree_dedicated_basis(self):
-        return self._data.get('gridfree_dedicated_basis', 'no')
+    # gridfree/dual_level -----------------------------------------------
+    def _get_gridfree_dual_level(self):
+        return self._data.get('gridfree_dual_level', False)
 
-    def _set_gridfree_dedicated_basis(self, value):
-        value = bool(value)
-        if value == True:
-            value = 'yes'
-        else:
-            value = 'no'
-        self._data['gridfree_dedicated_basis'] = value
+    def _set_gridfree_dual_level(self, value):
+        if isinstance(value, str):
+            value = value.upper()
+            if value in ['YES', 'TRUE', '1']:
+                value = True
+            else:
+                value = False
+        self._data['gridfree_dual_level'] = bool(value)
 
-    gridfree_dedicated_basis = property(_get_gridfree_dedicated_basis,
-                                        _set_gridfree_dedicated_basis)
+    gridfree_dual_level = property(_get_gridfree_dual_level,
+                                   _set_gridfree_dual_level)
         
     # gridfree/orthogonalize_method ------------------------------------
     def _get_gridfree_orthogonalize_method(self):
         return self._data.get('gridfree_orthogonalize_method', 'canonical')
 
     def _set_gridfree_orthogonalize_method(self, value):
-        value = str(value)
-        self._data['gridfree_orthogonalize_method'] = value
+        if value != None:
+            value = str(value)
+            self._data['gridfree_orthogonalize_method'] = value
 
     gridfree_orthogonalize_method = property(_get_gridfree_orthogonalize_method,
                                              _set_gridfree_orthogonalize_method)
+
+    # gridfree/CDAM_tau ------------------------------------------------
+    def _get_gridfree_CDAM_tau(self):
+        return self._data.get('gridfree_CDAM_tau', 1.0E-10)
+
+    def _set_gridfree_CDAM_tau(self, value):
+        if value != None:
+            value = float(value)
+            self._data['gridfree_CDAM_tau'] = value
+
+    gridfree_CDAM_tau = property(_get_gridfree_CDAM_tau,
+                                 _set_gridfree_CDAM_tau)
+
+    # gridfree/CD_epsilon ----------------------------------------------
+    def _get_gridfree_CD_epsilon(self):
+        return self._data.get('gridfree_CD_epsilon', 1.0E-4)
+
+    def _set_gridfree_CD_epsilon(self, value):
+        if value != None:
+            value = float(value)
+            self._data['gridfree_CD_epsilon'] = value
+
+    gridfree_CD_epsilon = property(_get_gridfree_CD_epsilon,
+                                   _set_gridfree_CD_epsilon)
+
+    # extra_keywords ---------------------------------------------------
+    def _get_extra_keywords(self):
+        return self._data.get('extra_keywords', {})
+        
+    def _set_extra_keywords(self, value):
+        if value != None:
+            value = dict(value)
+            self._data['extra_keywords'] = value
+        
+    extra_keywords = property(_get_extra_keywords,
+                              _set_extra_keywords)
     
     # num_of_atoms -----------------------------------------------------
     def _get_num_of_atoms(self):
@@ -431,42 +536,45 @@ class PdfParam(object):
 
     max_iterations = property(_get_max_iterations, _set_max_iterations)
 
-    # convergence_threshold_energy
-    def _get_convergence_threshold_energy(self):
-        return self._data.get('convergence_threshold_energy', 1.0E-4)
-
-    def _set_convergence_threshold_energy(self, value):
-        self._data['convergence_threshold_energy'] = float(value)
-
-    convergence_threshold_energy = property(_get_convergence_threshold_energy,
-                                            _set_convergence_threshold_energy)
-
     # convergence_threshold
     def _get_convergence_threshold(self):
         return self._data.get('convergence_threshold', 1.0E-3)
-
     def _set_convergence_threshold(self, value):
-        self._data['convergence_threshold'] = float(value)
-
+        if value != None:
+            self._data['convergence_threshold'] = float(value)
     convergence_threshold = property(_get_convergence_threshold,
                                      _set_convergence_threshold)
    
     # convergence_type
     def _get_convergence_type(self):
         return self._data.get('convergence_type', 'density')
-
     def _set_convergence_type(self, value):
-        self._data['convergence_type'] = str(value)
-
+        if value != None:
+            self._data['convergence_type'] = str(value)
     convergence_type = property(_get_convergence_type,
                                 _set_convergence_type)
 
+    # convergence_threshold_energy
+    def _get_convergence_threshold_energy(self):
+        return self._data.get('convergence_threshold_energy', 1.0E-4)
+    def _set_convergence_threshold_energy(self, value):
+        if value != None:
+            self._data['convergence_threshold_energy'] = float(value)
+    convergence_threshold_energy = property(_get_convergence_threshold_energy,
+                                            _set_convergence_threshold_energy)
+
     # level_shift
     def _get_level_shift(self):
-        return self._data.get('level_shift', False)
+        return bridge.Utils.str_to_bool(self._data.get('level_shift', False))
 
     def _set_level_shift(self, value):
-        self._data['level_shift'] = bool(value)
+        value = value.to_upper()
+        v = False
+        if (value == 'YES' or
+            value == 'TRUE' or
+            value == 1):
+            v = True
+        self._data['level_shift'] = v
 
     level_shift = property(_get_level_shift, _set_level_shift)
 
@@ -530,47 +638,47 @@ class PdfParam(object):
 
     # basis set name
     def get_basisset_name(self, atomlabel):
-        atomlabel = bridge.Utils.byte2str(atomlabel)
+        atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_name', {})
         return self._data['basisset_name'].get(atomlabel, '')
 
     def set_basisset_name(self, atomlabel, value):
-        atomlabel = bridge.Utils.byte2str(atomlabel)
+        atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_name', {})
-        self._data['basisset_name'][atomlabel] = bridge.Utils.byte2str(value)
+        self._data['basisset_name'][atomlabel] = bridge.Utils.to_unicode(value)
 
 
     def get_basisset_j_name(self, atomlabel):
-        atomlabel = bridge.Utils.byte2str(atomlabel)
+        atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_j_name', {})
         return self._data['basisset_j_name'].get(atomlabel, '')
 
     def set_basisset_j_name(self, atomlabel, value):
-        atomlabel = bridge.Utils.byte2str(atomlabel)
+        atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_j_name', {})
-        self._data['basisset_j_name'][atomlabel] = bridge.Utils.byte2str(value)
+        self._data['basisset_j_name'][atomlabel] = bridge.Utils.to_unicode(value)
 
 
     def get_basisset_xc_name(self, atomlabel):
-        atomlabel = bridge.Utils.byte2str(atomlabel)
+        atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_xc_name', {})
         return self._data['basisset_xc_name'].get(atomlabel, '')
 
     def set_basisset_xc_name(self, atomlabel, value):
-        atomlabel = bridge.Utils.byte2str(atomlabel)
+        atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_xc_name', {})
-        self._data['basisset_xc_name'][atomlabel] = bridge.Utils.byte2str(value)
+        self._data['basisset_xc_name'][atomlabel] = bridge.Utils.to_unicode(value)
 
 
     def get_basisset_gridfree_name(self, atomlabel):
-        atomlabel = bridge.Utils.byte2str(atomlabel)
+        atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_gridfree_name', {})
         return self._data['basisset_gridfree_name'].get(atomlabel, '')
 
     def set_basisset_gridfree_name(self, atomlabel, value):
-        atomlabel = bridge.Utils.byte2str(atomlabel)
+        atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_gridfree_name', {})
-        self._data['basisset_gridfree_name'][atomlabel] = bridge.Utils.byte2str(value)
+        self._data['basisset_gridfree_name'][atomlabel] = bridge.Utils.to_unicode(value)
 
     def get_basisset(self, atom_label):
         return self._get_basisset_common(atom_label, 'basis_set')
@@ -600,7 +708,7 @@ class PdfParam(object):
         """
         原子(ラベル)名のBasisSetがあれば、そのBasisSetオブジェクトを返す
         """
-        atom_label = bridge.Utils.byte2str(atom_label)
+        atom_label = bridge.Utils.to_unicode(atom_label)
         answer = pdf.BasisSet()
         if key in self._data:
             answer = self._data[key].get(atom_label, pdf.BasisSet())
@@ -611,7 +719,7 @@ class PdfParam(object):
         """
         原子(ラベル)名にBasisSetオブジェクトを設定する
         """
-        atom_label = bridge.Utils.byte2str(atom_label)
+        atom_label = bridge.Utils.to_unicode(atom_label)
         self._data.setdefault(key, {})
         if isinstance(basisset, str) == True:
             basis2 = pdf.Basis2()
@@ -628,6 +736,7 @@ class PdfParam(object):
                 assert(isinstance(bs, pdf.BasisSet))
                 self._data[key][atom_label] = bs
             else:
+                print('unknown key: {}'.format(key))
                 raise                              
                 
         elif isinstance(basisset, pdf.BasisSet) == True:
@@ -665,29 +774,29 @@ class PdfParam(object):
 
     lo_num_of_iterations = property(_get_lo_num_of_iterations)
     
-    # force ============================================================
-    def get_force(self, atom_index):
+    # gradient =================================================================
+    def get_gradient(self, atom_index):
         atom_index = int(atom_index)
         assert(0 <= atom_index < self.num_of_atoms)
 
-        force_mat = self._data.get('force', None)
-        force = None
-        if force_mat != None:
-            if atom_index < len(force_mat):
-                force = force_mat[atom_index]
-                assert(len(force) == 3)
+        gradient_mat = self._data.get('gradient', None)
+        gradient = None
+        if gradient_mat != None:
+            if atom_index < len(gradient_mat):
+                gradient = gradient_mat[atom_index]
+                assert(len(gradient) == 3)
 
-        return force
+        return gradient
             
 
-    def set_force(self, atom_index, fx, fy, fz):
+    def set_gradient(self, atom_index, fx, fy, fz):
         atom_index = int(atom_index)
         fx = float(fx)
         fy = float(fy)
         fz = float(fz)
         assert(0 <= atom_index < self.num_of_atoms)
-        self._data.setdefault('force', [[] for x in range(self.num_of_atoms)])
-        self._data['force'][atom_index] = [fx, fy, fz]
+        self._data.setdefault('gradient', [[] for x in range(self.num_of_atoms)])
+        self._data['gradient'][atom_index] = [fx, fy, fz]
 
     # --------------------------------------------------------------------------
     def get_inputfile_contents(self):
@@ -696,15 +805,18 @@ class PdfParam(object):
         """
         output = ""
         output += ">>>>MAIN\n"
-        output += "    step-control = [%s]\n" % (self.step_control)
+        output += "    step_control = [%s]\n" % (self.step_control)
         output += "\n"
         output += ">>>>MODEL\n"
-        output += "    scf-start-guess = %s\n" % (self.guess)
+        output += "    cut_value = {0}\n".format(self.cut_value)
+        output += "    CDAM_tau = {0}\n".format(self.CDAM_tau)
+        output += "    CD_epsilon = {0}\n".format(self.CD_epsilon)
+        output += "    scf_start_guess = %s\n" % (self.guess)
         output += "    method = %s\n" % (self.method)
         if self.method == 'rks':
-            output += "    method/nsp/electron-number = %d\n" % (
+            output += "    method/rks/electrons = %d\n" % (
                 self.num_of_electrons)
-            output += "    method/nsp/occlevel = %s\n" % (
+            output += "    method/rks/occlevel = %s\n" % (
                 self.occupation_level)
         else:
             raise
@@ -712,21 +824,27 @@ class PdfParam(object):
         output += "    orbital_independence_threshold  = {0}\n".format(self.orbital_independence_threshold)
         output += "    orbital_independence_threshold/canonical = {0}\n".format(self.orbital_independence_threshold_canonical)
         output += "    orbital_independence_threshold/lowdin = {0}\n".format(self.orbital_independence_threshold_lowdin)
-        output += "    scf_acceleration = {0}\n".format(self.scf_acceleration)
-        output += "    scf_acceleration/damping/damping_type = {0}\n".format(self.scf_acceleration_damping_damping_type)
-        output += "    scf_acceleration/damping/damping_factor = {0}\n".format(self.scf_acceleration_damping_damping_factor)
         output += "    convergence/threshold_energy = {0}\n".format(self.convergence_threshold_energy)
         output += "    convergence/threshold = {0}\n".format(self.convergence_threshold)
         output += "    convergence/type = {0}\n".format(self.convergence_type)
+        output += "    scf_acceleration = {0}\n".format(self.scf_acceleration)
+        output += "    scf_acceleration/damping/damping_type = {0}\n".format(self.scf_acceleration_damping_damping_type)
+        output += "    scf_acceleration/damping/damping_factor = {0}\n".format(self.scf_acceleration_damping_damping_factor)
+        output += "    scf_acceleration/anderson/start_number = {0}\n".format(self.scf_acceleration_anderson_start_number)
+        output += "    scf_acceleration/anderson/damping_factor = {0}\n".format(self.scf_acceleration_anderson_damping_factor)
         output += "    xc_functional = {0}\n".format(self.xc_functional)
         output += "    J_engine = {0}\n".format(self.j_engine)
         output += "    K_engine = {0}\n".format(self.k_engine)
         output += "    XC_engine = {0}\n".format(self.xc_engine)
-        output += "    gridfree/dedicated_basis = {0}\n".format(self.gridfree_dedicated_basis)
+        output += "    gridfree/dual_level = {0}\n".format('yes' if self.gridfree_dual_level else 'no')
         output += "    gridfree/orthogonalize_method = {0}\n".format(self.gridfree_orthogonalize_method)
-        output += "    level_shift = {0}\n".format(self.level_shift)
+        output += "    level_shift = {0}\n".format('yes' if self.level_shift else 'no')
         output += "    level_shift/start_iteration = {0}\n".format(self.level_shift_start_iteration)
         output += "    level_shift/virtual_mo = {0}\n".format(self.level_shift_virtual_mo)
+        output += "    \n"
+        output += "    # === extras === \n"
+        for k, v in self.extra_keywords.items():
+            output += "    {} = {}\n".format(k, v)
         output += "\n"
         output += ">>>>MOLECULE\n"
         output += "    geometry/cartesian/unit = angstrom\n"
@@ -902,20 +1020,67 @@ class PdfParam(object):
                 del odict['control']['scf_converged']
         del odict['control']
 
-        odict.setdefault('scf_acceleration',
-                         self.scf_acceleration)
-        self.scf_acceleration = odict.get('scf_acceleration')
-        del odict['scf_acceleration']
+        if 'orbital_independence_threshold' in odict:
+            self.orbital_independence_threshold = odict.get('orbital_independence_threshold', None)
+            del odict['orbital_independence_threshold']
+        if 'orbital_independence_threshold/canonical' in odict:
+            self.orbital_independence_threshold_canonical = odict.get('orbital_independence_threshold/canonical', None)
+            del odict['orbital_independence_threshold/canonical']
+        if 'orbital_independence_threshold/lowdin' in odict:
+            self.orbital_independence_threshold_lowdin = odict.get('orbital_independence_threshold/lowdin', None)
+            del odict['orbital_independence_threshold/lowdin']
 
-        odict.setdefault('scf_acceleration/damping/damping_factor',
-                         self.scf_acceleration_damping_damping_factor)
-        self.scf_acceleration_damping_damping_factor = odict.get('scf_acceleration/damping/damping_factor')
-        del odict['scf_acceleration/damping/damping_factor']
+        # gridfree
+        if 'gridfree/orthogonalize_method' in odict:
+            self.gridfree_orthogonalize_method = odict.get('gridfree/orthogonalize_method')
+            del odict['gridfree/orthogonalize_method']
 
-        odict.setdefault('scf_acceleration/damping/damping_type',
-                         self.scf_acceleration_damping_damping_type)
-        self.scf_acceleration_damping_damping_type = odict.get('scf_acceleration/damping/damping_type')
-        del odict['scf_acceleration/damping/damping_type']
+        if 'gridfree/CDAM_tau' in odict:
+            self.gridfree_CDAM_tau = odict.get('gridfree/CDAM_tau')
+            del odict['gridfree/CDAM_tau']
+
+        if 'gridfree/CD_epsilon' in odict:
+            self.gridfree_CD_epsilon = odict.get('gridfree/CD_epsilon')
+            del odict['gridfree/CD_epsilon']
+
+        if 'gridfree/dual_level' in odict:
+            self.gridfree_dual_level = odict.get('gridfree/dual_level')
+            del odict['gridfree/dual_level']
+
+        # scf acceleration
+        if 'scf_acceleration' in odict:
+            self.scf_acceleration = odict.get('scf_acceleration', None)
+            del odict['scf_acceleration']
+
+        if 'scf_acceleration/damping/damping_factor' in odict:
+            self.scf_acceleration_damping_damping_factor = odict.get('scf_acceleration/damping/damping_factor', None)
+            del odict['scf_acceleration/damping/damping_factor']
+
+        if 'scf_acceleration/damping/damping_type' in odict:
+            self.scf_acceleration_damping_damping_type = odict.get('scf_acceleration/damping/damping_type', None)
+            del odict['scf_acceleration/damping/damping_type']
+
+        if 'scf_acceleration/anderson/start_number' in odict:
+            self.scf_acceleration_anderson_start_number = odict.get('scf_acceleration/anderson/start_number', None)
+            del odict['scf_acceleration/anderson/start_number']
+
+        if 'scf_acceleration/anderson/damping_factor' in odict:
+            self.scf_acceleration_anderson_damping_factor = odict.get('scf_acceleration/anderson/damping_factor', None)
+            del odict['scf_acceleration/anderson/damping_factor']
+        
+        # convergence
+        if 'convergence/threshold' in odict:
+            self.convergence_threshold = odict.get('convergence/threshold', None)
+            del odict['convergence/threshold']
+
+        if 'convergence/type' in odict:
+            self.convergence_type = odict.get('convergence/type', None)
+            del odict['convergence/type']
+
+        if 'convergence/threshold_energy' in odict:
+            self.convergence_threshold_energy = odict.get('convergence/threshold_energy', None)
+            del odict['convergence/threshold_energy']
+
         
         # coordinates
         def setup_coordinates(data):
@@ -942,14 +1107,7 @@ class PdfParam(object):
             self.molecule = setup_coordinates(odict['coordinates'])
             del odict['coordinates']
 
-        # force
-        if 'force' in odict:
-            force_dat = odict.get('force')
-            for atom_index in range(len(force_dat)):
-                force = force_dat[atom_index]
-                self.set_force(atom_index, force[0], force[1], force[2])
-            del odict['force']
-
+        # guess
         self.guess = odict.get('guess', self.guess)
         del odict['guess']
 
@@ -1001,6 +1159,22 @@ class PdfParam(object):
         self.xc_engine = odict.get('XC_engine')
         del odict['XC_engine']
         
+        # gradient
+        if 'gradient' in odict:
+            gradient_dat = odict.get('gradient')
+            for atom_index in range(len(gradient_dat)):
+                gradient = gradient_dat[atom_index]
+                self.set_gradient(atom_index, gradient[0], gradient[1], gradient[2])
+            del odict['gradient']
+        elif 'force' in odict:
+            self._logger.warning('parameter "force" is ABSOLUTE.')
+            gradient_dat = odict.get('force')
+            for atom_index in range(len(gradient_dat)):
+                gradient = gradient_dat[atom_index]
+                self.set_gradient(atom_index, gradient[0], gradient[1], gradient[2])
+            del odict['force']
+            
+
         # 未入力部分をマージ
         self._data.update(odict)
 

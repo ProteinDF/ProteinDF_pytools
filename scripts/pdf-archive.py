@@ -50,6 +50,13 @@ def main():
                         nargs='?',
                         default='pdfresults.db',
                         help='ProteinDF results file')
+
+    parser.add_argument('--calc-pop',
+                        nargs='*',
+                        choices=['mulliken', 'mk'],
+                        default=argparse.SUPPRESS,
+                        help='calc population')
+    
     parser.add_argument('-v', '--verbose',
                         action='store_true',
                         default=False)
@@ -66,6 +73,13 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
     is_little_endian = True
 
+    do_calc_pop_types = [None]
+    if 'calc_pop' in args:
+        if len(args.calc_pop) == 0:
+            do_calc_pop_types = ['mulliken']
+        else:
+            do_calc_pop_types = args.calc_pop
+    
     try:
         # read ProteinDF parameters
         pdfparam = pdf.load_pdfparam(pdfparam_path)
@@ -74,7 +88,8 @@ def main():
         entry = pdf.PdfArchive(output,
                                pdfparam=pdfparam)
 
-        pdf2db = Pdf2Db(pdfparam, entry)
+        pdf2db = Pdf2Db(pdfparam, entry,
+                        pop_types=do_calc_pop_types)
         pdf2db.regist()
     except:
         print('-'*60)
@@ -84,7 +99,7 @@ def main():
     
 
 class Pdf2Db(object):
-    def __init__(self, pdfparam, entry):
+    def __init__(self, pdfparam, entry, pop_types=[]):
         nullHandler = pdfbridge.NullHandler()
         self._logger = logging.getLogger(__name__)
         self._logger.addHandler(nullHandler)
@@ -95,6 +110,7 @@ class Pdf2Db(object):
         assert(isinstance(entry, pdf.PdfArchive))
         self._pdfparam = pdfparam
         self._entry = entry
+        self._pop_types = pop_types
         
     def regist(self):
         # energy level
@@ -106,6 +122,10 @@ class Pdf2Db(object):
         # LCAO matrix
         self.set_lcao('last')
 
+        # calc population
+        if self._pdfparam.scf_converged:
+            self.set_pop(self._pop_types)
+        
     def _get_is_little_endian(self):
         return self._is_little_endian
     
@@ -174,8 +194,22 @@ class Pdf2Db(object):
                 if m.is_loadable(path, self.is_little_endian):
                     m.load(path, self.is_little_endian)
                     entry.set_lcao(runtype, itr, m)
-                
-    
+
+    def set_pop(self, pop_types = [], iteration = 0):
+        for pop_type in pop_types:
+            if pop_type == 'mulliken':
+                self._logger.info('calc pop mulliken')
+                if iteration == 0:
+                    iteration = self._pdfparam.iterations
+                pop_matrix_path = 'mulliken_{}.mat'.format(iteration)
+                pdf.run_pdf(['pop-mulliken', '-i', iteration, '-s', pop_matrix_path])
+                m = pdf.Matrix()
+                m.load(pop_matrix_path)
+                self._entry.set_population('mulliken', iteration, m)
+            else:
+                self._logger.warning('unknown pop type: {}'.format(pop_type))
+                    
+            
 if __name__ == '__main__':
     logconfig_file = 'logconfig.ini'
     if os.path.exists(logconfig_file):

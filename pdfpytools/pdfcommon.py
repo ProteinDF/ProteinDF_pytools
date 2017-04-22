@@ -19,9 +19,11 @@
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
+import io
 import sys
 import os
 import subprocess
+import shlex
 import tempfile
 import logging
 import traceback
@@ -38,6 +40,8 @@ epsilon = 1.0E-10 # 計算機イプシロン
 error = 1.0E-5 # 許容誤差
 
 module_logger = logging.getLogger(__name__)
+module_logger.addHandler(logging.NullHandler())
+module_logger.setLevel(logging.INFO)
 
 #class NullHandler(logging.Handler):
 #    def emit(self, record):
@@ -62,7 +66,7 @@ def get_default_pdfparam():
     pdf.run_pdf(['init-param', '-v', '-o', tempfile_path])
     f = open(tempfile_path, "rb")
     tempdata = msgpack.unpackb(f.read())
-    tempdata = bridge.Utils.byte2str(tempdata)
+    tempdata = bridge.Utils.to_unicode_dict(tempdata)
     f.close()
 
     # remove temp
@@ -83,7 +87,7 @@ def get_default_pdfparam():
     pdfparam.xc_functional = "b3lyp"
     pdfparam.j_engine = "CD"
     pdfparam.k_engine = "CD"
-    pdfparam.xc_engine = "gridfree_CD"
+    pdfparam.xc_engine = "grid"
     pdfparam.gridfree_orthogonalize_method = "canonical"
 
     return pdfparam
@@ -124,58 +128,27 @@ def run_pdf(subcmd):
     """
     run ProteinDF command
     """
-    #handler = logging.StreamHandler()
-    #handler.setLevel(logging.DEBUG)
-    #module_logger.setLevel(logging.DEBUG)
-    #logger.addHandler(handler)
+    module_logger.debug("run_pdf({})".format(subcmd))
 
-    module_logger.info("pdf.run_pdf >> {}".format(subcmd))
-
-    if isinstance(subcmd, str):
-        subcmd = [subcmd]
-
-    for i, c in enumerate(subcmd):
-        subcmd[i] = str(c)
-        
-    cmd = os.path.join(pdf_home(), "bin", "pdf")
-    cmdlist = [cmd]
-    cmdlist.extend(subcmd)
-    module_logger.critical("run: {0}".format(cmdlist))
-    
-    subproc_args = {'stdin': subprocess.PIPE,
-                    'stdout': subprocess.PIPE,
-                    'stderr': subprocess.PIPE,
-                    'shell': False,
-                    'universal_newlines': True
-                    }
     try:
-        proc = subprocess.Popen(cmdlist, **subproc_args)
-    except OSError as e:
-        module_logger.critical('Failed to execute command: %s' % cmdlist)
-        module_logger.critical(str(errno.errorcode[e.errno]))
-        module_logger.critical(str(os.strerror(e.errno)))
-        raise e
+        if isinstance(subcmd, list):
+            subcmd_tmp = [str(x) for x in subcmd ]
+            subcmd = " ".join(subcmd_tmp)
+    except:
+        print(subcmd)
+        raise
 
-    if proc.stdout != None:
-        while True:
-            line = proc.stdout.readline()
-            if not line:
-                break
-            module_logger.info(line)
-        
-    return_code = proc.wait()
-    stdout_lines = proc.stdout.readlines() 
-    stderr_lines = proc.stderr.readlines() 
-    for line in stdout_lines:
-        sys.stdout.write(line)
-    for line in stderr_lines:
-        sys.stderr.write(line)
+    cmd = os.path.join(pdf_home(), "bin", "pdf") + " " + subcmd
+    module_logger.debug("run: {0}".format(cmd))
 
+    p = pdf.Process()
+    return_code = p.cmd(cmd).commit()
+    
     module_logger.debug('return code={}'.format(return_code))
     if return_code != 0:
-        print('Failed to execute command: %s' % cmdlist)
-        print('return code = {}'.format(return_code))
-        module_logger.critical('Failed to execute command: %s' % cmdlist)
+        sys.stderr.write('Failed to execute command: %s' % cmd)
+        sys.stderr.write('return code = {}'.format(return_code))
+        module_logger.critical('Failed to execute command: %s' % cmd)
         module_logger.critical('return code = {}'.format(return_code))
         raise
     
@@ -188,7 +161,7 @@ def mpac2py(path):
 
     f = open(path, "rb")
     contents = f.read()
-    data = bridge.Utils.byte2str(msgpack.unpackb(contents))
+    data = bridge.Utils.to_unicode_dict(msgpack.unpackb(contents))
     f.close()
 
     return data
@@ -198,3 +171,11 @@ def load_pdfparam(pdfparam_path='pdfparam.mpac'):
     param = pdf.PdfParam(data)
 
     return param
+
+def save_pdfparam(pdfparam_data, pdfparam_path):
+    assert(isinstance(pdfparam_path, str))
+    raw_data = pdfparam_data.get_raw_data()
+    data = msgpack.packb(raw_data)
+    
+    with open(pdfparam_path, 'wb') as f:
+        f.write(data)

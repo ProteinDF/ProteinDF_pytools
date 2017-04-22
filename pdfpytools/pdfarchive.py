@@ -44,7 +44,7 @@ class PdfArchive(object):
         self._logger = logging.getLogger(__name__)
         self._logger.addHandler(nullHandler)
 
-        self._pdf_id = 'NONE'
+        self._pdf_id = "0"
         self._db = bridge.DbManager(db_path)
         user_version = self._db.get_user_version()
         if user_version > PdfArchive._format_version:
@@ -58,15 +58,15 @@ class PdfArchive(object):
             self._set_pdfparam_conditions(pdfparam)
             self._set_pdfparam_coordinates(pdfparam)
             self._set_pdfparam_basisset(pdfparam)
-            self._set_pdfparram_total_energies(pdfparam)
-            self._set_pdfparam_force(pdfparam)
+            self._set_pdfparam_total_energies(pdfparam)
+            self._set_pdfparam_gradient(pdfparam)
             
     # private ------------------------------------------------------------------
     def _create_tables(self):
         self._create_table_conditions()
         self._create_table_vectors()
         self._create_table_matrices()
-        self._create_table_force()
+        self._create_table_gradient()
         
     def _create_table_conditions(self):
         """
@@ -126,11 +126,11 @@ class PdfArchive(object):
                                    'runtype',
                                    'iteration'])
             
-    def _create_table_force(self):
+    def _create_table_gradient(self):
         """
-        力情報のDBを作成
+        gradient情報のDBを作成
         """
-        table_name = 'force'
+        table_name = 'gradient'
         if not self._db.has_table(table_name):
             self._db.create_table(table_name,
                                   ['atom_id',
@@ -151,7 +151,7 @@ class PdfArchive(object):
         assert(isinstance(pdfparam, pdf.PdfParam))
         table_name = 'conditions'
 
-        self._pdf_id = pdfparam.digest()
+        # self._pdf_id = pdfparam.digest()
         comment = pdfparam.comment
         num_of_atoms = pdfparam.num_of_atoms
         num_of_AOs = pdfparam.num_of_AOs
@@ -328,7 +328,7 @@ class PdfArchive(object):
                                          'exp': exp
                                         })
                         
-    def _set_pdfparram_total_energies(self, pdfparam):
+    def _set_pdfparam_total_energies(self, pdfparam):
         assert(isinstance(pdfparam, pdf.PdfParam))
         table_name = 'total_energies'
         if not self._db.has_table(table_name):
@@ -351,15 +351,15 @@ class PdfArchive(object):
                                     {'iteration':iteration,
                                      'energy':energy})
 
-    def _set_pdfparam_force(self, pdfparam):
+    def _set_pdfparam_gradient(self, pdfparam):
         assert(isinstance(pdfparam, pdf.PdfParam))
-        table_name = 'force'
+        table_name = 'gradient'
         if not self._db.has_table(table_name):
-            self._create_table_force()
+            self._create_table_gradient()
 
         num_of_atoms = pdfparam.num_of_atoms
         for atom_index in range(num_of_atoms):
-            v = pdfparam.get_force(atom_index)
+            v = pdfparam.get_gradient(atom_index)
             if v != None:
                 data = {'atom_id':atom_index,
                         'x':v[0],
@@ -375,10 +375,15 @@ class PdfArchive(object):
                     self._db.insert(table_name, data)
         #
                     
-    # -------
+    # ------------------------------------------------------------------
+    # pdf_id
     def _get_pdf_id(self):
         return self._pdf_id
 
+    pdf_id = property(_get_pdf_id)
+
+    # ------------------------------------------------------------------
+    # num_of_atoms 
     def _get_num_of_atoms(self):
         value = None
         table_name = 'conditions'
@@ -389,6 +394,10 @@ class PdfArchive(object):
                 value = int(values[0]['num_of_atoms'])
         return value        
     
+    num_of_atoms = property(_get_num_of_atoms)
+
+    # ------------------------------------------------------------------
+    # num_of_AOs
     def _get_num_of_AOs(self):
         value = None
         table_name = 'conditions'
@@ -399,6 +408,10 @@ class PdfArchive(object):
                 value = int(values[0]['num_of_AOs'])
         return value
     
+    num_of_AOs = property(_get_num_of_AOs)
+    
+    # ------------------------------------------------------------------
+    # num_of_MOs
     def _get_num_of_MOs(self):
         value = None
         table_name = 'conditions'
@@ -408,7 +421,11 @@ class PdfArchive(object):
             if len(values) > 0:
                 value = int(values[0]['num_of_MOs'])
         return value
+    
+    num_of_MOs = property(_get_num_of_MOs)
 
+    # ------------------------------------------------------------------
+    # method
     def _get_method(self):
         value = None
         table_name = 'conditions'
@@ -418,7 +435,11 @@ class PdfArchive(object):
             if len(values) > 0:
                 value = values[0]['method']
         return value
+    
+    method = property(_get_method)
         
+    # ------------------------------------------------------------------
+    # iterations
     def _get_iterations(self):
         value = None
         table_name = 'conditions'
@@ -428,7 +449,11 @@ class PdfArchive(object):
             if len(values) > 0:
                 value = values[0]['iterations']
         return value
+    
+    iterations = property(_get_iterations)
 
+    # ------------------------------------------------------------------
+    # scf_converged
     def _get_scf_converged(self):
         value = None
         table_name = 'conditions'
@@ -439,6 +464,8 @@ class PdfArchive(object):
                 value = values[0]['scf_converged']
         return value
     
+    scf_converged = property(_get_scf_converged)
+
     # 出力 ----------
     def get_molecule(self):
         """
@@ -616,6 +643,15 @@ class PdfArchive(object):
         runtype = runtype.upper()
         iteration = int(iteration)
         assert(isinstance(m, bridge.Matrix))
+
+        if m.rows <= 0:
+            self._logger.warn('The row size of the input matrix is too small.: {}'.format(m.rows))
+            self._logger.warn('cannnot register the matrix.')
+            return
+        if m.cols <= 0:
+            self._logger.warn('The col size of the input matrix is too small.: {}'.format(m.cols))
+            self._logger.warn('cannnot register the matrix.')
+            return
         
         table_name = 'matrices'
         where_str = 'dtype = "%s" and runtype = "%s" and iteration = %d' % (
@@ -656,7 +692,7 @@ class PdfArchive(object):
         check_record = self._db.select(table_name,
                                        ['rows',
                                         'cols',
-                                        'format'
+                                        'format',
                                         'data'],
                                        where=where_str)
         if check_record:
@@ -707,33 +743,42 @@ class PdfArchive(object):
         """
         self._set_matrix('C', runtype, iteration, lcao)
         
-    # property
-    pdf_id = property(_get_pdf_id)
-    num_of_atoms = property(_get_num_of_atoms)
-    num_of_AOs = property(_get_num_of_AOs)
-    num_of_MOs = property(_get_num_of_MOs)
-    method = property(_get_method)
-    iterations = property(_get_iterations)
-    scf_converged = property(_get_scf_converged)
+    # population ------------------------------------------------------------------
+    def set_population(self, pop_type, iteration, pop_mat):
+        pop_type = pop_type.upper()
+        assert(pop_type in ['MULLIKEN'])
+        self._set_matrix(dtype=pop_type,
+                         runtype='',
+                         iteration=iteration,
+                         m=pop_mat)
 
-    # force --------------------------------------------------------------------
-    def get_force(self, atom_id):
+    def get_population(self, pop_type, iteration):
+        pop_type = pop_type.upper()
+        assert(pop_type in ['MULLIKEN'])
+        mat = self._get_matrix(dtype=pop_type,
+                               runtype='',
+                               iteration=iteration)
+        
+        return mat
+        
+    # gradient --------------------------------------------------------------------
+    def get_gradient(self, atom_id):
         atom_id = int(atom_id)
-        force = None
-        table_name = 'force'
+        gradient = None
+        table_name = 'gradient'
         if self._db.has_table(table_name):
             results = self._db.select(table_name,fields=['x', 'y', 'z'], where={'atom_id': atom_id})
             if len(results) > 0:
-                force = [results[0]['x'], results[0]['y'], results[0]['z']]
-        return force
+                gradient = [results[0]['x'], results[0]['y'], results[0]['z']]
+        return gradient
         
-    def get_force_RMS(self):
+    def get_gradient_rms(self):
         """
-        forceのRMSを返す
+        gradientのRMSを返す
         """
         rms = 0.0
         for atom_index in range(self.num_of_atoms):
-            v = self.get_force(atom_index)
+            v = self.get_gradient(atom_index)
             if v != None:
                 rms += v[0]*v[0] + v[1]*v[1] + v[2]*v[2]
             else:
@@ -742,16 +787,17 @@ class PdfArchive(object):
         
             
     # compare ------------------------------------------------------------------
+    def compare_simple(self, other):
+        answer = True
+        answer = answer & self.compare_info(other)
+        answer = answer & self.compare_energy(other)
+        
+        return answer
+        
     def __eq__(self, other):
         answer = True
-        answer = answer & self._check(self.num_of_AOs, other.num_of_AOs,
-                                      'num_of_AOs')
-        answer = answer & self._check(self.num_of_MOs, other.num_of_MOs,
-                                      'num_of_MOs')
-        answer = answer & self._check(self.scf_converged, other.scf_converged,
-                                      'scf_converged')
-        answer = answer & self._check(self.iterations, other.iterations,
-                                      'num_of_iterations')
+        answer = answer & self.compare_info(other)
+        answer = answer & self.compare_energy(other)
 
         # check Total Energy
         iterations = max(self.iterations, other.iterations)
@@ -767,6 +813,10 @@ class PdfArchive(object):
         if isinstance(val1, float) and isinstance(val2, float):
             v = math.fabs(val1 - val2)
             answer = (v < pdf.error)
+        elif isinstance(val1, list) and isinstance(val2, list):
+            if len(val1) == len(val2):
+                for i in range(len(val1)):
+                    answer = answer ^ self._check(val1[i], val2[i], '{0}[{1}]'.format(msg, i))
         else:
             answer = (val1 == val2)
 
@@ -777,6 +827,80 @@ class PdfArchive(object):
             self._logger.error('test: %s; %s != %s' % (
                     str(msg), str(val1), str(val2)))
 
+        return answer
+
+    def compare_info(self, rhs):
+        answer = True
+
+        answer = answer & self._check(self.num_of_AOs, other.num_of_AOs,
+                                      'num_of_AOs')
+        answer = answer & self._check(self.num_of_MOs, other.num_of_MOs,
+                                      'num_of_MOs')
+        answer = answer & self._check(self.scf_converged, other.scf_converged,
+                                      'scf_converged')
+
+        return answer
+    
+    def compare_energy(self, rhs):
+        answer = True
+
+        TE_self = self.get_total_energy(self.iterations)
+        TE_other = rhs.get_total_energy(rhs.iterations)
+        answer = answer & self._check(TE_self, TE_other,
+                                      'TE')
+
+        return answer
+
+    def compare_pop(self, rhs):
+        answer = True
+
+        answer = answer & self._check(self.num_of_atoms,
+                                      rhs.num_of_atoms,
+                                      'num of atoms')
+        num_of_atoms = self.num_of_atoms
+
+        itr1 = self.iterations
+        itr2 = rhs.iterations
+        pop1 = self.get_population('mulliken', itr1)
+        pop2 = rhs.get_population('mulliken', itr2)
+
+        if isinstance(pop1, bridge.Matrix):
+            if isinstance(pop2, bridge.Matrix):
+                answer = answer & self._check(pop1.rows,
+                                              pop2.rows,
+                                              'pop rows')
+                answer = answer & self._check(pop1.cols,
+                                              pop2.cols,
+                                              'pop cols')
+                answer = answer & self._check(pop1, pop2,
+                                              'pop matrix')
+            else:
+                self._logger.warning('type mismatch(rhs): POP not found')
+                answer = False
+        else:
+            self._logger.warning('type mismatch(lhs): POP not found')
+            answer = False
+            
+        return answer
+    
+    def compare_grad(self, rhs):
+        answer = True
+
+        # check gradient elements
+        max1 = 0.0
+        max2 = 0.0
+        for atom_index in range(self.num_of_atoms):
+            xyz1 = self.get_gradient(atom_index)
+            xyz2 = rhs.get_gradient(atom_index)
+            answer = answer & self._check(xyz1, xyz2, 'grad')
+            max1 = max(max1, max(max(xyz1), -min(xyz1)))
+            max2 = max(max2, max(max(xyz2), -min(xyz2)))
+        answer = answer & self._check(max1, max2, 'grad max')
+            
+        # check gradient RMS
+        answer = answer & self._check(self.get_gradient_rms(),
+                                      rhs.get_gradient_rms(),
+                                      'grad RMS')
         return answer
     
 if __name__ == '__main__':
