@@ -77,6 +77,25 @@ class Matrix(bridge.Matrix):
                 answer = True
         return answer
 
+    
+    @classmethod
+    def get_size(cls, file_path, is_little_endian = True):
+        row = None
+        col = None
+        if os.path.isfile(file_path):
+            fin = open(file_path, "rb")
+            header_struct = cls.__get_header_struct(is_little_endian)
+            size_of_header = struct.calcsize(header_struct)
+            data = fin.read(size_of_header)
+            fin.close()
+            header = struct.unpack(header_struct, data[0: size_of_header])
+            matrix_type = header[0]
+            if (matrix_type == 0):
+                row = header[1]  
+                col = header[2]
+        return (row, col)
+
+    
     def load(self, file_path, is_little_endian = True):
         if os.path.isfile(file_path):
             fin = open(file_path, "rb")
@@ -170,6 +189,25 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
                 answer = True
         return answer
 
+    
+    @classmethod
+    def get_size(cls, file_path, is_little_endian = True):
+        row = None
+        col = None
+        if os.path.isfile(file_path):
+            fin = open(file_path, "rb")
+            header_struct = cls.__get_header_struct(is_little_endian)
+            size_of_header = struct.calcsize(header_struct);
+            data = fin.read(size_of_header)
+            fin.close()
+            header = struct.unpack(header_struct, data[0: size_of_header])
+            matrix_type = header[0]
+            if (matrix_type == 2):
+                row = header[1]  
+                col = header[2]
+        return (row, col)
+
+    
     def load(self, file_path, is_little_endian = True):
         if os.path.isfile(file_path):
             fin = open(file_path, "rb")
