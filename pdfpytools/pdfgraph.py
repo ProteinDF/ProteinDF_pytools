@@ -193,7 +193,7 @@ class DfGraph(object):
         if self.aspect != None:
             self._ax.set_aspect(self.aspect)
 
-        if self.legend != None:
+        if self.legend == True:
             self._ax.legend()
 
             
