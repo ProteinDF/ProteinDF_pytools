@@ -166,6 +166,7 @@ class DfGraph(object):
     # method
     # ==========================================================================
     def _draw(self):
+        self._ax.use_sticky_edges = False
         self._draw_data()
 
         self._ax.set_title(self.title)
@@ -177,8 +178,9 @@ class DfGraph(object):
                           right = self.xmax)
         self._ax.set_ylim(bottom = self.ymin,
                           top = self.ymax)
+        # self._ax.relim(visible_only=True)
         self._ax.autoscale_view(tight=True)
-
+        
         if self.xticks != None:
             self._ax.set_xticks(self.xticks)
         if self.yticks != None:
@@ -193,6 +195,8 @@ class DfGraph(object):
 
         if self.legend != None:
             self._ax.legend()
+
+            
             
     def _draw_data(self):
         pass
@@ -269,9 +273,13 @@ class DfEnergyLevelHistoryGraphH(DfGraph):
         itr_vs_list = []
         if len(self._select_iterations) == 0:
             itr_vs_list = range(self._max_itr +1)
+            self.xmin = 1
+            self.xmax = self._max_itr +1
         else:
             itr_vs_list = [ 0 for x in range(self._max_itr +1) ]
             for order, itr in enumerate(self._select_iterations):
+                self.xmin = min(self.xmin, order +1)
+                self.xmax = max(self.xmin, order +1)
                 itr_vs_list[itr] = order +1
                 
         for d in self._data:
