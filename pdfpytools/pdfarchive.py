@@ -3,19 +3,19 @@
 
 # Copyright (C) 2014 The ProteinDF development team.
 # see also AUTHORS and README if provided.
-# 
+#
 # This file is a part of the ProteinDF software package.
-# 
+#
 # The ProteinDF is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # The ProteinDF is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -33,7 +33,7 @@ class PdfArchive(object):
     ProteinDFの結果をDBに格納するクラス
     """
     _format_version = 20121230 # DB format version
-    
+
     def __init__(self,
                  db_path ='pdfentry.db',
                  pdfparam =None):
@@ -60,14 +60,14 @@ class PdfArchive(object):
             self._set_pdfparam_basisset(pdfparam)
             self._set_pdfparam_total_energies(pdfparam)
             self._set_pdfparam_gradient(pdfparam)
-            
+
     # private ------------------------------------------------------------------
     def _create_tables(self):
         self._create_table_conditions()
         self._create_table_vectors()
         self._create_table_matrices()
         self._create_table_gradient()
-        
+
     def _create_table_conditions(self):
         """
         pdf_id は多重登録を防ぐため
@@ -125,7 +125,7 @@ class PdfArchive(object):
                                   ['dtype',
                                    'runtype',
                                    'iteration'])
-            
+
     def _create_table_gradient(self):
         """
         gradient情報のDBを作成
@@ -146,7 +146,7 @@ class PdfArchive(object):
             lines = self._db.select(table_name, fields=['pdf_id'])
             if len(lines) > 0:
                 self._pdf_id = lines[0]['pdf_id']
-            
+
     def _set_pdfparam_conditions(self, pdfparam):
         assert(isinstance(pdfparam, pdf.PdfParam))
         table_name = 'conditions'
@@ -259,7 +259,7 @@ class PdfArchive(object):
                                    'coef',
                                    'exp'],
                                   ['name', 'CGTO_ID', 'PGTO_ID'])
-        
+
         for atom_label in pdfparam.get_basisset_atomlabels():
             basisset = pdfparam.get_basisset(atom_label)
             name = basisset.name
@@ -275,7 +275,7 @@ class PdfArchive(object):
                 self._db.insert('basis',
                                 {'atom_label': atom_label,
                                  'name': name})
-            
+
             for cgto_id, cgto in enumerate(basisset):
                 shell_type = cgto.shell_type
                 scale_factor = cgto.scale_factor
@@ -327,7 +327,7 @@ class PdfArchive(object):
                                          'coef': coef,
                                          'exp': exp
                                         })
-                        
+
     def _set_pdfparam_total_energies(self, pdfparam):
         assert(isinstance(pdfparam, pdf.PdfParam))
         table_name = 'total_energies'
@@ -374,7 +374,7 @@ class PdfArchive(object):
                 else:
                     self._db.insert(table_name, data)
         #
-                    
+
     # ------------------------------------------------------------------
     # pdf_id
     def _get_pdf_id(self):
@@ -383,7 +383,7 @@ class PdfArchive(object):
     pdf_id = property(_get_pdf_id)
 
     # ------------------------------------------------------------------
-    # num_of_atoms 
+    # num_of_atoms
     def _get_num_of_atoms(self):
         value = None
         table_name = 'conditions'
@@ -392,8 +392,8 @@ class PdfArchive(object):
                                      fields=['num_of_atoms'])
             if len(values) > 0:
                 value = int(values[0]['num_of_atoms'])
-        return value        
-    
+        return value
+
     num_of_atoms = property(_get_num_of_atoms)
 
     # ------------------------------------------------------------------
@@ -407,9 +407,9 @@ class PdfArchive(object):
             if len(values) > 0:
                 value = int(values[0]['num_of_AOs'])
         return value
-    
+
     num_of_AOs = property(_get_num_of_AOs)
-    
+
     # ------------------------------------------------------------------
     # num_of_MOs
     def _get_num_of_MOs(self):
@@ -421,7 +421,7 @@ class PdfArchive(object):
             if len(values) > 0:
                 value = int(values[0]['num_of_MOs'])
         return value
-    
+
     num_of_MOs = property(_get_num_of_MOs)
 
     # ------------------------------------------------------------------
@@ -435,9 +435,9 @@ class PdfArchive(object):
             if len(values) > 0:
                 value = values[0]['method']
         return value
-    
+
     method = property(_get_method)
-        
+
     # ------------------------------------------------------------------
     # iterations
     def _get_iterations(self):
@@ -449,7 +449,7 @@ class PdfArchive(object):
             if len(values) > 0:
                 value = values[0]['iterations']
         return value
-    
+
     iterations = property(_get_iterations)
 
     # ------------------------------------------------------------------
@@ -463,7 +463,7 @@ class PdfArchive(object):
             if len(values) > 0:
                 value = values[0]['scf_converged']
         return value
-    
+
     scf_converged = property(_get_scf_converged)
 
     # 出力 ----------
@@ -497,7 +497,7 @@ class PdfArchive(object):
                                 name = label)
                 mol.set_atom(atom_id, a)
         return mol
-                
+
     def get_basisset_name(self, atom_label):
         """
         原子名(atom_label)に対応する名前を返す
@@ -550,7 +550,7 @@ class PdfArchive(object):
                     exp = pgto_entry['exp']
                     basisset[CGTO_ID][PGTO_ID] = PrimitiveGTO(exp, coef)
         return basisset
-                    
+
     def get_HOMO_level(self, runtype):
         """
         HOMOのレベルを返す
@@ -563,7 +563,7 @@ class PdfArchive(object):
                 answer = i
                 break
         return answer
-        
+
     def get_total_energy(self, iteration):
         iteration = int(iteration)
         value = None
@@ -629,7 +629,7 @@ class PdfArchive(object):
             answer = bridge.Vector()
             answer.set_buffer(buf)
             assert(size == len(answer))
-                   
+
         return answer
 
     # matrix -------------------------------------------------------------------
@@ -652,7 +652,7 @@ class PdfArchive(object):
             self._logger.warn('The col size of the input matrix is too small.: {}'.format(m.cols))
             self._logger.warn('cannnot register the matrix.')
             return
-        
+
         table_name = 'matrices'
         where_str = 'dtype = "%s" and runtype = "%s" and iteration = %d' % (
             dtype, runtype, iteration)
@@ -674,7 +674,7 @@ class PdfArchive(object):
                              'cols':m.cols,
                              'format':m.type,
                              'data':sqlite3.Binary(m.get_buffer())})
-            
+
     def _get_matrix(self, dtype, runtype, iteration):
         """
         行列を取得する
@@ -722,7 +722,7 @@ class PdfArchive(object):
         占有軌道情報を取得する
         """
         return self._get_vector('occ', runtype, 0)
-        
+
     # energy level -------------------------------------------------------------
     def set_energylevel(self, runtype, iteration, energy_levels):
         """
@@ -742,7 +742,7 @@ class PdfArchive(object):
         LCAOを設定する
         """
         self._set_matrix('C', runtype, iteration, lcao)
-        
+
     # population ------------------------------------------------------------------
     def set_population(self, pop_type, iteration, pop_mat):
         pop_type = pop_type.upper()
@@ -758,9 +758,9 @@ class PdfArchive(object):
         mat = self._get_matrix(dtype=pop_type,
                                runtype='',
                                iteration=iteration)
-        
+
         return mat
-        
+
     # gradient --------------------------------------------------------------------
     def get_gradient(self, atom_id):
         atom_id = int(atom_id)
@@ -771,7 +771,7 @@ class PdfArchive(object):
             if len(results) > 0:
                 gradient = [results[0]['x'], results[0]['y'], results[0]['z']]
         return gradient
-        
+
     def get_gradient_rms(self):
         """
         gradientのRMSを返す
@@ -784,16 +784,9 @@ class PdfArchive(object):
             else:
                 return None
         return math.sqrt(rms / (3 * self.num_of_atoms))
-        
-            
+
+
     # compare ------------------------------------------------------------------
-    def compare_simple(self, other):
-        answer = True
-        answer = answer & self.compare_info(other)
-        answer = answer & self.compare_energy(other)
-        
-        return answer
-        
     def __eq__(self, other):
         answer = True
         answer = answer & self.compare_info(other)
@@ -805,7 +798,7 @@ class PdfArchive(object):
             TE1 = self.get_total_energy(itr)
             TE2 = other.get_total_energy(itr)
             answer = answer & self._check(TE1, TE2, '#%d TE' % (itr))
-            
+
         return answer
 
     def _check(self, val1, val2, msg):
@@ -832,15 +825,15 @@ class PdfArchive(object):
     def compare_info(self, rhs):
         answer = True
 
-        answer = answer & self._check(self.num_of_AOs, other.num_of_AOs,
+        answer = answer & self._check(self.num_of_AOs, rhs.num_of_AOs,
                                       'num_of_AOs')
-        answer = answer & self._check(self.num_of_MOs, other.num_of_MOs,
+        answer = answer & self._check(self.num_of_MOs, rhs.num_of_MOs,
                                       'num_of_MOs')
-        answer = answer & self._check(self.scf_converged, other.scf_converged,
+        answer = answer & self._check(self.scf_converged, rhs.scf_converged,
                                       'scf_converged')
 
         return answer
-    
+
     def compare_energy(self, rhs):
         answer = True
 
@@ -880,9 +873,9 @@ class PdfArchive(object):
         else:
             self._logger.warning('type mismatch(lhs): POP not found')
             answer = False
-            
+
         return answer
-    
+
     def compare_grad(self, rhs):
         answer = True
 
@@ -896,12 +889,12 @@ class PdfArchive(object):
             max1 = max(max1, max(max(xyz1), -min(xyz1)))
             max2 = max(max2, max(max(xyz2), -min(xyz2)))
         answer = answer & self._check(max1, max2, 'grad max')
-            
+
         # check gradient RMS
         answer = answer & self._check(self.get_gradient_rms(),
                                       rhs.get_gradient_rms(),
                                       'grad RMS')
         return answer
-    
+
 if __name__ == '__main__':
     pass
