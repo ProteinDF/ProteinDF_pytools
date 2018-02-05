@@ -11,8 +11,8 @@ except:
 import math
 import copy
 
-import pdfbridge as bridge
-import pdfpytools as pdf
+import proteindf_bridge as bridge
+import proteindf_tools as pdf
 
 import sklearn.linear_model as lm
 
@@ -22,7 +22,7 @@ class ESP_charge(object):
         rrms = self._calcRRMS(grids, ESPs, atoms)
 
         return rrms
-        
+
     def _load_ESPs(self, mpac_path):
         print('load: {}'.format(mpac_path))
         data = None
@@ -63,7 +63,7 @@ class ESP_charge(object):
         print('delta2={} sum_v2={} RRMS2={} RRMS={}'.format(sum_delta2, sum_v2, rrms2, rrms))
 
         return rrms
-    
+
     def _calc_esp(self, pos, atoms):
         esp = 0.0
         num_of_atoms = len(atoms)
@@ -78,7 +78,7 @@ class Ridge(object):
     def __init__(self, alpha=1.0):
         self._alpha = alpha
         self._coef = None
-        
+
     def fit(self, X, y):
         '''
         X: design matrix (n x b)
@@ -142,7 +142,7 @@ class Ridge(object):
         Minv = M.inverse()
         self._coef = Minv * y
 
-        
+
     @property
     def coef(self):
         return self._coef
@@ -162,7 +162,7 @@ def set_atomlist(atom_charges, atomlist):
         print(atomlist[i])
     print('charge={:.3f}'.format(q_total))
 
-    
+
 def main():
     # parse args
     parser = argparse.ArgumentParser(description='ridge')
@@ -210,7 +210,7 @@ def main():
                         action="store_true",
                         default=False)
     args = parser.parse_args()
-        
+
     # setting
     design_matrix_path = args.design_matrix_path
     target_vector_path = args.target_vector_path
@@ -222,7 +222,7 @@ def main():
     if verbose:
         print("alpha={}".format(alpha))
     esp_data_path = args.espdat[0]
-    
+
     atomlist = []
     if args.db:
         entry = pdf.PdfArchive(args.db)
@@ -261,20 +261,20 @@ def main():
         # atom_charges = ridge.coef_[:-1]
         atom_charges = ridge.coef_[:]
         set_atomlist(atom_charges, atomlist)
-    else:    
+    else:
         ridge = Ridge(alpha=alpha)
 
         ridge.fit_atomic_charges(X, y)
         atom_charges = ridge.coef[:-1]
         set_atomlist(atom_charges, atomlist)
-        
+
         # debug
         #X.resize(X.rows -1, X.cols -1)
         #y.resize(len(y) -1)
         #ridge.fit(X, y) # same as scikit-learn
         #atom_charges = ridge.coef[:]
         #set_atomlist(atom_charges, atomlist)
-        
+
         #ridge.fit_atomic_charges(X, y)
         #atom_charges = ridge.coef[:-1]
         #set_atomlist(atom_charges, atomlist)
@@ -291,7 +291,6 @@ def main():
                 line = "{:2}, {: 8.3f}\n".format(atomlist[i].symbol,
                                                  atomlist[i].charge)
                 f.write(line)
-    
+
 if __name__ == '__main__':
     main()
-    

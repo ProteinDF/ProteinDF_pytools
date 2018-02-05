@@ -3,19 +3,19 @@
 
 # Copyright (C) 2014 The ProteinDF development team.
 # see also AUTHORS and README if provided.
-# 
+#
 # This file is a part of the ProteinDF software package.
-# 
+#
 # The ProteinDF is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # The ProteinDF is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -29,7 +29,7 @@ import argparse
 import msgpack
 import array
 
-import pdfpytools as pdf
+import proteindf_tools as pdf
 
 def main():
     # initialize
@@ -95,7 +95,7 @@ def main():
     #    if obj_atomlabel == atomlabel:
     #        harris_db['harris'][atom] = obj
     #        break
-            
+
     # density matrix
     print("density matrix: %s" % (density_matrix_path))
     mat = pdf.SymmetricMatrix()
@@ -121,11 +121,11 @@ def main():
         for j in range(i +1):
             atom_dens_mat.set(i, j, mat.get(target_orbs[i],
                                             target_orbs[j]))
-    
+
     # 登録
     harris_db.setdefault('density_matrix', {})
     harris_db['density_matrix'][atom] = atom_dens_mat.get_raw_data()
-    
+
     # output
     fout = open(harris_db_path, "wb")
     harris_mpac = msgpack.packb(harris_db)

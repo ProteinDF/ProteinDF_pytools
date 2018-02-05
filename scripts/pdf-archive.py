@@ -3,19 +3,19 @@
 
 # Copyright (C) 2014 The ProteinDF development team.
 # see also AUTHORS and README if provided.
-# 
+#
 # This file is a part of the ProteinDF software package.
-# 
+#
 # The ProteinDF is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # The ProteinDF is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -34,9 +34,9 @@ try:
 except:
     import msgpack_pure as msgpack
 #import pprint
-    
-import pdfbridge
-import pdfpytools as pdf
+
+import proteindf_bridge as bridge
+import proteindf_tools as pdf
 
 def main():
     parser = argparse.ArgumentParser(description='archive ProteinDF results')
@@ -56,7 +56,7 @@ def main():
                         choices=['mulliken', 'mk'],
                         default=argparse.SUPPRESS,
                         help='calc population')
-    
+
     parser.add_argument('-v', '--verbose',
                         action='store_true',
                         default=False)
@@ -79,11 +79,11 @@ def main():
             do_calc_pop_types = ['mulliken']
         else:
             do_calc_pop_types = args.calc_pop
-    
+
     try:
         # read ProteinDF parameters
         pdfparam = pdf.load_pdfparam(pdfparam_path)
-    
+
         # setup DB
         entry = pdf.PdfArchive(output,
                                pdfparam=pdfparam)
@@ -96,13 +96,11 @@ def main():
         traceback.print_exc(file=sys.stdout)
         #print(traceback.format_exc())
         print('-'*60)
-    
+
 
 class Pdf2Db(object):
     def __init__(self, pdfparam, entry, pop_types=[]):
-        nullHandler = pdfbridge.NullHandler()
         self._logger = logging.getLogger(__name__)
-        self._logger.addHandler(nullHandler)
 
         self._is_little_endian = True
 
@@ -111,30 +109,30 @@ class Pdf2Db(object):
         self._pdfparam = pdfparam
         self._entry = entry
         self._pop_types = pop_types
-        
+
     def regist(self):
         # energy level
         self.set_energylevels('full')
 
         # OCC
         self.set_occ()
-        
+
         # LCAO matrix
         self.set_lcao('last')
 
         # calc population
         if self._pdfparam.scf_converged:
             self.set_pop(self._pop_types)
-        
+
     def _get_is_little_endian(self):
         return self._is_little_endian
-    
+
     def _set_is_little_endian(self, value):
         assert(isinstance(value, bool))
         self._is_little_endian = value
 
     is_little_endian = property(_get_is_little_endian, _set_is_little_endian)
-        
+
     def set_energylevels(self, mode ='last'):
         """
         エネルギー準位をDBに格納する
@@ -144,7 +142,7 @@ class Pdf2Db(object):
         pdfparam = self._pdfparam
         entry = self._entry
         iterations = pdfparam.iterations
-        
+
         for itr in range(1, iterations +1):
             v = pdf.Vector()
             # energy level
@@ -171,7 +169,7 @@ class Pdf2Db(object):
                 entry.set_occupations(runtype, v)
             else:
                 self._logger.warning('could not load %s' % (path))
-        
+
     def set_lcao(self, mode ='last'):
         """
         LCAO行列をDBに格納する
@@ -185,7 +183,7 @@ class Pdf2Db(object):
         start_itr = 1
         if mode == 'last':
             start_itr = iterations
-            
+
         m = pdf.Matrix()
         for itr in range(start_itr, iterations +1):
             for runtype in pdfparam.runtypes():
@@ -208,11 +206,10 @@ class Pdf2Db(object):
                 self._entry.set_population('mulliken', iteration, m)
             else:
                 self._logger.warning('unknown pop type: {}'.format(pop_type))
-                    
-            
+
+
 if __name__ == '__main__':
     logconfig_file = 'logconfig.ini'
     if os.path.exists(logconfig_file):
         logging.config.fileConfig(logconfig_file)
     main()
-

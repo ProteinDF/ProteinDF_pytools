@@ -3,19 +3,19 @@
 
 # Copyright (C) 2014 The ProteinDF development team.
 # see also AUTHORS and README if provided.
-# 
+#
 # This file is a part of the ProteinDF software package.
-# 
+#
 # The ProteinDF is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # The ProteinDF is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -23,7 +23,7 @@ import os
 import re
 import argparse
 
-import pdfpytools as pdf
+import proteindf_tools as pdf
 
 class BasisSetParser(object):
     """
@@ -32,10 +32,10 @@ class BasisSetParser(object):
     _re_atom_line = re.compile('\s*(\S+)\s+0')
     _re_CGTO_line = re.compile('\s*(\S+)\s+(\S+)\s+(\S+)')
     _re_PGTO_line = re.compile('\s*(\S+)\s+(\S+)')
-    
+
     def __init__(self):
         self._basissets = {}
-        
+
     def load(self, file_path, mode = 'Gaussian94'):
         self._load_gaussian94(file_path)
 
@@ -49,7 +49,7 @@ class BasisSetParser(object):
         in_section = False
         for line in fin:
             line = line.rstrip('\n')
-            
+
             if (line[0:4] == '****'):
                 if in_section:
                     # parse & store data
@@ -70,12 +70,12 @@ class BasisSetParser(object):
 
     def _parse_block_aussian94(self, lines):
         has_error = False
-        
+
         # [atom] 0
         matchObj = self._re_atom_line.match(lines[0])
         atom = matchObj.group(1)
         #print(">>>> %s" % (atom))
-        
+
         line_index = 1
         cgtos = []
         while line_index < len(lines):
@@ -86,7 +86,7 @@ class BasisSetParser(object):
             CGTO_coef = float(matchObj.group(3))
             line_index += 1
             cgto = ContractedGTO(type.lower(), num_of_PGTOs)
-            
+
             for pgto_index in range(num_of_PGTOs):
                 pgto_line = lines[line_index + pgto_index]
                 matchObj = self._re_PGTO_line.match(pgto_line)
@@ -95,11 +95,11 @@ class BasisSetParser(object):
                 cgto[pgto_index] = PrimitiveGTO(exponent, coef)
             line_index += num_of_PGTOs
             cgtos.append(cgto)
-            
+
         basisset = BasisSet('', len(cgtos))
         for cgto_index in range(len(cgtos)):
             basisset[cgto_index] = cgtos[cgto_index]
-            
+
         return (atom, basisset)
 
     def __str__(self):
@@ -110,7 +110,7 @@ class BasisSetParser(object):
             answer += '\n'
 
         return answer
-    
+
 def main():
     parser = argparse.ArgumentParser(description='parse EMSL BasisSet Data')
     parser.add_argument('FILE',
@@ -124,14 +124,13 @@ def main():
     # setting
     file_path = args.FILE[0]
     verbose = args.verbose
-    
+
     obj = BasisSetParser()
     if verbose:
         print('reading: %s' % (file_path))
     obj.load(file_path)
     print(obj)
-    
+
 
 if __name__ == '__main__':
     main()
-

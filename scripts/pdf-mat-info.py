@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import pdfpytools as pdf
+import proteindf_tools as pdf
 
 def main():
     # parse args

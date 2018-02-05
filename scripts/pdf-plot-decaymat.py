@@ -13,9 +13,9 @@ except:
         import umsgpack as msgpack
     except:
         import msgpack_pure as msgpack
-    
-import pdfbridge as bridge
-import pdfpytools as pdf
+
+import proteindf_bridge as bridge
+import proteindf_tools as pdf
 
 def main():
     # parse args
@@ -71,7 +71,7 @@ def main():
     if verbose:
         sys.stderr.write("prepare molecule information\n")
     distance_mat = distance_matrix(molecule)
-        
+
     # setup matrix
     mat = get_matrix(mat_path, verbose)
     if mat == None:
@@ -83,8 +83,8 @@ def main():
     distgraph = pdf.DfDistanceVsElementGraph()
     distgraph.load('mat.dat')
     distgraph.save(output_path)
-    
-            
+
+
 def get_matrix(path, verbose = False):
     if verbose:
         sys.stderr.write("load matrix: {}\n".format(path))
@@ -105,22 +105,22 @@ def get_matrix(path, verbose = False):
 def distance_matrix(atomgroup, verbose = False):
     '''
     create distance matrix
-    
-    support flat-atomgroup only 
+
+    support flat-atomgroup only
     '''
     atomlist = atomgroup.get_atom_list()
     num_of_atoms = len(atomlist)
     if verbose:
         sys.stderr.write("num of atoms: {}n".format(num_of_atoms))
     mat = bridge.SymmetricMatrix(num_of_atoms)
-    
+
     for i in range(num_of_atoms):
         for j in range(i):
             distance = atomlist[i].xyz.distance_from(atomlist[j].xyz)
             mat.set(i, j, distance)
 
     return mat
-            
+
 
 def dist_vs_matvalue(orb_info, distance_mat, mat, path, verbose = False):
     if verbose:
@@ -137,8 +137,7 @@ def dist_vs_matvalue(orb_info, distance_mat, mat, path, verbose = False):
             data_str = "{}, {}\n".format(d, v)
             f.write(data_str)
     f.close()
-    
-    
+
+
 if __name__ == '__main__':
     main()
-    

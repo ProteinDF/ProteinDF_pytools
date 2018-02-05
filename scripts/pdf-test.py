@@ -32,7 +32,7 @@ try:
 except:
     import msgpack_pure as msgpack
 
-import pdfpytools as pdf
+import proteindf_tools as pdf
 
 
 def get_OK_NG(yn):

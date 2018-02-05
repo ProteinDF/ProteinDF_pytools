@@ -3,19 +3,19 @@
 
 # Copyright (C) 2014 The ProteinDF development team.
 # see also AUTHORS and README if provided.
-# 
+#
 # This file is a part of the ProteinDF software package.
-# 
+#
 # The ProteinDF is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # The ProteinDF is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -28,9 +28,9 @@ try:
     import msgpack
 except:
     import msgpack_pure as msgpack
-    
-import pdfbridge
-import pdfpytools as pdf
+
+import proteindf_bridge as bridge
+import proteindf_tools as pdf
 
 def main():
     # parse args
@@ -96,27 +96,27 @@ def main():
         eigvals.load(eigval_path)
         elevel2dat(itr, eigvals, data_path)
         plot_elevel_single(data_path, itr, HOMO_level, output_path)
-        
-    
+
+
 def elevel2dat(itr, eigvals, data_path):
     """
     エネルギー準位ベクトルファイルを
     グラフ描画用データに変換する
 
     itr: iteraton(int)
-    eigvals: energy level(pdfbridge.Vector object)
+    eigvals: energy level(bridge.Vector object)
     data_path: output path of data
     """
     assert(isinstance(itr, IntType))
-    assert(isinstance(eigvals, pdfbridge.Vector))
+    assert(isinstance(eigvals, bridge.Vector))
     assert(isinstance(data_path, StringType))
-    
+
     dat = open(data_path, 'w')
     for level, e in enumerate(eigvals):
         e *= 27.2116
         dat.write('%d, %d, % 16.10f\n' % (itr, level, e))
     dat.close()
-    
+
 def plot_elevel_single(data_path, itr, HOMO_level, output_path):
     """
     横向きのエネルギー準位グラフを描画する
@@ -124,7 +124,7 @@ def plot_elevel_single(data_path, itr, HOMO_level, output_path):
     data_path: グラフ描画用データファイルのパス
     HOMO: 最高占有軌道(0からスタート)
     itr: iteration
-    output_path: 
+    output_path:
     """
     graphV = pdf.DfEnergyLevelHistoryGraphV()
     graphV.set_HOMO_level(HOMO_level) # option base 0
@@ -136,9 +136,8 @@ def plot_elevel_single(data_path, itr, HOMO_level, output_path):
     graphV.ymin = 0.4
     graphV.ymax = 1.6
     graphV.aspect = 3.0
-    
+
     graphV.save(output_path)
 
 if __name__ == '__main__':
     main()
-    

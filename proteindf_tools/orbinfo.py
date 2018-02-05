@@ -3,25 +3,28 @@
 
 # Copyright (C) 2014 The ProteinDF development team.
 # see also AUTHORS and README if provided.
-# 
+#
 # This file is a part of the ProteinDF software package.
-# 
+#
 # The ProteinDF is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # The ProteinDF is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
 
-import pdfpytools as pdf
+from .basisset import ContractedGTO
+from .pdfarchive import PdfArchive
+from .pdfparam import PdfParam
+
 
 class OrbInfo(object):
     """
@@ -31,13 +34,13 @@ class OrbInfo(object):
         self._orb_info = []
         self._atoms = []
         self._basissets = {}
-        if isinstance(obj, pdf.PdfArchive):
+        if isinstance(obj, PdfArchive):
             self._setup_by_db(obj)
-        elif isinstance(obj, pdf.PdfParam):
+        elif isinstance(obj, PdfParam):
             self._setup_by_param(obj)
-        
+
     def _setup_by_db(self, db):
-        assert(isinstance(db, pdf.PdfArchive))
+        assert(isinstance(db, PdfArchive))
 
         mol = db.get_molecule()
         # make atom and basisset list
@@ -54,7 +57,7 @@ class OrbInfo(object):
             for CGTO_index in range(num_of_CGTOs):
                 CGTO = basisset[CGTO_index]
                 shell_type = CGTO.shell_type
-                shell_type_id = pdf.ContractedGTO.get_shell_type_id(shell_type)
+                shell_type_id = ContractedGTO.get_shell_type_id(shell_type)
                 num_of_basis_type = shell_type_id * 2 + 1
                 for basis_type in range(num_of_basis_type):
                     data = {'atom_index': atom_index,
@@ -66,7 +69,7 @@ class OrbInfo(object):
             atom_index += 1
 
     def _setup_by_param(self, param):
-        assert(isinstance(param, pdf.PdfParam))
+        assert(isinstance(param, PdfParam))
 
         mol = param.molecule
         # make atom and basisset list
@@ -82,7 +85,7 @@ class OrbInfo(object):
             for CGTO_index in range(num_of_CGTOs):
                 CGTO = basisset[CGTO_index]
                 shell_type = CGTO.shell_type
-                shell_type_id = pdf.ContractedGTO.get_shell_type_id(shell_type)
+                shell_type_id = ContractedGTO.get_shell_type_id(shell_type)
                 num_of_basis_type = shell_type_id * 2 + 1
                 for basis_type in range(num_of_basis_type):
                     data = {'atom_index': atom_index,
@@ -92,7 +95,7 @@ class OrbInfo(object):
                     self._orb_info.append(data)
             self._atoms.append(copy.deepcopy(atom))
             atom_index += 1
-            
+
     def _get_atom_label(self, atom):
         atom_label = atom.symbol
         if len(atom.label) > 0:
@@ -101,7 +104,7 @@ class OrbInfo(object):
 
     def get_num_of_orbitals(self):
         return len(self._orb_info)
-    
+
     def get_atom_id(self, orb_index):
         answer = None
         if orb_index < self.get_num_of_orbitals():
@@ -114,7 +117,7 @@ class OrbInfo(object):
         if atom_id != None:
             atom = self._atoms[atom_id]
         return atom
-    
+
     def get_shell_type(self, orb_index):
         answer = None
         if orb_index < self.get_num_of_orbitals():
@@ -132,11 +135,10 @@ class OrbInfo(object):
             CGTO_index = self._orb_info[orb_index]['CGTO_index']
             shell_type = basisset[CGTO_index].shell_type_id
             basis_type = self._orb_info[orb_index]['basis_type']
-            answer = pdf.ContractedGTO.get_basis_type(shell_type, basis_type)
+            answer = ContractedGTO.get_basis_type(shell_type, basis_type)
         return answer
-        
-    
+
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-        

@@ -9,9 +9,9 @@ try:
 except:
     import msgpack_pure as msgpack
 import math
-    
-import pdfbridge as bridge
-import pdfpytools as pdf
+
+import proteindf_bridge as bridge
+import proteindf_tools as pdf
 
 class ESP_charge(object):
     def get_RRMS(self, mpac_path, atoms):
@@ -19,7 +19,7 @@ class ESP_charge(object):
         rrms = self._calcRRMS(grids, ESPs, atoms)
 
         return rrms
-        
+
     def _load_ESPs(self, mpac_path):
         print('load: {}'.format(mpac_path))
         data = None
@@ -60,7 +60,7 @@ class ESP_charge(object):
         print('delta2={} sum_v2={} RRMS2={} RRMS={}'.format(sum_delta2, sum_v2, rrms2, rrms))
 
         return rrms
-    
+
     def _calc_esp(self, pos, atoms):
         esp = 0.0
         num_of_atoms = len(atoms)
@@ -70,7 +70,7 @@ class ESP_charge(object):
 
         return esp
 
-   
+
 class ElasticNet(object):
     def __init__(self, alpha=1.0, l1_ratio=0.5, max_iter=1000, tol=0.0001):
         self._alpha = alpha
@@ -78,7 +78,7 @@ class ElasticNet(object):
         self._fit_intercept = False
         self._max_iter = max_iter
         self._iter = 0
-        
+
         self._conv_threshold = tol
         self._num_of_converged = 0
         self._is_converged = False
@@ -88,15 +88,15 @@ class ElasticNet(object):
     @property
     def iterations(self):
         return self._iter
-        
+
     @property
     def is_converged(self):
         return self._is_converged
-        
+
     @property
     def coef(self):
         return self._coef
-        
+
     def fit(self, X, y):
         '''
         X: design matrix (n x b)
@@ -112,7 +112,7 @@ class ElasticNet(object):
         n = X.rows
         b = X.cols
         assert(y.size() == n)
-        
+
         beta = pdf.Vector(b)
         prev_beta = pdf.Vector(b)
         for self._iter in range(1, self._max_iter +1):
@@ -124,7 +124,7 @@ class ElasticNet(object):
                 X_j = X.get_col_vector(j)
                 arg1 = X_j * r_j
                 arg2 = self._alpha * n
-                
+
                 X_j2 = X_j * X_j
                 beta[j] = self._soft_thresholding_operator(arg1, arg2) / X_j2
 
@@ -141,7 +141,7 @@ class ElasticNet(object):
     def _fit_with_intercept(self, X, y):
         # to inprement
         raise
-        
+
     def _soft_thresholding_operator(self, x, lambda_):
         if x > 0 and lambda_ < abs(x):
             return x - lambda_
@@ -155,24 +155,24 @@ class ElasticNet(object):
         #    return x - lambda_
         #else:
         #    return x + lambda_
-       
+
     def _is_convergence(self, iter, x, prev_x):
         answer = False
         if iter > 1:
             dim = len(x)
-            
+
             diff_x = x - prev_x
             max_diff = max(abs(diff_x.max), abs(diff_x.min))
             rms_diff = diff_x * diff_x / dim
             print("#{} MAX delta: {} MAX RMS: {}".format(iter, max_diff, rms_diff))
-            
+
             if (max_diff < self._conv_threshold * 0.1):
                 self._num_of_converged += 1
                 if self._num_of_converged >= 2:
                     answer = True
             else:
                 self._num_of_converged = 0
-            
+
         return answer
 
     def fit_atomic_charges(self, X, y):
@@ -195,7 +195,7 @@ class ElasticNet(object):
             prev_beta = pdf.Vector(beta)
             beta = Minv * y
             self._coef = beta
-                
+
             if self._is_convergence(self._iter, beta, prev_beta):
                 self._is_converged = True
                 print("iter={}".format(self._iter))
@@ -230,11 +230,11 @@ class ElasticNet(object):
                 self._is_converged = True
                 break
             prev_coef = bridge.Vector(coef)
-        
+
         self._coef = coef
-    
-            
-    
+
+
+
 def get_charge(x):
     charge = 0.0
     for i in range(len(x) -1):
@@ -311,7 +311,7 @@ def main():
                         action="store_true",
                         default=False)
     args = parser.parse_args()
-        
+
     # setting
     design_matrix_path = args.design_matrix_path
     target_vector_path = args.target_vector_path
@@ -325,7 +325,7 @@ def main():
     if verbose:
         print("alpha={}".format(alpha))
     esp_data_path = args.espdat[0]
-    
+
     atomlist = []
     if args.db:
         entry = pdf.PdfArchive(args.db)
@@ -335,7 +335,7 @@ def main():
         for atom in atoms:
             if atom.symbol != 'X':
                 atomlist.append(atom)
-    
+
     # load design matrix
     # design matrix size = (atom +1) * (atom +1): +1 for lagurange parameter of MK
     X = pdf.Matrix()
@@ -379,8 +379,8 @@ def main():
         #print(lasso.is_converged)
         #atom_charges = lasso.coef[:]
         #set_atomlist(atom_charges, atomlist)
-        
-        
+
+
     # RRMS
     esp_charge = ESP_charge()
     rrms = esp_charge.get_RRMS(esp_data_path, atomlist)
@@ -393,7 +393,6 @@ def main():
                 line = "{:2}, {: 8.3f}\n".format(atomlist[i].symbol,
                                                  atomlist[i].charge)
                 f.write(line)
-    
+
 if __name__ == '__main__':
     main()
-    

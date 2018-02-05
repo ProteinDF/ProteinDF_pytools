@@ -31,7 +31,7 @@ try:
 except:
     import msgpack_pure as msgpack
 
-import pdfpytools as pdf
+import proteindf_tools as pdf
 
 def main():
     # parse args

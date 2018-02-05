@@ -3,19 +3,19 @@
 
 # Copyright (C) 2014 The ProteinDF development team.
 # see also AUTHORS and README if provided.
-# 
+#
 # This file is a part of the ProteinDF software package.
-# 
+#
 # The ProteinDF is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # The ProteinDF is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -26,6 +26,7 @@ import subprocess
 import shlex
 import tempfile
 import logging
+logger = logging.getLogger(__name__)
 import traceback
 
 try:
@@ -33,19 +34,13 @@ try:
 except:
     import msgpack_pure as msgpack
 
-import pdfbridge as bridge
-import pdfpytools as pdf
+import proteindf_bridge as bridge
+from .pdfparam import PdfParam
+from .process import Process
+
 
 epsilon = 1.0E-10 # 計算機イプシロン
 error = 1.0E-5 # 許容誤差
-
-module_logger = logging.getLogger(__name__)
-module_logger.addHandler(logging.NullHandler())
-module_logger.setLevel(logging.INFO)
-
-#class NullHandler(logging.Handler):
-#    def emit(self, record):
-#        pass
 
 def pdf_home():
     """
@@ -61,9 +56,9 @@ def get_default_pdfparam():
     # make temp dir & filepath
     tempfile_fd, tempfile_path = tempfile.mkstemp()
     os.close(tempfile_fd)
-    
+
     # 一時ファイルの初期化情報を読取る
-    pdf.run_pdf(['init-param', '-v', '-o', tempfile_path])
+    run_pdf(['init-param', '-v', '-o', tempfile_path])
     f = open(tempfile_path, "rb")
     tempdata = msgpack.unpackb(f.read())
     tempdata = bridge.Utils.to_unicode_dict(tempdata)
@@ -71,8 +66,8 @@ def get_default_pdfparam():
 
     # remove temp
     os.remove(tempfile_path)
-    
-    pdfparam = pdf.PdfParam(tempdata)
+
+    pdfparam = PdfParam(tempdata)
     pdfparam.step_control = 'create integral guess scf'
 
     pdfparam.guess = 'harris'
@@ -100,7 +95,7 @@ def set_basisset(pdfparam,
     """
     pdfparamにbasissetを設定する
     """
-    assert(isinstance(pdfparam, pdf.PdfParam))
+    assert(isinstance(pdfparam, PdfParam))
 
     basis2 = Basis2()
     atoms = ['C', 'H', 'N', 'O', 'S']
@@ -128,7 +123,7 @@ def run_pdf(subcmd):
     """
     run ProteinDF command
     """
-    module_logger.debug("run_pdf({})".format(subcmd))
+    logger.debug("run_pdf({})".format(subcmd))
 
     try:
         if isinstance(subcmd, list):
@@ -138,21 +133,22 @@ def run_pdf(subcmd):
         print(subcmd)
         raise
 
-    cmd = os.path.join(pdf_home(), "bin", "pdf") + " " + subcmd
-    module_logger.debug("run: {0}".format(cmd))
+    # cmd = os.path.join(pdf_home(), "bin", "pdf") + " " + subcmd
+    cmd = "pdf" + " " + subcmd
+    logger.debug("run: {0}".format(cmd))
 
-    p = pdf.Process()
+    p = Process()
     return_code = p.cmd(cmd).commit()
-    
-    module_logger.debug('return code={}'.format(return_code))
+
+    logger.debug('return code={}'.format(return_code))
     if return_code != 0:
         sys.stderr.write('Failed to execute command: %s' % cmd)
         sys.stderr.write('return code = {}'.format(return_code))
-        module_logger.critical('Failed to execute command: %s' % cmd)
-        module_logger.critical('return code = {}'.format(return_code))
+        logger.critical('Failed to execute command: %s' % cmd)
+        logger.critical('return code = {}'.format(return_code))
         raise
-    
-    
+
+
 def mpac2py(path):
     """
     load message pack binary file to python dictionary data
@@ -168,7 +164,7 @@ def mpac2py(path):
 
 def load_pdfparam(pdfparam_path='pdfparam.mpac'):
     data = mpac2py(pdfparam_path)
-    param = pdf.PdfParam(data)
+    param = PdfParam(data)
 
     return param
 
@@ -176,6 +172,6 @@ def save_pdfparam(pdfparam_data, pdfparam_path):
     assert(isinstance(pdfparam_path, str))
     raw_data = pdfparam_data.get_raw_data()
     data = msgpack.packb(raw_data)
-    
+
     with open(pdfparam_path, 'wb') as f:
         f.write(data)
