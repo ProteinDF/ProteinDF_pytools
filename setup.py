@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2014 The ProteinDF development team.
 # see also AUTHORS and README if provided.
@@ -20,17 +21,18 @@
 
 import sys, os
 import shutil
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 shutil.copyfile('scripts/pdfcmd.py', 'scripts/pdf')
 
-setup(name='ProteinDF_pytools',
-      version='0.1',
+setup(name='proteindf_tools',
+      version='2018.2',
       description='python scripts for ProteinDF package',
       author='Toshiyuki HIRANO',
       author_email='hiracchi@gmail.com',
       url='http://proteindf.github.io/',
-      packages=['pdfpytools'],
+      license='GPLv3',
+      packages=['proteindf_tools'],
       scripts=[
           'scripts/pdf',
           'scripts/pdf-archive.py',
@@ -57,7 +59,19 @@ setup(name='ProteinDF_pytools',
           'scripts/pdf-pop-rrms.py',
           'scripts/pdf-set-charges.py'
       ],
-      data_files=[
-          ('data', ['data/basis2.cache'])
-      ]
+
+      install_requires=[
+          'configparser',
+          'msgpack-python',
+          'BeautifulSoup4',
+          'numpy',
+          'pandas',
+          'matplotlib',
+          'scikit-learn',
+          'proteindf_bridge'
+      ],
+
+      package_data={
+          'pdfpytools': 'data/basis2.cache'
+      }
 )

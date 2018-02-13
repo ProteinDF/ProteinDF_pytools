@@ -20,13 +20,13 @@ from logging import getLogger, DEBUG, INFO
 logger = getLogger(__name__)
 
 from bs4 import BeautifulSoup
-import pdfbridge
-import pdfpytools as pdf
+import proteindf_bridge as bridge
+import proteindf_tools as pdf
 
 
 class MakeBasis2(object):
     MAX_SHELL_TYPE = 'spdfg'
-        
+
     def __init__(self,
                  alias_path=None,
                  cache_path=None,
@@ -40,12 +40,12 @@ class MakeBasis2(object):
         self._debug = debug
 
         self._load_alias(alias_path)
-        
+
         self._cache = {}
         self._cache_path = cache_path
 
         self._calced_set = set()
-        
+
         self._stdout = sys.stdout
         if output_path != None:
             self._stdout = open(output_path, 'w')
@@ -60,12 +60,12 @@ class MakeBasis2(object):
         if alias in self._alias.keys():
             real_name = self._alias[alias]
         return real_name
-        
+
     def show_list(self):
         basisset_info = self._get_basissets_info()
         for basisset_name in basisset_info.keys():
             self._stdout.write(basisset_name + "\n")
-        
+
     def run(self, basisset_names=[], header=""):
         # output header
         self._stdout.write(header + '\n')
@@ -105,7 +105,7 @@ class MakeBasis2(object):
                     is_parsed = True
                 else:
                     self._run_for_others(basisset_info, alias)
-        
+
             if not is_parsed:
                 logger.info(
                     "# pass: {name} ({status}; {bs_type})".format(name=basisset_name,
@@ -113,22 +113,22 @@ class MakeBasis2(object):
                                                                   bs_type=basisset_info[basisset_name]['type']))
         else:
             logger.error("basisset \"{}\" is not found. ".format(basisset_name))
-        
+
 
     def _sort_atom_symbols(self, atom_symbols):
-        atom_table = [ None ] * pdfbridge.PeriodicTable.get_num_of_atoms()
+        atom_table = [ None ] * bridge.PeriodicTable.get_num_of_atoms()
         for atom_symbol in atom_symbols:
-            atom_num = pdfbridge.PeriodicTable.get_atomic_number(atom_symbol)
+            atom_num = bridge.PeriodicTable.get_atomic_number(atom_symbol)
             atom_table[atom_num] = atom_symbol
         return [ x for x in atom_table if x != None ]
 
-    
+
     def _run_for_orbital(self, basisset_info, alias):
         """
         """
         db_basisset_name = self._alias2real(alias)
         logger.debug("orb: [{}] -> [{}]".format(alias, db_basisset_name))
-        
+
         bs_content = self._download_gaussian94(basisset_info, db_basisset_name)
         logger.info("# reg: {name} ({status}; {bs_type})".format(name=db_basisset_name,
                                                                  status=basisset_info[db_basisset_name]['status'],
@@ -138,7 +138,7 @@ class MakeBasis2(object):
             filepath = filepath.replace(os.sep, '_')
             with open(filepath, 'wb') as f:
                 # f = codecs.EncodedFile(f, 'utf-8')
-                f.write(pdfbridge.Utils.to_bytes(bs_content))
+                f.write(bridge.Utils.to_bytes(bs_content))
 
         # make basissets & basis2
         bsp = pdf.BasisSetParser()
@@ -169,30 +169,30 @@ class MakeBasis2(object):
                     basis2_MRD = self._get_basis2_MRD(db_basisset_name, basissets, uncontract_shell)
                     self._cache["ProteinDF-MRD"][db_basisset_name_uncontract] = basis2_MRD
                     self._save_cache()
-                    
+
                 if len(basis2_MRD) > 0:
                     self._stdout.write('# {} -------------\n'.format(alias + "-" + uncontract_shell))
                     self._stdout.write(basis2_MRD + '\n')
 
-                
+
     def _run_for_dftorb(self, basisset_info, alias):
         """
         """
         db_basisset_name = self._alias2real(alias)
         logger.debug("dft: alias[{}] -> {}".format(alias, db_basisset_name))
-        
+
         bs_content = self._download_gaussian94(basisset_info, db_basisset_name)
         logger.info("# reg: {name} ({status}; {bs_type})".format(name=db_basisset_name,
                                                                  status=basisset_info[db_basisset_name]['status'],
                                                                  bs_type=basisset_info[db_basisset_name]['type']))
-        
+
         if self._debug:
             filepath = '{}-dftorb.txt'.format(alias)
             filepath = filepath.replace(os.sep, '_')
             with open(filepath, 'wb') as f:
                 # f = codecs.EncodedFile(f, 'utf-8')
-                f.write(pdfbridge.Utils.to_bytes(bs_content))
-        
+                f.write(bridge.Utils.to_bytes(bs_content))
+
         # make basissets & basis2
         bsp = pdf.BasisSetParser()
         (basissets, basissets_density, basissets_xc) = bsp.parse(bs_content)
@@ -233,12 +233,12 @@ class MakeBasis2(object):
                     basis2_MRD = self._get_basis2_MRD(db_basisset_name, basissets, uncontract_shell)
                     self._cache["ProteinDF-MRD"][db_basisset_name_uncontract] = basis2_MRD
                     self._save_cache()
-                    
+
                 if len(basis2_MRD) > 0:
                     self._stdout.write('# {} -------------\n'.format(alias + "-" + uncontract_shell))
                     self._stdout.write(basis2_MRD + '\n')
-        
-        
+
+
     def _run_for_others(self, basisset_info, alias):
         basisset_name = self._alias2real(alias)
         bs_content = self._download_gaussian94(basisset_info, basisset_name)
@@ -247,7 +247,7 @@ class MakeBasis2(object):
                                                          status=basisset_info[basisset_name]['status'],
                                                          bs_type=basisset_info[basisset_name]['type']))
 
-        
+
     def _download_gaussian94(self, basisset_info, basisset_name):
         if (self._force_download == True) or (basisset_name not in self._cache['Gaussian94']):
             logger.info(
@@ -260,12 +260,12 @@ class MakeBasis2(object):
             self._cache['Gaussian94'][basisset_name] = bs_content
             self._save_cache()
         return self._cache['Gaussian94'][basisset_name]
-        
+
 
     def _load_alias(self, path):
         self._alias = {}
         re_alias = re.compile("^\s*(\S.*?)\s*=\s*(\S.*?)\s*$")
-        
+
         if path != None:
             with open(path, mode='r') as f:
                 line = f.readline()
@@ -283,8 +283,8 @@ class MakeBasis2(object):
         # debug out
         for alias in self._alias.keys():
             logger.debug("alias: [{}] -> [{}]".format(alias, self._alias[alias]))
-    
-    
+
+
     def _load_cache(self):
         if os.path.exists(self._cache_path):
             with open(self._cache_path, mode='rb') as f:
@@ -294,40 +294,40 @@ class MakeBasis2(object):
         self._cache["ProteinDF"] = {}
         self._cache["ProteinDF-DFT"] = {}
         self._cache["ProteinDF-MRD"] = {}
-            
+
     def _save_cache(self):
         with open(self._cache_path, mode='wb') as f:
             pickle.dump(self._cache, f)
 
-            
+
     def _get_content(self, url, params={}):
         cache_key = tuple((url, tuple(params.items())))
         if cache_key not in self._cache:
             response = requests.get(url, params=params)
             html = response.text.encode(response.encoding)
-            html = pdfbridge.Utils.to_unicode(html)
+            html = bridge.Utils.to_unicode(html)
             self._cache[cache_key] = html
             self._save_cache()
-        
+
         return self._cache[cache_key]
 
-    
+
     def _get_basissets_info(self):
         '''download basisset information
 
         retval: basisset information dict.
         '''
-        
+
         url = "https://bse.pnl.gov/bse/portal/user/anon/js_peid/11535052407933/panel/Main/template/content"
         index_html = self._get_content(url)
-        
+
         db_info = self._parse_basissets_index(index_html)
 
         return db_info
 
 
     def _parse_basissets_index(self, html):
-        ''' 
+        '''
         0 - path to xml file
         1 - basis set name
         2 - categorization: "dftcfit", "dftorb", "dftxfit", "diffuse",
@@ -352,7 +352,7 @@ class MakeBasis2(object):
             has_ECP = (l[5][0].upper() == 'T')
             has_spin = (l[6][0].upper() == 'T')
             last_modified = l[7]
-        
+
             answer[name] = {'url': url,
                             'type': bs_type,
                             'elements': elements,
@@ -369,17 +369,17 @@ class MakeBasis2(object):
         contraction = 'True'
         url = "https://bse.pnl.gov:443/bse/portal/user/anon/js_peid/11535052407933/action/portlets.BasisSetAction/template/courier_content/panel/Main/"
         url += "/eventSubmit_doDownload/true"
-            
+
         params = {'bsurl': bsurl,
                   'bsname': name,
                   'elts': " ".join(elements),
                   'format': text_format,
                   'minimize': contraction}
         html = self._get_content(url, params=params)
-        
+
         soup = BeautifulSoup(html, "html.parser")
         text = soup.pre.get_text()
-        
+
         return text
 
 
@@ -393,7 +393,7 @@ class MakeBasis2(object):
             basisset_name = "O-" + basisset_name
         else:
             basisset_name = "A-" + basisset_name
-            
+
         basis2 = ''
         for atom_symbol in self._sort_atom_symbols(basissets.keys()):
             bs = basissets[atom_symbol]
@@ -434,7 +434,7 @@ class MakeBasis2(object):
             assert(isinstance(bs, pdf.BasisSet))
             bs_MRD = self._makeBasisSet_MRD(bs, uncontract_shell)
             bs_MRD.name = basisset_name + '-{}'.format(uncontract_shell) + '.' + atom_symbol
-            
+
             # for orbital basis
             if bs_MRD.max_shell_type in max_shell_type:
                 basis2 += str(bs_MRD) + '\n'
@@ -443,11 +443,11 @@ class MakeBasis2(object):
                                                                                                              shell_type=bs_MRD.max_shell_type))
 
         return basis2
-        
+
 
     def _makeBasisSet_MRD(self, basisset, uncontract_shell='spd'):
         assert isinstance(basisset, pdf.BasisSet)
-            
+
         new_cgtos = []
         for cgto in basisset:
             shell_type = cgto.shell_type
@@ -482,13 +482,13 @@ class MakeBasis2(object):
         logger.debug("_get_basis2(): [{}] => [{}]".format(name_old, name))
 
         return name
-    
-    
+
+
 def main():
     default_cache_path = os.path.join(os.environ['PDF_HOME'],
                                       'data',
                                       'basis2.cache')
-    
+
     parser = argparse.ArgumentParser(description='make basis2 file')
     parser.add_argument('--list',
                         action='store_true',
@@ -542,7 +542,7 @@ def main():
             logger.info('basisset: ')
             for basisset_name in basisset_names:
                 logger.info('{} '.format(basisset_name))
-        
+
 
     header = ""
     # header += '##### basis2 file created by {}. #####\n'.format(parser.prog)
@@ -561,12 +561,10 @@ def main():
     else:
         bs2.run(basisset_names=basisset_names,
                 header=header)
-    
-    
+
+
 if __name__ == '__main__':
     if os.path.exists("config.ini"):
         logging.config.fileConfig("config.ini",
                                   disable_existing_loggers=False)
     main()
-        
-

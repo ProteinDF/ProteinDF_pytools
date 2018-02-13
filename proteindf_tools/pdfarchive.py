@@ -24,8 +24,9 @@ import logging
 import math
 import sqlite3
 
-import pdfbridge as bridge
-import pdfpytools as pdf
+import proteindf_bridge as bridge
+from .pdfparam import PdfParam
+from . import pdfcommon as pdf
 
 
 class PdfArchive(object):
@@ -40,9 +41,7 @@ class PdfArchive(object):
         """
         オブジェクトを作成する
         """
-        nullHandler = bridge.NullHandler()
         self._logger = logging.getLogger(__name__)
-        self._logger.addHandler(nullHandler)
 
         self._pdf_id = "0"
         self._db = bridge.DbManager(db_path)
@@ -53,7 +52,7 @@ class PdfArchive(object):
         self._create_tables()
         self._read_db()
 
-        if isinstance(pdfparam, pdf.PdfParam):
+        if isinstance(pdfparam, PdfParam):
             pdf_id = pdfparam.digest()
             self._set_pdfparam_conditions(pdfparam)
             self._set_pdfparam_coordinates(pdfparam)
@@ -148,7 +147,7 @@ class PdfArchive(object):
                 self._pdf_id = lines[0]['pdf_id']
 
     def _set_pdfparam_conditions(self, pdfparam):
-        assert(isinstance(pdfparam, pdf.PdfParam))
+        assert(isinstance(pdfparam, PdfParam))
         table_name = 'conditions'
 
         # self._pdf_id = pdfparam.digest()
@@ -193,7 +192,7 @@ class PdfArchive(object):
                              'scf_converged':scf_converged})
 
     def _set_pdfparam_coordinates(self, pdfparam):
-        assert(isinstance(pdfparam, pdf.PdfParam))
+        assert(isinstance(pdfparam, PdfParam))
         table_name = 'coordinates'
         if not self._db.has_table(table_name):
             self._db.create_table(table_name,
@@ -235,7 +234,7 @@ class PdfArchive(object):
         """
         BasisSet情報を格納する
         """
-        assert(isinstance(pdfparam, pdf.PdfParam))
+        assert(isinstance(pdfparam, PdfParam))
         table_name = 'basis'
         if not self._db.has_table(table_name):
             self._db.create_table(table_name,
@@ -329,7 +328,7 @@ class PdfArchive(object):
                                         })
 
     def _set_pdfparam_total_energies(self, pdfparam):
-        assert(isinstance(pdfparam, pdf.PdfParam))
+        assert(isinstance(pdfparam, PdfParam))
         table_name = 'total_energies'
         if not self._db.has_table(table_name):
             self._db.create_table(table_name,
@@ -352,7 +351,7 @@ class PdfArchive(object):
                                      'energy':energy})
 
     def _set_pdfparam_gradient(self, pdfparam):
-        assert(isinstance(pdfparam, pdf.PdfParam))
+        assert(isinstance(pdfparam, PdfParam))
         table_name = 'gradient'
         if not self._db.has_table(table_name):
             self._create_table_gradient()

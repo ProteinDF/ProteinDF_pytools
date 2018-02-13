@@ -9,9 +9,9 @@ try:
 except:
     import msgpack_pure as msgpack
 import math
-    
-import pdfbridge as bridge
-import pdfpytools as pdf
+
+import proteindf_bridge as bridge
+import proteindf_tools as pdf
 
 class ESP_charge(object):
     def get_RRMS(self, mpac_path, atoms):
@@ -19,7 +19,7 @@ class ESP_charge(object):
         rrms = self._calcRRMS(grids, ESPs, atoms)
 
         return rrms
-        
+
     def _load_ESPs(self, mpac_path):
         print('load: {}'.format(mpac_path))
         data = None
@@ -60,7 +60,7 @@ class ESP_charge(object):
         print('delta2={} sum_v2={} RRMS2={} RRMS={}'.format(sum_delta2, sum_v2, rrms2, rrms))
 
         return rrms
-    
+
     def _calc_esp(self, pos, atoms):
         esp = 0.0
         num_of_atoms = len(atoms)
@@ -70,7 +70,7 @@ class ESP_charge(object):
 
         return esp
 
-   
+
 
 class Resp(object):
     def __init__(self, alpha=0.0005, beta=0.1, refs=None, max_iter=1000, tol=0.0001):
@@ -79,7 +79,7 @@ class Resp(object):
         self._refs = refs
         self._max_iter = int(max_iter)
         self._iter = 0
-        
+
         self._conv_threshold = float(tol)
         self._num_of_converged = 0
         self._is_converged = False
@@ -88,32 +88,32 @@ class Resp(object):
     @property
     def iterations(self):
         return self._iter
-        
+
     @property
     def is_converged(self):
         return self._is_converged
-        
+
     @property
     def coef(self):
         return self._coef
-        
+
     def _is_convergence(self, iter, x, prev_x):
         answer = False
         if iter > 1:
             dim = len(x)
-            
+
             diff_x = x - prev_x
             max_diff = max(abs(diff_x.max), abs(diff_x.min))
             rms_diff = diff_x * diff_x / dim
             print("#{} MAX delta: {} MAX RMS: {}".format(iter, max_diff, rms_diff))
-            
+
             if (max_diff < self._conv_threshold * 0.1):
                 self._num_of_converged += 1
                 if self._num_of_converged >= 2:
                     answer = True
             else:
                 self._num_of_converged = 0
-            
+
         return answer
 
     def fit_q(self, model_mat, predicted):
@@ -127,7 +127,7 @@ class Resp(object):
         prev_coef = bridge.Vector(coef)
         if self._refs == None:
             self._refs = bridge.Vector(dim)
-        
+
         for self._iter in range(1, self._max_iter +1):
             A = bridge.Matrix(model_mat)
             y = bridge.Vector(predicted)
@@ -142,7 +142,7 @@ class Resp(object):
                 self._is_converged = True
                 break
             prev_coef = bridge.Vector(coef)
-        
+
         self._coef = coef
 
 
@@ -177,10 +177,10 @@ class Resp(object):
                 self._is_converged = True
                 break
             prev_coef = bridge.Vector(coef)
-        
+
         self._coef = coef
-        
-        
+
+
 def get_charge(x):
     charge = 0.0
     for i in range(len(x) -1):
@@ -260,7 +260,7 @@ def main():
                         action="store_true",
                         default=False)
     args = parser.parse_args()
-        
+
     # setting
     design_matrix_path = args.design_matrix_path
     target_vector_path = args.target_vector_path
@@ -274,7 +274,7 @@ def main():
         print("alpha={}".format(alpha))
         print("beta={}".format(beta))
     esp_data_path = args.espdat[0]
-    
+
     atomlist = []
     if args.db:
         entry = pdf.PdfArchive(args.db)
@@ -284,7 +284,7 @@ def main():
         for atom in atoms:
             if atom.symbol != 'X':
                 atomlist.append(atom)
-    
+
     # load design matrix
     # design matrix size = (atom +1) * (atom +1): +1 for lagurange parameter of MK
     X = pdf.Matrix()
@@ -319,7 +319,6 @@ def main():
                 line = "{:2}, {: 8.3f}\n".format(atomlist[i].symbol,
                                                  atomlist[i].charge)
                 f.write(line)
-    
+
 if __name__ == '__main__':
     main()
-    

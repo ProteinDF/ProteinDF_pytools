@@ -13,9 +13,9 @@ except:
         import umsgpack as msgpack
     except:
         import msgpack_pure as msgpack
-    
-import pdfbridge as bridge
-import pdfpytools as pdf
+
+import proteindf_bridge as bridge
+import proteindf_tools as pdf
 
 def main():
     # parse args
@@ -56,7 +56,7 @@ def main():
     mat_path = args.matrix[0]
     output_path = args.output[0]
     is_diverging = args.diverging
-    
+
     # setup orbinfo
     #if verbose:
     #    sys.stderr.write("prepare orbital information\n")
@@ -75,7 +75,7 @@ def main():
     #if verbose:
     #    sys.stderr.write("prepare molecule information\n")
     #distance_mat = distance_matrix(molecule)
-        
+
     # setup matrix
     mat = get_matrix(mat_path, verbose)
 
@@ -83,14 +83,14 @@ def main():
     mat_plot = pdf.DfMatrixGraph(mat, is_diverging)
     mat_plot.save(output_path)
 
-        
+
     # distance v.s. matrix elements
-    #dist_vs_matvalue(orb_info, distance_mat, mat, 'mat.dat')    
+    #dist_vs_matvalue(orb_info, distance_mat, mat, 'mat.dat')
     #distgraph = pdf.DfDistanceVsElementGraph2()
     #distgraph.load('mat.dat')
     #distgraph.save("dist.png")
-    
-            
+
+
 def get_matrix(path, verbose = False):
     if verbose:
         sys.stderr.write("load matrix: {}\n".format(path))
@@ -105,7 +105,7 @@ def get_matrix(path, verbose = False):
         mat.load(path)
     else:
         print("matrix file cannnot load.")
-        raise 
+        raise
 
     return mat
 
@@ -113,15 +113,15 @@ def get_matrix(path, verbose = False):
 def distance_matrix(atomgroup, verbose = False):
     '''
     create distance matrix
-    
-    support flat-atomgroup only 
+
+    support flat-atomgroup only
     '''
     atomlist = atomgroup.get_atom_list()
     num_of_atoms = len(atomlist)
     if verbose:
         sys.stderr.write("num of atoms: {}n".format(num_of_atoms))
     mat = bridge.SymmetricMatrix(num_of_atoms)
-    
+
     for i in range(num_of_atoms):
         for j in range(i):
             distance = atomlist[i].xyz.distance_from(atomlist[j].xyz)
@@ -145,8 +145,7 @@ def dist_vs_matvalue(orb_info, distance_mat, mat, path, verbose = False):
             data_str = "{}, {}\n".format(d, v)
             f.write(data_str)
     f.close()
-    
-    
+
+
 if __name__ == '__main__':
     main()
-    

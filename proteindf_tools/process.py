@@ -3,19 +3,19 @@
 
 # Copyright (C) 2014-2015 The ProteinDF development team.
 # see also AUTHORS and README if provided.
-# 
+#
 # This file is a part of the ProteinDF software package.
-# 
+#
 # The ProteinDF is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # The ProteinDF is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -27,7 +27,8 @@ import subprocess
 import fcntl
 import select
 
-import pdfbridge
+import proteindf_bridge as bridge
+
 
 class Process(object):
     '''
@@ -48,7 +49,7 @@ class Process(object):
     >>> return_code = p.commit()
     ... #doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     Hello python!
-    
+
     ...
     '''
 
@@ -63,7 +64,7 @@ class Process(object):
             'stderr': subprocess.PIPE,
         }
         p_args['shell'] = self._is_shell_script(cmd)
-        
+
         return self._exec(cmd, p_args)
 
     def pipe(self, cmd):
@@ -85,7 +86,7 @@ class Process(object):
 
         if p_args.get('shell', False) == False:
             cmd = shlex.split(cmd)
-            
+
         new_proc = None
         try:
             new_proc = subprocess.Popen(cmd, **p_args)
@@ -98,7 +99,7 @@ class Process(object):
 
         self._procs.append(new_proc)
         return self
-            
+
     def commit(self):
         stdout = self._procs[-1].stdout
         stderr = self._procs[-1].stderr
@@ -115,13 +116,13 @@ class Process(object):
         logfile = None
         if len(self._logfile_path) > 0:
             logfile = open(self._logfile_path, mode='ab')
-        
+
         while True:
             to_check = [stdout_fd]*(not stdout_eof) + [stderr_fd]*(not stderr_eof)
             ready = select.select(to_check, [], [])
             if stdout_fd in ready[0]:
                 stdout_chunk = stdout.read()
-                stdout_chunk = pdfbridge.Utils.to_unicode(stdout_chunk)
+                stdout_chunk = bridge.Utils.to_unicode(stdout_chunk)
                 if stdout_chunk == '':
                     stdout_eof = True
                 else:
@@ -132,7 +133,7 @@ class Process(object):
                     #stdout_data.append(stdout_chunk)
             if stderr_fd in ready[0]:
                 stderr_chunk = stderr.read()
-                stderr_chunk = pdfbridge.Utils.to_unicode(stderr_chunk)
+                stderr_chunk = bridge.Utils.to_unicode(stderr_chunk)
                 if stderr_chunk == '':
                     stderr_eof = True
                 else:
@@ -144,7 +145,7 @@ class Process(object):
             if stdout_eof and stderr_eof:
                 break
             select.select([], [], [], .1)
-            
+
         self._procs[-1].wait()
         status = self._procs[-1].returncode
 
@@ -154,7 +155,7 @@ class Process(object):
 
         if logfile != None:
             logfile.close()
-        
+
         return status
 
 
@@ -176,8 +177,8 @@ class Process(object):
                 answer = True
 
         return answer
-            
-            
+
+
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
