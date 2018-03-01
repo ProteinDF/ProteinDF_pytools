@@ -153,6 +153,7 @@ def plot_convergence_energy_level(entry,
     graphV_path = output_dir + '/eigvals_last.png'
     graphV = pdf.DfEnergyLevelHistoryGraphV()
     graphV.set_HOMO_level(HOMO_level) # option base 0
+    graphV.set_LUMO_level(HOMO_level +1) # option base 0
     graphV.load_data(data_path)
     if entry.scf_converged:
         graphV.select_iterations([itr])

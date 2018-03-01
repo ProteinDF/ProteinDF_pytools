@@ -249,11 +249,15 @@ class DfEnergyLevelHistoryGraphH(DfGraph):
         self.ymax =   5.0
 
         self._HOMO_level = -1
+        self._LUMO_level = -1
         self._max_itr = 0
         self._select_iterations = []
 
     def set_HOMO_level(self, level):
         self._HOMO_level = int(level)
+
+    def set_LUMO_level(self, level):
+        self._LUMO_level = int(level)
 
     def load_data(self, path):
         f = open(path)
@@ -292,23 +296,31 @@ class DfEnergyLevelHistoryGraphH(DfGraph):
             if order == 0:
                 continue
 
-            self._draw_data_line(order, value, (level == self._HOMO_level))
+            strike = False
+            color = 'k'
+            if level == self._HOMO_level:
+                strike = True
+                color = 'r'
+            elif level == self._LUMO_level:
+                strike = True
+                color = 'b'
+            self._draw_data_line(order, value,
+                                 strike=strike,
+                                 color=color)
 
-    def _draw_data_line(self, order, value, is_HOMO):
+    def _draw_data_line(self, order, value, strike=False, color='k'):
         if (self.ymin < value) and (value < self.ymax):
             width = 0.8
             height = 0.01
-            c = 'k'
-            if is_HOMO:
+            if strike:
                 width = 1.0
                 height = 0.01
-                c = 'r'
 
             left = order - width / 2.0
             bottom = value - height / 2.0
 
             self._ax.bar(left, height, width, bottom,
-                         edgecolor=c, color=c)
+                         edgecolor=color, color=color)
 
 
 class DfEnergyLevelHistoryGraphV(DfEnergyLevelHistoryGraphH):
@@ -327,27 +339,26 @@ class DfEnergyLevelHistoryGraphV(DfEnergyLevelHistoryGraphH):
         self.ymax = None
 
         self._HOMO_level = -1
+        self._LUMO_level = -1
 
-    def _draw_data_line(self, order, value, is_HOMO):
+    def _draw_data_line(self, order, value, strike=False, color='k'):
         if (self.xmin < value) and (value < self.xmax):
             width = 0.01
             height = 0.8
-            c = 'k'
-            if is_HOMO:
+            if strike:
                 width = 0.01
                 height = 1.0
-                c = 'r'
 
             bottom = order - height / 2.0
             left = value - width / 2.0
 
             self._ax.bar(left, height, width, bottom,
-                         edgecolor=c, color=c)
-
+                         edgecolor=color, color=color)
 
     def _draw(self):
         self._ax.tick_params(labelleft="off")
         super(DfEnergyLevelHistoryGraphV, self)._draw()
+
 
 class DfLineChart(DfGraph):
     def __init__(self):
