@@ -2,76 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import numpy as np
-import pandas as pd
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
-import math
-import copy
+import os
+
+import logging
+import logging.config
+logger = logging.getLogger(__name__)
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
-
-import sklearn.linear_model as lm
-
-class ESP_charge(object):
-    def get_RRMS(self, mpac_path, atoms):
-        grids, ESPs = self._load_ESPs(mpac_path)
-        rrms = self._calcRRMS(grids, ESPs, atoms)
-
-        return rrms
-
-    def _load_ESPs(self, mpac_path):
-        print('load: {}'.format(mpac_path))
-        data = None
-        with open(mpac_path, 'rb') as f:
-            mpac_data = f.read()
-            data = msgpack.unpackb(mpac_data)
-            data = bridge.Utils.to_unicode_dict(data)
-
-            grids = []
-            for p in data['grids']:
-                pos = bridge.Position(p[0], p[1], p[2])
-                pos *= (1.0 / 0.5291772108) # Angstroam to a.u.
-                grids.append(pos)
-
-            ESPs = []
-            for v in data['ESP']:
-                ESPs.append(v)
-
-            assert(len(grids) == len(ESPs))
-        return (grids, ESPs)
-
-    def _calcRRMS(self, grids, ESPs, atoms):
-        sum_delta2 = 0.0
-        sum_v2 = 0.0
-        num_of_grids = len(grids)
-        print('# of grids: {}'.format(num_of_grids))
-        assert(len(ESPs) == num_of_grids)
-        for i in range(num_of_grids):
-            estimate_esp = self._calc_esp(grids[i], atoms)
-            exact_esp = ESPs[i]
-            delta = estimate_esp - exact_esp
-            delta2 = delta * delta
-            sum_delta2 += delta2
-            sum_v2 += exact_esp * exact_esp
-            #print("grid={} est={: 8.3e} exact={: 8.3e} >> delta2={: 8.3e}".format(grids[i], estimate_esp, exact_esp, delta2))
-        rrms2 = sum_delta2 / sum_v2
-        rrms = math.sqrt(rrms2)
-        print('delta2={} sum_v2={} RRMS2={} RRMS={}'.format(sum_delta2, sum_v2, rrms2, rrms))
-
-        return rrms
-
-    def _calc_esp(self, pos, atoms):
-        esp = 0.0
-        num_of_atoms = len(atoms)
-        for i in range(num_of_atoms):
-            d = pos.distance_from(atoms[i].xyz)
-            esp += atoms[i].charge / d;
-
-        return esp
 
 
 class Ridge(object):
@@ -147,25 +85,10 @@ class Ridge(object):
     def coef(self):
         return self._coef
 
-def get_charge(x):
-    charge = 0.0
-    for i in range(len(x) -1):
-        charge += x[i]
-    return charge
-
-def set_atomlist(atom_charges, atomlist):
-    q_total = 0.0
-    for i in range(len(atom_charges)):
-        q = atom_charges[i];
-        atomlist[i].charge = q;
-        q_total += q
-        print(atomlist[i])
-    print('charge={:.3f}'.format(q_total))
-
 
 def main():
     # parse args
-    parser = argparse.ArgumentParser(description='ridge')
+    parser = argparse.ArgumentParser(description='calculate ridge partial charges')
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-d', '--db',
@@ -185,14 +108,29 @@ def main():
                         action='store',
                         default=['1.0'],
                         help="ridge alpha")
+
+    parser.add_argument("--design_matrix_path",
+                        nargs=1,
+                        action='store',
+                        default=['esp_design.mat'],
+                        help="design matrix path (default: esp_design.mat), which is created by `pdf-pop-esp`.")
+    parser.add_argument("--target_vector_path",
+                        nargs=1,
+                        action='store',
+                        default=['esp_target.vtr'],
+                        help="target vector path (default: esp_target.vtr), which is created by `pdf-pop-esp`.")
+    parser.add_argument("--model_vector_path",
+                        nargs=1,
+                        action='store',
+                        default=['ridge_model.vtr'],
+                        help="output model vector path (default: ridge_model.vtr).")
+
     parser.add_argument("-e", "--espdat",
                         nargs=1,
                         action='store',
                         default=['grid-esp.mpac'],
-                        help="ESP values on grids by msgpack format")
-    parser.add_argument("-s", "--use_scikit_learn",
-                        action='store_true',
-                        help="use scikit-learn module")
+                        help="ESP values on grids by msgpack format (default: grid-esp.mpac)")
+
     parser.add_argument("--csv",
                         type=str,
                         nargs=1,
@@ -200,22 +138,19 @@ def main():
                         default=[''],
                         help="output csv path")
 
-    parser.add_argument("design_matrix_path",
-                        action='store',
-                        help="design matrix path")
-    parser.add_argument("target_vector_path",
-                        action='store',
-                        help="target vector path")
     parser.add_argument("-v", "--verbose",
                         action="store_true",
                         default=False)
     args = parser.parse_args()
 
+    # logging
+    logging.basicConfig(level=logging.INFO)
+
     # setting
-    design_matrix_path = args.design_matrix_path
-    target_vector_path = args.target_vector_path
+    design_matrix_path = args.design_matrix_path[0]
+    target_vector_path = args.target_vector_path[0]
+    model_vector_path = args.model_vector_path[0]
     output_csv_path = args.csv[0]
-    use_scikit_learn = args.use_scikit_learn
     verbose = args.verbose
     tol = 1.0e-3
     alpha = float(args.alpha[0])
@@ -223,15 +158,13 @@ def main():
         print("alpha={}".format(alpha))
     esp_data_path = args.espdat[0]
 
+    # make atomlist
     atomlist = []
     if args.db:
-        entry = pdf.PdfArchive(args.db)
+        atomlist, charge = pdf.PopUtils.get_atomlist_by_db(args.db)
     elif args.param:
-        pdfparam = pdf.load_pdfparam(args.param)
-        atoms = pdfparam.molecule.get_atom_list()
-        for atom in atoms:
-            if atom.symbol != 'X':
-                atomlist.append(atom)
+        atomlist, charge = pdf.PopUtils.get_atomlist_by_param(args.param)
+    num_of_real_atoms = len(atomlist)
 
     # load design matrix
     # design matrix size = (atom +1) * (atom +1): +1 for lagurange parameter of MK
@@ -247,42 +180,19 @@ def main():
     y = pdf.Vector()
     y.load(target_vector_path)
 
-    atom_charges = []
-    if use_scikit_learn:
-        print('use scikit-learn module')
-        print('alpha={}'.format(alpha))
-        import sklearn.linear_model as lm
-        ridge = lm.Ridge(alpha=alpha, fit_intercept=False)
-        X.resize(X.rows -1, X.cols -1)
-        y.resize(len(y) -1)
-        ridge.fit(X.get_ndarray(), y.get_ndarray())
-        # print(ridge.coef_)
-        # print('charge={:.6f}'.format(get_charge(ridge.coef_)))
-        # atom_charges = ridge.coef_[:-1]
-        atom_charges = ridge.coef_[:]
-        set_atomlist(atom_charges, atomlist)
-    else:
-        ridge = Ridge(alpha=alpha)
+    # set constrained value (charge)
+    y[num_of_real_atoms] = charge
 
-        ridge.fit_atomic_charges(X, y)
-        atom_charges = ridge.coef[:-1]
-        set_atomlist(atom_charges, atomlist)
+    # solve ridge
+    ridge = Ridge(alpha=alpha)
+    ridge.fit_atomic_charges(X, y)
+    atom_charges = ridge.coef[:-1]
+    pdf.PopUtils.set_atomlist(atom_charges, atomlist)
 
-        # debug
-        #X.resize(X.rows -1, X.cols -1)
-        #y.resize(len(y) -1)
-        #ridge.fit(X, y) # same as scikit-learn
-        #atom_charges = ridge.coef[:]
-        #set_atomlist(atom_charges, atomlist)
-
-        #ridge.fit_atomic_charges(X, y)
-        #atom_charges = ridge.coef[:-1]
-        #set_atomlist(atom_charges, atomlist)
-
-    # RRMS
-    esp_charge = ESP_charge()
-    rrms = esp_charge.get_RRMS(esp_data_path, atomlist)
-    print("RRMS={:.3f}".format(rrms))
+    # output
+    if len(model_vector_path) > 0:
+        atom_charges = pdf.Vector(atom_charges)
+        atom_charges.save(model_vector_path)
 
     # output csv
     if output_csv_path != '':
@@ -292,5 +202,14 @@ def main():
                                                  atomlist[i].charge)
                 f.write(line)
 
+    # RRMS
+    espUtils = pdf.PopEspUtils()
+    rrms = espUtils.get_RRMS(esp_data_path, atomlist)
+    print("RRMS={: .5f}".format(rrms))
+
+
 if __name__ == '__main__':
+    if os.path.exists("config.ini"):
+        logging.config.fileConfig("config.ini",
+                                  disable_existing_loggers=False)
     main()

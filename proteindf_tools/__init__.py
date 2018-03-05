@@ -44,6 +44,8 @@ from .pdfmath import Math
 from .vector import Vector
 from .matrix import Matrix, SymmetricMatrix
 
+from .poputils import PopUtils, PopEspUtils
+
 from .pdfsim import PdfSim
 
 
@@ -57,5 +59,6 @@ __all__ = [
     'Basis2',
     'Vector',
     'Matrix', 'SymmetricMatrix',
+    'PopUtils', 'PopEspUtils',
     'PdfSim'
 ]
