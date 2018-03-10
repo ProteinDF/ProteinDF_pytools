@@ -66,8 +66,7 @@ class PdfParam(object):
         if self.method == 'rks':
             runtypes = ['rks']
         elif self.method == 'uks':
-            #runtypes = ['uks_alpha', 'uks_beta']
-            runtypes = ['uks-alpha', 'uks-beta']
+            runtypes = ['uks_alpha', 'uks_beta']
         elif self.method == 'roks':
             runtypes = ['roks_close', 'roks_open']
         return runtypes
