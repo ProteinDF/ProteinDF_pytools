@@ -3,19 +3,19 @@
 
 # Copyright (C) 2014 The ProteinDF development team.
 # see also AUTHORS and README if provided.
-# 
+#
 # This file is a part of the ProteinDF software package.
-# 
+#
 # The ProteinDF is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # The ProteinDF is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -33,8 +33,10 @@ try:
 except:
     import msgpack_pure as msgpack
 
-import pdfbridge as bridge
-import pdfpytools as pdf
+import proteindf_bridge as bridge
+from .basisset import BasisSet
+from .basis2 import Basis2
+
 
 class PdfParam(object):
     """
@@ -64,12 +66,11 @@ class PdfParam(object):
         if self.method == 'rks':
             runtypes = ['rks']
         elif self.method == 'uks':
-            #runtypes = ['uks_alpha', 'uks_beta']
-            runtypes = ['uks-alpha', 'uks-beta']
+            runtypes = ['uks_alpha', 'uks_beta']
         elif self.method == 'roks':
             runtypes = ['roks_close', 'roks_open']
         return runtypes
-    
+
     # path ---------------------------------------------------------------------
     def _get_work_path(self):
         return self._data.get('work_path', './fl_Work')
@@ -87,7 +88,7 @@ class PdfParam(object):
         filename = filename.replace('%s', '{}{}'.format(runtype, itr))
         path = os.path.join(self.work_path, filename)
         return path
-        
+
     def get_occ_path(self, runtype):
         '''
         return electron occupation information file path
@@ -109,14 +110,14 @@ class PdfParam(object):
         '''
         filename = self._get_file_base_name('X_matrix')
         return os.path.join(self.work_path, filename)
-        
+
     def get_Xinv_mat_path(self):
         '''
         return X^-1 matrix path
         '''
         filename = self._get_file_base_name('Xinv_matrix')
         return os.path.join(self.work_path, filename)
-        
+
     def get_Fmat_path(self, runtype='rks', itr=-1):
         '''
         return Fmatrix path
@@ -149,14 +150,14 @@ class PdfParam(object):
         filename = self._get_file_base_name('Ppq_matrix')
         filename = filename.replace('%s', '{}{}'.format(runtype, itr))
         return os.path.join(self.work_path, filename)
-        
+
     def get_clomat_path(self, runtype='rks', itr=-1):
         '''
         return localized matrix (C_lo) path
         '''
         if itr == -1:
             itr = self.lo_num_of_iterations
-        
+
         filename = self._get_file_base_name('Clo_matrix')
         filename = filename.replace('%s', '{}{}'.format(runtype, itr))
         return os.path.join(self.work_path, filename)
@@ -169,7 +170,7 @@ class PdfParam(object):
         self._data.setdefault('control', {})
         self._data['control'].setdefault('file_base_name', {})
         return self._data['control']['file_base_name'].get(key, '')
-        
+
     # property -----------------------------------------------------------------
 
     # step_control
@@ -219,7 +220,7 @@ class PdfParam(object):
             value = float(value)
             self._data['CDAM_tau'] = value
     CDAM_tau = property(_get_CDAM_tau, _set_CDAM_tau)
-    
+
     def _get_CD_epsilon(self):
         return self._data.get('CD_epsilon', 1.E-4)
     def _set_CD_epsilon(self, value):
@@ -227,7 +228,7 @@ class PdfParam(object):
             value = float(value)
             self._data['CD_epsilon'] = value
     CD_epsilon = property(_get_CD_epsilon, _set_CD_epsilon)
-    
+
     # guess --------------------------------------------------------------------
     def _get_guess(self):
         return self._data.get('guess', None)
@@ -261,7 +262,7 @@ class PdfParam(object):
 
     orbital_independence_threshold_canonical = property(_get_orbital_independence_threshold_canonical,
                                                         _set_orbital_independence_threshold_canonical)
-        
+
     # orbital_independence_threshold_lowdin ----------------------------
     def _get_orbital_independence_threshold_lowdin(self):
         return self._data.get('orbital_independence_threshold_lowdin', 0.007)
@@ -273,7 +274,7 @@ class PdfParam(object):
 
     orbital_independence_threshold_lowdin = property(_get_orbital_independence_threshold_lowdin,
                                                      _set_orbital_independence_threshold_lowdin)
-        
+
     # scf_acceleration -------------------------------------------------
     def _get_scf_acceleration(self):
         return self._data.get('scf_acceleration', 'damping')
@@ -297,7 +298,7 @@ class PdfParam(object):
 
     scf_acceleration_damping_damping_factor = property(_get_scf_acceleration_damping_damping_factor,
                                                        _set_scf_acceleration_damping_damping_factor)
-        
+
     # scf_acceleration/damping/damping_type ----------------------------
     def _get_scf_acceleration_damping_damping_type(self):
         value = self._data.get('scf_acceleration_damping_damping_type', None)
@@ -327,7 +328,7 @@ class PdfParam(object):
 
     scf_acceleration_anderson_start_number = property(_get_scf_acceleration_anderson_start_number,
                                                       _set_scf_acceleration_anderson_start_number)
-    
+
     # scf_acceleration/anderson/damping_factor
     def _get_scf_acceleration_anderson_damping_factor(self):
         return self._data['scf_acceleration_anderson_damping_factor']
@@ -339,7 +340,7 @@ class PdfParam(object):
 
     scf_acceleration_anderson_damping_factor = property(_get_scf_acceleration_anderson_damping_factor,
                                                         _set_scf_acceleration_anderson_damping_factor)
-    
+
     # xc_functional ----------------------------------------------------
     def _get_xc_functional(self):
         return self._data.get('xc_functional', 'SVWN')
@@ -366,7 +367,7 @@ class PdfParam(object):
         self._data['j_engine'] = value
 
     j_engine = property(_get_j_engine, _set_j_engine)
-    
+
     # K_engine
     def _get_k_engine(self):
         return self._data.get('k_engine', 'conventional')
@@ -376,7 +377,7 @@ class PdfParam(object):
         self._data['k_engine'] = value
 
     k_engine = property(_get_k_engine, _set_k_engine)
-    
+
     # XC_engine
     def _get_xc_engine(self):
         return self._data.get('xc_engine', 'grid')
@@ -386,7 +387,7 @@ class PdfParam(object):
         self._data['xc_engine'] = value
 
     xc_engine = property(_get_xc_engine, _set_xc_engine)
-    
+
     # gridfree/dual_level -----------------------------------------------
     def _get_gridfree_dual_level(self):
         return self._data.get('gridfree_dual_level', False)
@@ -402,7 +403,7 @@ class PdfParam(object):
 
     gridfree_dual_level = property(_get_gridfree_dual_level,
                                    _set_gridfree_dual_level)
-        
+
     # gridfree/orthogonalize_method ------------------------------------
     def _get_gridfree_orthogonalize_method(self):
         return self._data.get('gridfree_orthogonalize_method', 'canonical')
@@ -442,15 +443,15 @@ class PdfParam(object):
     # extra_keywords ---------------------------------------------------
     def _get_extra_keywords(self):
         return self._data.get('extra_keywords', {})
-        
+
     def _set_extra_keywords(self, value):
         if value != None:
             value = dict(value)
             self._data['extra_keywords'] = value
-        
+
     extra_keywords = property(_get_extra_keywords,
                               _set_extra_keywords)
-    
+
     # num_of_atoms -----------------------------------------------------
     def _get_num_of_atoms(self):
         return self._data.get('num_of_atoms', None)
@@ -482,7 +483,7 @@ class PdfParam(object):
             if atm.symbol == 'X':
                 charge += atm.charge
         return charge
-    
+
     # num_of_AOs
     def _get_num_of_AOs(self):
         return self._data.get('num_of_AOs', None)
@@ -508,7 +509,7 @@ class PdfParam(object):
         value = self._data.get('occupation_level', None)
         if value == None:
             value = '[1 - {0}]'.format(int(self.num_of_electrons / 2))
-            self.occupation_level = value 
+            self.occupation_level = value
         return value
 
     def _set_occupation_level(self, level):
@@ -526,7 +527,7 @@ class PdfParam(object):
         self._data['num_of_iterations'] = int(value)
 
     iterations = property(_get_iterations, _set_iterations)
-        
+
     # max_iterations
     def _get_max_iterations(self):
         return self._data.get('max_iterations', 100)
@@ -544,7 +545,7 @@ class PdfParam(object):
             self._data['convergence_threshold'] = float(value)
     convergence_threshold = property(_get_convergence_threshold,
                                      _set_convergence_threshold)
-   
+
     # convergence_type
     def _get_convergence_type(self):
         return self._data.get('convergence_type', 'density')
@@ -595,14 +596,14 @@ class PdfParam(object):
 
     level_shift_virtual_mo = property(_get_level_shift_virtual_mo,
                                       _set_level_shift_virtual_mo)
-    
-    
+
+
     # SCF converged
     @property
     def scf_converged(self):
         self._data.setdefault('control', {})
         return self._data['control'].get('scf_converged', False)
-    
+
     # molecule
     def _get_molecule(self):
         return self._data.get('molecule', bridge.AtomGroup())
@@ -614,7 +615,7 @@ class PdfParam(object):
     molecule = property(_get_molecule, _set_moleucule)
 
     # basis set --------------------------------------------------------
-    # atom label list for basis set 
+    # atom label list for basis set
     def get_basisset_atomlabels(self):
         return self._get_basis_set_atomlabels_common('basis_set')
 
@@ -682,25 +683,25 @@ class PdfParam(object):
 
     def get_basisset(self, atom_label):
         return self._get_basisset_common(atom_label, 'basis_set')
-        
+
     def set_basisset(self, atom_label, basisset):
         self._set_basisset_common(atom_label, basisset, 'basis_set')
 
     def get_basisset_j(self, atom_label):
         return self._get_basisset_common(atom_label, 'basis_set_j')
-    
+
     def set_basisset_j(self, atom_label, basisset):
         self._set_basisset_common(atom_label, basisset, 'basis_set_j')
 
     def get_basisset_xc(self, atom_label):
         return self._get_basisset_common(atom_label, 'basis_set_xc')
-    
+
     def set_basisset_xc(self, atom_label, basisset):
         self._set_basisset_common(atom_label, basisset, 'basis_set_xc')
 
     def get_basisset_gridfree(self, atom_label):
         return self._get_basisset_common(atom_label, 'basis_set_gridfree')
-    
+
     def set_basisset_gridfree(self, atom_label, basisset):
         self._set_basisset_common(atom_label, basisset, 'basis_set_gridfree')
 
@@ -709,10 +710,10 @@ class PdfParam(object):
         原子(ラベル)名のBasisSetがあれば、そのBasisSetオブジェクトを返す
         """
         atom_label = bridge.Utils.to_unicode(atom_label)
-        answer = pdf.BasisSet()
+        answer = BasisSet()
         if key in self._data:
-            answer = self._data[key].get(atom_label, pdf.BasisSet())
-        assert(isinstance(answer, pdf.BasisSet))
+            answer = self._data[key].get(atom_label, BasisSet())
+        assert(isinstance(answer, BasisSet))
         return answer
 
     def _set_basisset_common(self, atom_label, basisset, key):
@@ -722,28 +723,28 @@ class PdfParam(object):
         atom_label = bridge.Utils.to_unicode(atom_label)
         self._data.setdefault(key, {})
         if isinstance(basisset, str) == True:
-            basis2 = pdf.Basis2()
+            basis2 = Basis2()
             if (key == 'basis_set') or (key == 'basis_set_gridfree'):
                 bs = basis2.get_basisset(basisset)
-                assert(isinstance(bs, pdf.BasisSet))
+                assert(isinstance(bs, BasisSet))
                 self._data[key][atom_label] = bs
             elif key == 'basis_set_j':
                 bs = basis2.get_basisset_j(basisset)
-                assert(isinstance(bs, pdf.BasisSet))
+                assert(isinstance(bs, BasisSet))
                 self._data[key][atom_label] = bs
             elif key == 'basis_set_xc':
                 bs = basis2.get_basisset_xc(basisset)
-                assert(isinstance(bs, pdf.BasisSet))
+                assert(isinstance(bs, BasisSet))
                 self._data[key][atom_label] = bs
             else:
                 print('unknown key: {}'.format(key))
-                raise                              
-                
-        elif isinstance(basisset, pdf.BasisSet) == True:
+                raise
+
+        elif isinstance(basisset, BasisSet) == True:
             self._data[key][atom_label] = basisset
         else:
             raise "type mispatch"
-        
+
     # TEs --------------------------------------------------------------
     def _get_TEs(self):
         return self._data.get('TEs', None)
@@ -760,7 +761,7 @@ class PdfParam(object):
     # LO ===============================================================
     def _get_lo_satisfied(self):
         answer = self._data.get('lo/satisfied', False)
-        
+
         if not isinstance(answer, bool):
             answer = str(answer).upper()
         else:
@@ -773,7 +774,7 @@ class PdfParam(object):
         return self._data.get('lo/num_of_iterations', None)
 
     lo_num_of_iterations = property(_get_lo_num_of_iterations)
-    
+
     # gradient =================================================================
     def get_gradient(self, atom_index):
         atom_index = int(atom_index)
@@ -787,7 +788,7 @@ class PdfParam(object):
                 assert(len(gradient) == 3)
 
         return gradient
-            
+
 
     def set_gradient(self, atom_index, fx, fy, fz):
         atom_index = int(atom_index)
@@ -859,13 +860,13 @@ class PdfParam(object):
         basisset_str = basisset_str.replace('\n', '\n        ')
         output += "        " + basisset_str
         output += "}\n\n"
-        
+
         output += "    basis-set/density-auxiliary = {\n"
         basisset_str = self._get_input_basisset_j()
         basisset_str = basisset_str.replace('\n', '\n        ')
         output += "        " + basisset_str
         output += "}\n\n"
-        
+
         output += "    basis-set/exchange-auxiliary = {\n"
         basisset_str = self._get_input_basisset_xc()
         basisset_str = basisset_str.replace('\n', '\n        ')
@@ -877,7 +878,7 @@ class PdfParam(object):
         basisset_str = basisset_str.replace('\n', '\n        ')
         output += "        " + basisset_str
         output += "}\n\n"
-        
+
         return output
 
     def _get_input_geometry(self, atom_group = None):
@@ -920,7 +921,7 @@ class PdfParam(object):
                         charge = charge,
                         path = atom.path,
                         name = atom.name)
-                    
+
         return output
 
     def _get_input_basisset(self):
@@ -940,7 +941,7 @@ class PdfParam(object):
         for atom_kind in self._pickup_atom_kinds():
             output += '%s = "%s"\n' % (atom_kind, self.get_basisset_xc_name(atom_kind))
         return output
-        
+
     def _get_input_basisset_gridfree(self):
         output = ""
         for atom_kind in self._pickup_atom_kinds():
@@ -961,14 +962,14 @@ class PdfParam(object):
                 atom_symbol = atom.symbol
                 if (atom_symbol != 'X') or (self.counterpoise == True):
                     atom_label = atom.label
-                    
+
                     atom_kind = atom_symbol
                     if (len(atom_label) != 0):
                         atom_kind = "%s@%s" % (atom_symbol, label)
                     answer.add(atom_kind)
         return answer
-        
-        
+
+
     # ==========================================================================
     # I/O
     # ==========================================================================
@@ -978,14 +979,14 @@ class PdfParam(object):
         f.close()
 
         self.set_by_raw_data(data)
-        
+
     def save(self, path):
         data = self.get_raw_data()
 
         f = open(path, 'wb')
         f.write(msgpack.packb(data))
         f.close()
-    
+
     # --------------------------------------------------------------------------
     def set_by_raw_data(self, odict):
         odict = self._alias_conversion(odict)
@@ -1000,7 +1001,7 @@ class PdfParam(object):
                 if isinstance(odict[bsk], dict):
                     for atom_label, basisset_raw_data in odict[bsk].items():
                         assert(isinstance(basisset_raw_data, dict))
-                        basisset = pdf.BasisSet(basisset_raw_data)
+                        basisset = BasisSet(basisset_raw_data)
                         assert(isinstance(basisset.name, str))
                         self._set_basisset_common(atom_label, basisset, bsk)
                 del odict[bsk]
@@ -1067,7 +1068,7 @@ class PdfParam(object):
         if 'scf_acceleration/anderson/damping_factor' in odict:
             self.scf_acceleration_anderson_damping_factor = odict.get('scf_acceleration/anderson/damping_factor', None)
             del odict['scf_acceleration/anderson/damping_factor']
-        
+
         # convergence
         if 'convergence/threshold' in odict:
             self.convergence_threshold = odict.get('convergence/threshold', None)
@@ -1081,7 +1082,7 @@ class PdfParam(object):
             self.convergence_threshold_energy = odict.get('convergence/threshold_energy', None)
             del odict['convergence/threshold_energy']
 
-        
+
         # coordinates
         def setup_coordinates(data):
             answer = bridge.AtomGroup()
@@ -1146,19 +1147,19 @@ class PdfParam(object):
         odict.setdefault('xc_functional', self.xc_functional)
         self.xc_functional = odict.get('xc_functional')
         del odict['xc_functional']
-        
+
         odict.setdefault('J_engine', self.j_engine)
         self.j_engine = odict.get('J_engine')
         del odict['J_engine']
-        
+
         odict.setdefault('K_engine', self.k_engine)
         self.k_engine = odict.get('K_engine')
         del odict['K_engine']
-        
+
         odict.setdefault('XC_engine', self.xc_engine)
         self.xc_engine = odict.get('XC_engine')
         del odict['XC_engine']
-        
+
         # gradient
         if 'gradient' in odict:
             gradient_dat = odict.get('gradient')
@@ -1173,7 +1174,7 @@ class PdfParam(object):
                 gradient = gradient_dat[atom_index]
                 self.set_gradient(atom_index, gradient[0], gradient[1], gradient[2])
             del odict['force']
-            
+
 
         # 未入力部分をマージ
         self._data.update(odict)
@@ -1190,7 +1191,7 @@ class PdfParam(object):
         for atomlabel in self.get_basisset_j_atomlabels():
             bs = self.get_basisset_j(atomlabel)
             odict['basis_set_j'][atomlabel] = bs.get_raw_data()
-            
+
         odict['basis_set_xc'] = {}
         for atomlabel in self.get_basisset_atomlabels():
             odict['basis_set_xc'][atomlabel] = self.get_basisset_xc(atomlabel).get_raw_data()
@@ -1220,7 +1221,7 @@ class PdfParam(object):
 
         odict['coordinates'] = get_coordinates(self.molecule)
         del odict['molecule']
-            
+
         return odict
 
 
@@ -1248,8 +1249,7 @@ class PdfParam(object):
 
         return answer
 
-    
+
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
-    

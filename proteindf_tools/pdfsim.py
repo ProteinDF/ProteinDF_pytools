@@ -3,19 +3,19 @@
 
 # Copyright (C) 2014 The ProteinDF development team.
 # see also AUTHORS and README if provided.
-# 
+#
 # This file is a part of the ProteinDF software package.
-# 
+#
 # The ProteinDF is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # The ProteinDF is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -24,31 +24,29 @@ import sys
 import copy
 import math
 import logging
+logger = logging.getLogger(__name__)
 
-import pdfbridge as bridge
-import pdfpytools as pdf
+import proteindf_bridge as bridge
+from .pdfparam import PdfParam
+from .pdfcommon import get_default_pdfparam, run_pdf
+from .pdfarchive import PdfArchive
 
 class PdfSim(object):
     """
     """
-    def __init__(self):
-        nullHandler = bridge.NullHandler()
-        self._logger = logging.getLogger(__name__)
-        self._logger.addHandler(nullHandler)
-
     def setup(self, pdfparam =None, workdir ="."):
         """
         setup to run ProteinDF
         """
         # make fl_Userinput
         if pdfparam == None:
-            pdfparam = pdf.get_default_pdfparam()
-        assert(isinstance(pdfparam, pdf.PdfParam))
-        
+            pdfparam = get_default_pdfparam()
+        assert(isinstance(pdfparam, PdfParam))
+
         if not os.path.exists(workdir):
             os.mkdir(workdir)
         else:
-            self._logger.debug('already exist: {}'.format(workdir))
+            logger.debug('already exist: {}'.format(workdir))
 
         input_path = os.path.join(workdir, "fl_Userinput")
         f = open(input_path, 'w')
@@ -64,7 +62,7 @@ class PdfSim(object):
             path = os.path.join(workdir, d)
             if not os.path.exists(path):
                 os.mkdir(path)
-        
+
     # ------------------------------------------------------------------
     def sp(self, pdfparam, *args, **kwargs):
         """
@@ -78,19 +76,19 @@ class PdfSim(object):
 
         Returns:
         tuple of the number of iterations and the total energy.
-        
+
         """
         workdir = kwargs.get('workdir', '')
         db_path = kwargs.get('db_path', 'pdfresults.db')
         dry_run = kwargs.get('dry_run', False)
-        
+
         current_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or ".")
 
         pdf_workdir = os.path.join('.', workdir)
         if not os.path.exists(pdf_workdir):
             os.mkdir(pdf_workdir)
         else:
-            self._logger.debug('already exist {}'.format(pdf_workdir))
+            logger.debug('already exist {}'.format(pdf_workdir))
 
         self.setup(pdfparam, pdf_workdir)
         os.chdir(pdf_workdir)
@@ -98,10 +96,10 @@ class PdfSim(object):
         itr = None
         total_energy = None
         if not dry_run:
-            pdf.run_pdf(['serial', '-o', 'pdf.log'])
-            pdf.run_pdf('archive')
+            run_pdf(['serial', '-o', 'pdf.log'])
+            run_pdf('archive')
 
-            entry = pdf.PdfArchive(db_path)
+            entry = PdfArchive(db_path)
             itr = entry.iterations
             total_energy = entry.get_total_energy(itr)
 
@@ -114,7 +112,7 @@ class PdfSim(object):
 
 
 
-                
+
 
     def opt(self, pdfparam, workdir=".", max_cycle=100):
         current_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or ".")
@@ -148,18 +146,18 @@ class PdfSim(object):
 
             opt_cycle += 1
 
-        self._logger.info("opt done")
-        self._logger.info(str(pdfparam.molecule))
+        logger.info("opt done")
+        logger.info(str(pdfparam.molecule))
 
     def numerical_grad(self, pdfparam, workdir=".", accuracy=1.0E-3, delta=0.001):
         direction_str = ["x", "y", "z"]
 
-        self._logger.debug(">>>> start numerical grad")
+        logger.debug(">>>> start numerical grad")
         molecule = pdfparam.molecule
         num_of_atoms = molecule.get_number_of_all_atoms()
 
         if pdfparam.convergence_threshold_energy < accuracy * 0.5:
-            self._logger.warning('convergence_thresold_energy={} > 0.5*accuracy(={})'.format(
+            logger.warning('convergence_thresold_energy={} > 0.5*accuracy(={})'.format(
                 pdfparam.convergence_threshold_energy,
                 accuracy*0.5))
 
@@ -167,7 +165,7 @@ class PdfSim(object):
         index = 0
         for atom_id, atom in molecule.atoms():
             for direction in range(3):
-                self._logger.debug("start numerical grad for {}".format(direction_str[direction]))
+                logger.debug("start numerical grad for {}".format(direction_str[direction]))
                 h = delta
 
                 delta_TE = 0.0
@@ -188,7 +186,7 @@ class PdfSim(object):
                     delta_TE = total_energy2 - total_energy1
                     print("h={: e}, delta_TE={: e}, v={: e}".format(h, delta_TE, delta_TE / (2.0 * h)))
                     if (math.fabs(delta_TE) < accuracy) or (h < 1.0E-2):
-                        self._logger.debug("numerical grad condition satisfied. value={} < {}".format(delta_TE, accuracy))
+                        logger.debug("numerical grad condition satisfied. value={} < {}".format(delta_TE, accuracy))
                         break
 
                     h *= 0.5
@@ -198,27 +196,27 @@ class PdfSim(object):
                 # x,y,zのどれかが終了
                 value = delta_TE / (2.0 * h)
                 grad_mat[index][direction] = float(value)
-                self._logger.debug("gradient value [{}][{}] = {}".format(atom_id,
-                                                                         direction_str[direction],
-                                                                         value))
+                logger.debug("gradient value [{}][{}] = {}".format(atom_id,
+                                                                   direction_str[direction],
+                                                                   value))
                 #self._show_grad_mat(grad_mat)
 
                 sys.stderr.flush()
                 sys.stdout.flush()
             index += 1
 
-        self._logger.info("=== grad (accuracy={}) ===".format(accuracy))
+        logger.info("=== grad (accuracy={}) ===".format(accuracy))
         rms = 0.0
         index = 0
         for atom_id, atom in molecule.atoms():
-            self._logger.info("[{:>8s}] {: 8.5f} {: 8.5f} {: 8.5f}".format(atom_id, grad_mat[index][0], grad_mat[index][1], grad_mat[index][2]))
+            logger.info("[{:>8s}] {: 8.5f} {: 8.5f} {: 8.5f}".format(atom_id, grad_mat[index][0], grad_mat[index][1], grad_mat[index][2]))
             for i in range(3):
                 rms += grad_mat[index][i] * grad_mat[index][i]
             index += 1
         rms /= num_of_atoms * 3
         rms = math.sqrt(rms)
-        self._logger.info("RMS = {}".format(rms))
-        self._logger.info("============\n")
+        logger.info("RMS = {}".format(rms))
+        logger.info("============\n")
 
         return (grad_mat, rms)
 
@@ -243,7 +241,7 @@ class PdfSim(object):
         elif direction == 2:
             answer.xyz.z = float(answer.xyz.z) + delta
         else:
-            self._logger.critical("program error.")
+            logger.critical("program error.")
             exit(1)
 
         return answer
@@ -255,12 +253,12 @@ class PdfSim(object):
         if not os.path.exists(pdf_workdir):
             os.mkdir(pdf_workdir)
         else:
-            self._logger.info('already exist {}'.format(pdf_workdir))
+            logger.info('already exist {}'.format(pdf_workdir))
 
         self.setup(pdfparam, pdf_workdir)
         os.chdir(pdf_workdir)
-        pdf.run_pdf(['-o', 'pdf.log', 'serial'])
-        pdf.run_pdf('archive')
+        run_pdf(['-o', 'pdf.log', 'serial'])
+        run_pdf('archive')
 
         entry = pdf.PdfArchive('pdfresults.db')
         itr = entry.iterations
@@ -269,6 +267,3 @@ class PdfSim(object):
         os.chdir(current_dir)
 
         return (itr, total_energy)
-
-
-        

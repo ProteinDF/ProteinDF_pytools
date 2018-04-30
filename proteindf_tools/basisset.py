@@ -3,19 +3,19 @@
 
 # Copyright (C) 2014 The ProteinDF development team.
 # see also AUTHORS and README if provided.
-# 
+#
 # This file is a part of the ProteinDF software package.
-# 
+#
 # The ProteinDF is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # The ProteinDF is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -24,7 +24,8 @@ import array
 import copy
 import math
 
-import pdfpytools as pdf
+from .pdfmath import Math
+
 
 class PrimitiveGTO(object):
     """
@@ -44,7 +45,7 @@ class PrimitiveGTO(object):
             elif isinstance(args[0], dict):
                 self.set_by_raw_data(args[0])
                 return
-            
+
         self.exp = kwargs.get('exp', 0.0)
         self.coef = kwargs.get('coef', 1.0)
         if (len(args) == 2):
@@ -74,7 +75,7 @@ class PrimitiveGTO(object):
         shell_type = shell_type.upper()
         max_angular = 0
         l = m = n = 0
-        
+
         if shell_type == 'S':
             l = m = n = 0
             max_angular = 0
@@ -98,14 +99,14 @@ class PrimitiveGTO(object):
 
         pwr = float(l + m + n)
         answer = math.pow(2.0, pwr)
-        answer *= math.pow(pdf.Math.dbfact(2*l-1) *
-                           pdf.Math.dbfact(2*m-1) *
-                           pdf.Math.dbfact(2*n-1), -1.0/2.0);
+        answer *= math.pow(Math.dbfact(2*l-1) *
+                           Math.dbfact(2*m-1) *
+                           Math.dbfact(2*n-1), -1.0/2.0);
         answer *= math.pow(2.0 / math.pi, 3.0 / 4.0);
         answer *= math.pow(self.exp, (pwr + 3.0/2.0) / 2.0);
 
         return answer
-        
+
     # ==================================================================
     # raw data
     # ==================================================================
@@ -118,7 +119,7 @@ class PrimitiveGTO(object):
         odict['coef'] = self.coef
         odict['exp'] = self.exp
         return odict
-    
+
     # ==================================================================
     # debug
     # ==================================================================
@@ -139,7 +140,7 @@ class PrimitiveGTO(object):
     def __ne__(self, rhs):
         return not self.__eq__(rhs)
 
-    
+
 class ContractedGTO(list):
     """
     >>> cgto = ContractedGTO('p', 3)
@@ -158,15 +159,15 @@ class ContractedGTO(list):
     def __init__(self, *args, **kwargs):
         shell_type = 's'
         size = 0
-        
+
         if (len(args) == 1):
             if isinstance(args[0], ContractedGTO):
                 self._copy_constructer(args[0])
                 return
             elif isinstance(args[0], dict):
                 self.set_by_raw_data(args[0])
-                return 
-        
+                return
+
         if len(args) == 2:
             shell_type = args[0]
             size = int(args[1])
@@ -192,7 +193,7 @@ class ContractedGTO(list):
         list.__init__(self, [PrimitiveGTO() for x in range(len(rhs))])
         for i, pgto in enumerate(rhs):
             self[i] = PrimitiveGTO(pgto)
-        
+
     # shell_type_id ------------------------------------------------------------
     def _get_shell_type_id(self):
         if not '_shell_type_id' in self.__dict__:
@@ -201,7 +202,7 @@ class ContractedGTO(list):
 
     def _set_shell_type_id(self, id):
         self._shell_type_id = id
-    
+
     shell_type_id = property(_get_shell_type_id, _set_shell_type_id)
 
     # shell_type ---------------------------------------------------------------
@@ -268,13 +269,13 @@ class ContractedGTO(list):
                 trm *= math.pow(exp_a + exp_b, -1.0 * pwr)
                 answer += trm
 
-        answer *= pdf.Math.dbfact(2*l-1) * pdf.Math.dbfact(2*m-1) * pdf.Math.dbfact(2*n-1)
+        answer *= Math.dbfact(2*l-1) * Math.dbfact(2*m-1) * Math.dbfact(2*n-1)
         answer *= math.pow(2.0, -1.0 * float(l + m + n))
         answer *= math.pow(math.pi,  3.0 / 2.0)
         answer = math.sqrt(1.0 / answer)
 
         return answer
-    
+
     # --------------------------------------------------------------------------
     @classmethod
     def get_supported_shell_types(cls):
@@ -300,8 +301,8 @@ class ContractedGTO(list):
     @classmethod
     def get_shell_type(cls, id):
         return cls._shell_types[id]
-        
-    
+
+
     @classmethod
     def get_basis_type(cls, shell_type_id, basis_id):
         """
@@ -319,7 +320,7 @@ class ContractedGTO(list):
         tbl = [0, 1, 4]
         index = tbl[shell_type_id] + basis_id
         return cls._orb_types[index]
-    
+
     def expand(self):
         """
         shell_typeが'spd'などの場合に分解する
@@ -336,7 +337,7 @@ class ContractedGTO(list):
         else:
             answer = [self]
         return answer
-    
+
     # ==================================================================
     # raw data
     # ==================================================================
@@ -348,7 +349,7 @@ class ContractedGTO(list):
         pGTOs = odict.get('pGTOs', [])
         for pGTO in pGTOs:
             self.append(PrimitiveGTO(pGTO))
-        
+
     def get_raw_data(self):
         odict = {}
 
@@ -357,9 +358,9 @@ class ContractedGTO(list):
         odict.setdefault('pGTOs', [])
         for pgto in self:
             odict['pGTOs'].append(pgto.get_raw_data())
-        
+
         return odict
-    
+
     # ==================================================================
     # debug
     # ==================================================================
@@ -383,13 +384,13 @@ class ContractedGTO(list):
                         is_same_CGTO = False
                         break
                     answer = is_same_CGTO
-        
+
         return answer
 
     def __ne__(self, rhs):
         return not self.__eq__(rhs)
 
-    
+
 class BasisSet(list):
     """
     >>> bs = BasisSet('sample', 3)
@@ -413,7 +414,7 @@ class BasisSet(list):
             elif isinstance(args[0], dict):
                 self.set_by_raw_data(args[0])
                 return
-        
+
         if (len(args) > 0):
             self.name = args[0]
             if (len(args) > 1):
@@ -458,16 +459,16 @@ class BasisSet(list):
         return ContractedGTO.get_shell_type(self.max_shell_type_id)
 
     max_shell_type = property(_get_max_shell_type)
-    
+
     # ------------------------------------------------------------------
-    
+
     def get_number_of_AOs(self):
         answer = 0
         for cgto in self:
             st_id = cgto.shell_type_id
             answer += st_id * 2 + 1
         return answer
-    
+
     def get_num_of_CGTOs(self, shell_type):
         answer = 0
         for i in range(len(self)):
@@ -506,7 +507,7 @@ class BasisSet(list):
         cGTOs = odict.get('cGTOs', [])
         for cGTO in cGTOs:
             self.append(ContractedGTO(cGTO))
-        
+
     def get_raw_data(self):
         odict = {}
 
@@ -516,13 +517,13 @@ class BasisSet(list):
             odict['cGTOs'].append(cGTO.get_raw_data())
 
         return odict
-        
+
     # ==================================================================
     # debug
     # ==================================================================
     def get_basis2(self):
         self.sort()
-        
+
         output = ""
         output += "%s\n" % (self.name)
 
@@ -532,15 +533,15 @@ class BasisSet(list):
                 continue
             output += " %d" % (num_of_CGTOs)
         output += "\n"
-        
+
         for cgto in self:
             output += str(cgto)
-        
+
         return output
 
     def __str__(self):
         return self.get_basis2()
-    
+
     # operator
     def __eq__(self, rhs):
         answer = False
@@ -557,8 +558,8 @@ class BasisSet(list):
 
     def __ne__(self, rhs):
         return not self.__eq__(rhs)
-    
-    
+
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()

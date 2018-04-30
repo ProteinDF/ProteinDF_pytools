@@ -3,19 +3,19 @@
 
 # Copyright (C) 2014 The ProteinDF development team.
 # see also AUTHORS and README if provided.
-# 
+#
 # This file is a part of the ProteinDF software package.
-# 
+#
 # The ProteinDF is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # The ProteinDF is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -29,7 +29,8 @@ import matplotlib.cm as cm
 import math
 import types
 
-import pdfbridge as bridge
+import proteindf_bridge as bridge
+
 
 class DfGraph(object):
     def __init__(self):
@@ -39,12 +40,12 @@ class DfGraph(object):
 
         self._make_default_subplots()
 
-        
+
     def _make_default_subplots(self):
         self._fig = plt.figure()
         self._ax = self._fig.add_subplot(111)
-        
-        
+
+
     # ==========================================================================
     # property
     # ==========================================================================
@@ -55,7 +56,7 @@ class DfGraph(object):
             self._title = ''
         return self._title
     title = property(_get_title, _set_title)
-    
+
     def _set_xlabel(self, xlabel):
         self._xlabel = str(xlabel)
     def _get_xlabel(self):
@@ -95,7 +96,7 @@ class DfGraph(object):
             self._xmax = None
         return self._xmax
     xmax = property(_get_xmax, _set_xmax)
-    
+
     def _set_ymin(self, ymin):
         self._ymin = ymin
     def _get_ymin(self):
@@ -119,7 +120,7 @@ class DfGraph(object):
             self._aspect = None
         return self._aspect
     aspect = property(_get_aspect, _set_aspect)
-    
+
     def _set_xticks(self, ticks):
         assert(isinstance(ticks, types.ListType))
         self._xticks = ticks
@@ -128,7 +129,7 @@ class DfGraph(object):
             self._xticks = None
         return self._xticks
     xticks = property(_get_xticks, _set_xticks)
-        
+
     def _set_yticks(self, ticks):
         assert(isinstance(ticks, types.ListType))
         self._yticks = ticks
@@ -153,7 +154,7 @@ class DfGraph(object):
             self._yticklabels = None
         return self._yticklabels
     yticklabels = property(_get_yticklabels, _set_yticklabels)
-    
+
     def _set_legend(self, yn):
         self._legend = bool(yn)
     def _get_legend(self):
@@ -161,11 +162,12 @@ class DfGraph(object):
             self._legend = False
         return self._legend
     legend = property(_get_legend, _set_legend)
-    
+
     # ==========================================================================
     # method
     # ==========================================================================
     def _draw(self):
+        self._ax.use_sticky_edges = False
         self._draw_data()
 
         self._ax.set_title(self.title)
@@ -177,6 +179,7 @@ class DfGraph(object):
                           right = self.xmax)
         self._ax.set_ylim(bottom = self.ymin,
                           top = self.ymax)
+        # self._ax.relim(visible_only=True)
         self._ax.autoscale_view(tight=True)
 
         if self.xticks != None:
@@ -191,9 +194,11 @@ class DfGraph(object):
         if self.aspect != None:
             self._ax.set_aspect(self.aspect)
 
-        if self.legend != None:
+        if self.legend == True:
             self._ax.legend()
-            
+
+
+
     def _draw_data(self):
         pass
 
@@ -213,7 +218,7 @@ class DfTotalEnergyHistGraph(DfGraph):
         f = open(path)
         lines = f.readlines();
         f.close()
-        
+
         self._x = [];
         self._y = [];
         for line in lines:
@@ -227,7 +232,7 @@ class DfTotalEnergyHistGraph(DfGraph):
 
         # self._ax.legend(('total energy'), loc='best')
 
-        
+
 class DfEnergyLevelHistoryGraphH(DfGraph):
     """
     エネルギー準位を水平線で描画します
@@ -244,17 +249,21 @@ class DfEnergyLevelHistoryGraphH(DfGraph):
         self.ymax =   5.0
 
         self._HOMO_level = -1
+        self._LUMO_level = -1
         self._max_itr = 0
         self._select_iterations = []
-        
+
     def set_HOMO_level(self, level):
         self._HOMO_level = int(level)
-        
+
+    def set_LUMO_level(self, level):
+        self._LUMO_level = int(level)
+
     def load_data(self, path):
         f = open(path)
         lines = f.readlines();
         f.close()
-        
+
         self._data = []
         for line in lines:
             (itr, level, value) = line.strip().split(',')
@@ -264,16 +273,20 @@ class DfEnergyLevelHistoryGraphH(DfGraph):
 
     def select_iterations(self, iterations):
         self._select_iterations = set(iterations)
-            
+
     def _draw_data(self):
         itr_vs_list = []
         if len(self._select_iterations) == 0:
             itr_vs_list = range(self._max_itr +1)
+            self.xmin = 1
+            self.xmax = self._max_itr +1
         else:
             itr_vs_list = [ 0 for x in range(self._max_itr +1) ]
             for order, itr in enumerate(self._select_iterations):
+                self.xmin = min(self.xmin, order +1)
+                self.xmax = max(self.xmin, order +1)
                 itr_vs_list[itr] = order +1
-                
+
         for d in self._data:
             itr = d[0]
             level = d[1]
@@ -282,24 +295,32 @@ class DfEnergyLevelHistoryGraphH(DfGraph):
             order = itr_vs_list[itr]
             if order == 0:
                 continue
-            
-            self._draw_data_line(order, value, (level == self._HOMO_level))
 
-    def _draw_data_line(self, order, value, is_HOMO):
+            strike = False
+            color = 'k'
+            if level == self._HOMO_level:
+                strike = True
+                color = 'r'
+            elif level == self._LUMO_level:
+                strike = True
+                color = 'b'
+            self._draw_data_line(order, value,
+                                 strike=strike,
+                                 color=color)
+
+    def _draw_data_line(self, order, value, strike=False, color='k'):
         if (self.ymin < value) and (value < self.ymax):
             width = 0.8
             height = 0.01
-            c = 'k'
-            if is_HOMO:
+            if strike:
                 width = 1.0
                 height = 0.01
-                c = 'r'
 
             left = order - width / 2.0
             bottom = value - height / 2.0
 
             self._ax.bar(left, height, width, bottom,
-                         edgecolor=c, color=c)
+                         edgecolor=color, color=color)
 
 
 class DfEnergyLevelHistoryGraphV(DfEnergyLevelHistoryGraphH):
@@ -318,44 +339,43 @@ class DfEnergyLevelHistoryGraphV(DfEnergyLevelHistoryGraphH):
         self.ymax = None
 
         self._HOMO_level = -1
+        self._LUMO_level = -1
 
-    def _draw_data_line(self, order, value, is_HOMO):
+    def _draw_data_line(self, order, value, strike=False, color='k'):
         if (self.xmin < value) and (value < self.xmax):
             width = 0.01
             height = 0.8
-            c = 'k'
-            if is_HOMO:
+            if strike:
                 width = 0.01
                 height = 1.0
-                c = 'r'
 
             bottom = order - height / 2.0
             left = value - width / 2.0
 
             self._ax.bar(left, height, width, bottom,
-                         edgecolor=c, color=c)
+                         edgecolor=color, color=color)
 
-            
     def _draw(self):
         self._ax.tick_params(labelleft="off")
         super(DfEnergyLevelHistoryGraphV, self)._draw()
-            
+
+
 class DfLineChart(DfGraph):
     def __init__(self):
         DfGraph.__init__(self)
         self._data = []
-        
+
     def add_data(self, X, Y):
         d = (X, Y)
         self._data.append(d)
-        
+
     def _draw_data(self):
         # print('data size=', len(self._data))
         # print(self._data)
         for i, (X, Y) in enumerate(self._data):
             self._ax.plot(X, Y, linewidth=1.0, linestyle="-", label='{}'.format(i))
-            
-            
+
+
 class DfMatrixGraph(DfGraph):
     def __init__(self, matrix, is_diverging = True):
         assert(isinstance(matrix, bridge.Matrix))
@@ -372,12 +392,12 @@ class DfMatrixGraph(DfGraph):
             self._cmap = cm.coolwarm
         else:
             self._cmap = cm.bone_r
-        
+
     def _draw_data(self):
         data = self._matrix.data
         if not self._is_diverging:
             data = numpy.absolute(data)
-        
+
         cax = self._ax.imshow(data,
                               cmap=self._cmap,
                               interpolation='none',
@@ -397,10 +417,10 @@ class DfDistanceVsElementGraph(DfGraph):
     def __init__(self, log = False):
          DfGraph.__init__(self)
          self._log = log
-         
+
          self.xlabel = 'distance'
          self.ylabel = 'magnitude'
-         
+
     def _make_default_subplots(self):
         left, width = 0.1, 0.65
         bottom, height = 0.1, 0.65
@@ -419,14 +439,14 @@ class DfDistanceVsElementGraph(DfGraph):
         nullfmt = matplotlib.ticker.NullFormatter()
         #self._ax_hist_x.xaxis.set_major_formatter(nullfmt)
         #self._ax_hist_y.yaxis.set_major_formatter(nullfmt)
-        
-        
+
+
     def load(self, path):
         self._data_x = []
         self._data_y = []
         data_x = []
         data_y = []
-        
+
         with open(path) as f:
             for line in f:
                 line = line.strip()
@@ -435,7 +455,7 @@ class DfDistanceVsElementGraph(DfGraph):
                 x = float(d[0])
                 y = float(d[1])
                 y = math.fabs(y)
-                
+
                 data_x.append(x)
                 data_y.append(y)
 
@@ -447,7 +467,7 @@ class DfDistanceVsElementGraph(DfGraph):
         self._ax_scatter.set_xlabel(self.xlabel)
         self._ax_scatter.set_ylabel(self.ylabel)
         self._ax_scatter.grid(self.is_draw_grid)
-        
+
     def _draw_data(self):
         self._ax_scatter.scatter(self._data_x, self._data_y)
         if self._log:
@@ -466,8 +486,8 @@ class DfDistanceVsElementGraph(DfGraph):
         range_y = y_max - y_min
         width_y = range_y / 2
         self._ax_hist_x.set_yticks(numpy.arange(y_min, y_max, width_y))
-        
-        
+
+
     def _draw_histy(self):
         self._ax_hist_y.hist(self._data_y, orientation='horizontal', log=self._log)
         self._ax_hist_y.set_ylim(self._ax_scatter.get_ylim())
@@ -478,8 +498,8 @@ class DfDistanceVsElementGraph(DfGraph):
         range_x = x_max - x_min
         width_x = range_x / 2
         self._ax_hist_y.set_xticks(numpy.arange(x_min, x_max, width_x))
-        
-        
+
+
 class DfLineChart(DfGraph):
     def __init__(self):
         DfGraph.__init__(self)
@@ -495,12 +515,12 @@ class DfLineChart(DfGraph):
             self._cmap = cm.coolwarm
         else:
             self._cmap = cm.bone_r
-        
+
     def _draw_data(self):
         data = self._matrix.data
         if not self._is_diverging:
             data = numpy.absolute(data)
-        
+
         cax = self._ax.imshow(data,
                               cmap=self._cmap,
                               interpolation='none',
@@ -520,10 +540,10 @@ class DfDistanceVsElementGraph(DfGraph):
     def __init__(self, log = False):
          DfGraph.__init__(self)
          self._log = log
-         
+
          self.xlabel = 'distance'
          self.ylabel = 'magnitude'
-         
+
     def _make_default_subplots(self):
         left, width = 0.1, 0.65
         bottom, height = 0.1, 0.65
@@ -542,14 +562,14 @@ class DfDistanceVsElementGraph(DfGraph):
         nullfmt = matplotlib.ticker.NullFormatter()
         #self._ax_hist_x.xaxis.set_major_formatter(nullfmt)
         #self._ax_hist_y.yaxis.set_major_formatter(nullfmt)
-        
-        
+
+
     def load(self, path):
         self._data_x = []
         self._data_y = []
         data_x = []
         data_y = []
-        
+
         with open(path) as f:
             for line in f:
                 line = line.strip()
@@ -558,7 +578,7 @@ class DfDistanceVsElementGraph(DfGraph):
                 x = float(d[0])
                 y = float(d[1])
                 y = math.fabs(y)
-                
+
                 data_x.append(x)
                 data_y.append(y)
 
@@ -570,7 +590,7 @@ class DfDistanceVsElementGraph(DfGraph):
         self._ax_scatter.set_xlabel(self.xlabel)
         self._ax_scatter.set_ylabel(self.ylabel)
         self._ax_scatter.grid(self.is_draw_grid)
-        
+
     def _draw_data(self):
         self._ax_scatter.scatter(self._data_x, self._data_y)
         if self._log:
@@ -589,8 +609,8 @@ class DfDistanceVsElementGraph(DfGraph):
         range_y = y_max - y_min
         width_y = range_y / 2
         self._ax_hist_x.set_yticks(numpy.arange(y_min, y_max, width_y))
-        
-        
+
+
     def _draw_histy(self):
         self._ax_hist_y.hist(self._data_y, orientation='horizontal', log=self._log)
         self._ax_hist_y.set_ylim(self._ax_scatter.get_ylim())
@@ -601,23 +621,23 @@ class DfDistanceVsElementGraph(DfGraph):
         range_x = x_max - x_min
         width_x = range_x / 2
         self._ax_hist_y.set_xticks(numpy.arange(x_min, x_max, width_x))
-        
-        
-        
+
+
+
 # ******************************************************************************
 
 class LineChart(object):
     def set_data(self, x, y):
         self.__x = x
         self.__y = y
-    
+
     def savefig(self, fname):
         plt.figure()
         plt.subplot(111)
 
         # clear
         plt.clf()
-        
+
         # line
         line = plt.plot(self.__x,
                         self.__y)
@@ -640,7 +660,7 @@ class LineChart(object):
             plt.axis('tight')
         else:
             plt.axis(range)
-            
+
         plt.savefig(fname)
 
 
@@ -649,14 +669,14 @@ class EnergyLevelChart(object):
 
     def set_data(self, itr, values):
         self.__data[itr] = values
-    
+
     def savefig(self, fname):
         plt.figure()
         plt.subplot(111)
 
         # clear
         plt.clf()
-        
+
         # line
         for itr in self.__data.keys():
             for value in self.__data[itr]:
@@ -665,7 +685,7 @@ class EnergyLevelChart(object):
                 height = 0
                 left = itr - 0.45
                 line = plt.barh(bottom, width, height, left)
-        
+
         # range
         is_tight = True
         range = plt.axis()
@@ -685,22 +705,22 @@ class EnergyLevelChart(object):
             plt.axis('tight')
         else:
             plt.axis(range)
-            
+
         plt.savefig(fname)
 
-        
-        
+
+
 class Graph(object):
     colors = ['blue', 'green', 'red', 'cyan', 'magenta',
               'yellow']
-    
+
     def __init__(self, size = None):
         """
         sizeはinchで指定する(width x height)
         """
         # clear the figure
         #self.fig.clf()
-    
+
     def file_out(self, file_path):
         self.__prepare()
         self.fig.savefig(file_path)
@@ -719,12 +739,12 @@ class Graph(object):
     def set_xscale(self, value):
         assert(value in ['linear', 'log', 'symlog'])
         self.param['xscale'] = value
- 
+
 
     def set_yscale(self, value):
         assert(value in ['linear', 'log', 'symlog'])
         self.param['yscale'] = value
-        
+
 
     def set_xlabel(self, label):
         self.param['xlabel'] = label
@@ -803,7 +823,7 @@ class Graph(object):
 
         # clear
         plt.clf()
-        
+
         # range
         range = plt.axis()
         if self.__xmin:
@@ -850,21 +870,21 @@ class GraphEnergyLevelHistory(Graph):
         """
         if (levels == None):
             return
-        
+
         min_y = self.param['min_y']
         max_y = self.param['max_y']
 
         # this value is for negligence
         last_value = min_y
         negligence_range = (max_y - min_y) * 0.001 # 0.1%
-        
+
         for level, value in enumerate(levels):
             # draw HOMO
             if (level == homo_level):
                 self.ax.broken_barh([(iteration -0.50, 1.0)], (value, 0),
                                     edgecolors='red', facecolors='red')
                 continue
-            
+
             # negligence
             if ((value < min_y) or (max_y < value)):
                 continue
@@ -894,7 +914,7 @@ class GraphEnergyLevelSingle(Graph):
         # this value is for negligence
         last_value = min_y
         negligence_range = (max_y - min_y) * 0.001 # 0.1%
-        
+
         # plot
         for level, value in enumerate(levels):
             # draw HOMO
@@ -970,17 +990,17 @@ class BarGraph(Graph):
             'legend.fontsize' : 9
             }
         pylab.rcParams.update(params)
-        
+
     def plot(self, data, labels = None):
         # prepare
         rows = len(data)
         cols = len(data[0]) if rows else 0
         for i in range(rows):
             assert cols == len(data[i])
-        
+
         colors = get_colours(cols)
         colors.reverse()
-        
+
         for row in range(rows):
             left = row
             y_offset = 0.0
@@ -993,5 +1013,3 @@ class BarGraph(Graph):
         if labels:
             #self.ax.legend(labels, bbox_to_anchor=(1.05, 1), loc=2)
             self.ax.legend(labels, loc='best')
-            
-        

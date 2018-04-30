@@ -3,19 +3,19 @@
 
 # Copyright (C) 2014 The ProteinDF development team.
 # see also AUTHORS and README if provided.
-# 
+#
 # This file is a part of the ProteinDF software package.
-# 
+#
 # The ProteinDF is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # The ProteinDF is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -36,8 +36,7 @@ try:
 except:
     import msgpack_pure as msgpack
 
-import pdfbridge
-import pdfpytools as pdf
+import proteindf_tools as pdf
 
 # parameters
 PDF_INDEX_FILE = 'pdfindex.mpac'
@@ -70,7 +69,7 @@ def make_orbinfo_table(pdfparam_path):
         proc = subprocess.Popen(args, **subproc_args)
     except OSError:
         sys.exit('Failed to execute command: %s\n' % args[0])
-    
+
     (stdouterr, stdin) = (proc.stdout, proc.stdin)
     while True:
         line = stdouterr.readline()
@@ -137,7 +136,7 @@ def get_pdf_eri_list(pdfparam_path, pdf_eri_indeces_path):
     (stdouterr, stdin) = (proc.stdout, proc.stdin)
     while True:
         line = stdouterr.readline()
-        
+
         matchObj = re_eri_val.match(line)
         if matchObj:
             value = float(matchObj.group(1))
@@ -194,7 +193,7 @@ def main():
     eri_data = mpac2py(eri_mpac_file)
 
     num_of_tests = len(eri_data)
-    
+
     # make index list
     orbinfo = make_orbinfo_table(pdfparam_file)
     pdf_eri_indeces = [ [0, 0, 0, 0] for x in range(num_of_tests) ]
@@ -214,11 +213,11 @@ def main():
     indeces_file = open(PDF_INDEX_FILE, 'wb')
     indeces_file.write(mpac)
     indeces_file.close()
-    
+
     # calc eri
     pdf_eri_values = get_pdf_eri_list(pdfparam_file, PDF_INDEX_FILE)
     assert(len(pdf_eri_values) == num_of_tests)
-    
+
     # check
     for i in range(num_of_tests):
         ref_eri_value = ref_eri_values[i]
@@ -233,7 +232,7 @@ def main():
                          verbose):
             error_count += 1
         total_count += 1
-        
+
     if error_count:
         sys.exit('%d/%d ERROR FOUND' % (error_count, total_count))
     else:

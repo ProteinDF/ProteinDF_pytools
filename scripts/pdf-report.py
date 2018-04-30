@@ -3,19 +3,19 @@
 
 # Copyright (C) 2014 The ProteinDF development team.
 # see also AUTHORS and README if provided.
-# 
+#
 # This file is a part of the ProteinDF software package.
-# 
+#
 # The ProteinDF is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # The ProteinDF is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -30,8 +30,8 @@ try:
     import msgpack
 except:
     import msgpack_pure as msgpack
-    
-import pdfpytools as pdf
+
+import proteindf_tools as pdf
 
 def main():
     # parse args
@@ -44,21 +44,41 @@ def main():
                         nargs='?',
                         default='report',
                         help='output directory')
+
     parser.add_argument("-v", "--verbose",
                         action="store_true",
                         default=False)
     parser.add_argument('-d', '--debug',
                         action='store_true',
                         default=False)
+    parser.add_argument("-p", "--profile",
+                        nargs='?',
+                        const='pdf-report.stat',
+                        help="do profiling")
+
     args = parser.parse_args()
-        
+
     # setting
     verbose = args.verbose
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
+    do_profile = args.profile
+
     output_dir=args.output_dir
     entry = pdf.PdfArchive(args.pdfresults_db)
 
+    # run
+    if do_profile != None:
+        import cProfile
+        cProfile.runctx("do_report(output_dir, entry)",
+                        globals(), locals(),
+                        do_profile)
+    else:
+        do_report(output_dir, entry)
+
+
+
+def do_report(output_dir, entry):
     # make output dir
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
@@ -66,7 +86,7 @@ def main():
     # ------------------
     iterations = entry.iterations
     logging.debug('iterations=%d' % (iterations))
-    
+
     plot_convergence_check(entry, output_dir)
     plot_convergence_energy_level(entry, output_dir)
 
@@ -75,11 +95,11 @@ def main():
 
     #plot_elapsed_time(pdfdata,
     #                  workdir + '/elapsed_time.png')
-    
+
     #contents = get_rst(entry)
     #print(contents)
 
-    
+
 def plot_convergence_check(entry,
                            output_dir):
     """
@@ -102,7 +122,8 @@ def plot_convergence_check(entry,
     graph = pdf.DfTotalEnergyHistGraph()
     graph.load_data(data_path)
     graph.save(graph_path)
-    
+
+
 def plot_convergence_energy_level(entry,
                                   output_dir):
     """
@@ -121,7 +142,7 @@ def plot_convergence_energy_level(entry,
                 e *= 27.2116
                 dat.write('%d, %d, % 16.10f\n' % (itr, level, e))
     dat.close()
-    
+
     graphH_path = output_dir + '/eigvals_hist.png'
     graphH = pdf.DfEnergyLevelHistoryGraphH()
     graphH.set_HOMO_level(HOMO_level) # option base 0
@@ -132,6 +153,7 @@ def plot_convergence_energy_level(entry,
     graphV_path = output_dir + '/eigvals_last.png'
     graphV = pdf.DfEnergyLevelHistoryGraphV()
     graphV.set_HOMO_level(HOMO_level) # option base 0
+    graphV.set_LUMO_level(HOMO_level +1) # option base 0
     graphV.load_data(data_path)
     if entry.scf_converged:
         graphV.select_iterations([itr])
@@ -142,8 +164,9 @@ def plot_convergence_energy_level(entry,
     graphV.y_ticks = [-1]
     graphV.y_ticklabels = [""]
     graphV.save(graphV_path)
-    
-    
+
+
+
 def plot_energy_level(entry, output_path):
     graph = EnergyLevelSingle()
 
@@ -160,13 +183,12 @@ def plot_energy_level(entry, output_path):
             e *= 27.2116
             dat.write('%d, %d, % 16.10f\n' % (itr, level, e))
     dat.close()
-    
+
     graph = pdf.DfEigValsHistGraph()
     graph.set_HOMO_level(HOMO_level) # option base 0
     graph.load_data(data_path)
     graph.save(graph_path)
 
-    
 
 #def get_eigenvalues(iterations):
 #    eigval_vtr_path = 'fl_Work/eigenvalues.rks%d.vtr' % (iterations) # TODO
@@ -176,7 +198,8 @@ def plot_energy_level(entry, output_path):
 #    else:
 #        logging.warning('cannot load: %s\n' % (eigval_vtr_path))
 #    return v
-    
+
+
 def plot_convergence_check0(pdfdata, output_path):
     graph = pdfex.GraphConvergenceCheck()
 
@@ -229,6 +252,7 @@ def plot_convergence_TE(pdfdata, output_path):
     graph.prepare()
     graph.file_out(output_path)
 
+
 def plot_elapsed_time(pdfdata, output_path):
     graph = pdfex.BarGraph()
 
@@ -250,7 +274,7 @@ def plot_elapsed_time(pdfdata, output_path):
     graph.prepare()
     graph.file_out(output_path)
 
-    
+
 def get_rst(pdfdata):
     assert isinstance(pdfdata, pdf.ProteinDF)
     contents = """
@@ -273,11 +297,10 @@ def get_rst(pdfdata):
         num_of_MOs=pdfdata.num_of_MOs,
         num_of_iterations=num_of_iterations,
         total_energy=pdfdata.TE[num_of_iterations])
-    
-    
+
+
 if __name__ == '__main__':
     if os.path.exists("config.ini"):
         logging.config.fileConfig("config.ini",
                                   disable_existing_loggers=False)
     main()
-
