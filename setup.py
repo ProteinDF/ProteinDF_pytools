@@ -26,7 +26,7 @@ from setuptools import setup, find_packages
 shutil.copyfile('scripts/pdfcmd.py', 'scripts/pdf')
 
 setup(name='proteindf_tools',
-      version='2018.2',
+      version='2018.10.rc',
       description='python scripts for ProteinDF package',
       author='Toshiyuki HIRANO',
       author_email='hiracchi@gmail.com',
@@ -70,7 +70,7 @@ setup(name='proteindf_tools',
           'pandas',
           'matplotlib',
           'scikit-learn',
-          'proteindf_bridge'
+          #'proteindf_bridge'
       ],
 
       package_data={
