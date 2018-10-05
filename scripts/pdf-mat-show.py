@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 def main():
     # parse args
-    parser = argparse.ArgumentParser(description='show matrix info')
+    parser = argparse.ArgumentParser(description='show matrix contents')
     parser.add_argument("path",
                         nargs=1,
                         help='matrix path')
@@ -37,13 +37,13 @@ def main():
         print("standard dens matrix")
         print("size: {row} x {col}".format(row = stdmat.rows,
                                            col = stdmat.cols))
-        #print(stdmat)
+        print(stdmat)
     elif symmat.is_loadable(mat_path):
         symmat.load(mat_path)
         print("symmetric dens matrix")
         print("size: {row} x {col}".format(row = symmat.rows,
                                            col = symmat.cols))
-        #print(symmat)
+        print(symmat)
     else:
         print("cannot load file.")
 

@@ -26,7 +26,7 @@ from setuptools import setup, find_packages
 shutil.copyfile('scripts/pdfcmd.py', 'scripts/pdf')
 
 setup(name='proteindf_tools',
-      version='2018.10.rc',
+      version='2018.10.rc0',
       description='python scripts for ProteinDF package',
       author='Toshiyuki HIRANO',
       author_email='hiracchi@gmail.com',
@@ -42,6 +42,7 @@ setup(name='proteindf_tools',
           'scripts/pdf-info-xyz.py',
           'scripts/pdf-make-basis2.py',
           'scripts/pdf-mat-info.py',
+          'scripts/pdf-mat-show.py',
           'scripts/pdf-plot-basisset.py',
           'scripts/pdf-plot-elevel.py',
           'scripts/pdf-plot-mat.py',
