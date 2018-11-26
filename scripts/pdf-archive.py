@@ -71,7 +71,7 @@ def main():
     verbose = args.verbose
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
-    is_little_endian = True
+    #is_little_endian = True
 
     do_calc_pop_types = [None]
     if 'calc_pop' in args:
@@ -102,7 +102,7 @@ class Pdf2Db(object):
     def __init__(self, pdfparam, entry, pop_types=[]):
         self._logger = logging.getLogger(__name__)
 
-        self._is_little_endian = True
+        #self._is_little_endian = True
 
         assert(isinstance(pdfparam, pdf.PdfParam))
         assert(isinstance(entry, pdf.PdfArchive))
@@ -124,14 +124,14 @@ class Pdf2Db(object):
         if self._pdfparam.scf_converged:
             self.set_pop(self._pop_types)
 
-    def _get_is_little_endian(self):
-        return self._is_little_endian
+    #def _get_is_little_endian(self):
+    #    return self._is_little_endian
 
-    def _set_is_little_endian(self, value):
-        assert(isinstance(value, bool))
-        self._is_little_endian = value
+    #def _set_is_little_endian(self, value):
+    #    assert(isinstance(value, bool))
+    #    self._is_little_endian = value
 
-    is_little_endian = property(_get_is_little_endian, _set_is_little_endian)
+    #is_little_endian = property(_get_is_little_endian, _set_is_little_endian)
 
     def set_energylevels(self, mode ='last'):
         """
@@ -149,8 +149,8 @@ class Pdf2Db(object):
             for runtype in pdfparam.runtypes():
                 path = pdfparam.get_energy_level_path(itr, runtype)
                 self._logger.debug('load %s' % (path))
-                if v.is_loadable(path, self.is_little_endian):
-                    v.load(path, self.is_little_endian)
+                if v.is_loadable(path):
+                    v.load(path)
                     entry.set_energylevel(runtype, itr, v)
 
     def set_occ(self):
@@ -164,8 +164,8 @@ class Pdf2Db(object):
         for runtype in pdfparam.runtypes():
             path = pdfparam.get_occ_path(runtype)
             self._logger.debug('load %s' % (path))
-            if v.is_loadable(path, self.is_little_endian):
-                v.load(path, self.is_little_endian)
+            if v.is_loadable(path):
+                v.load(path)
                 entry.set_occupations(runtype, v)
             else:
                 self._logger.warning('could not load %s' % (path))
@@ -189,8 +189,8 @@ class Pdf2Db(object):
             for runtype in pdfparam.runtypes():
                 path = pdfparam.get_cmat_path(runtype, itr)
                 self._logger.debug('load %s' % (path))
-                if m.is_loadable(path, self.is_little_endian):
-                    m.load(path, self.is_little_endian)
+                if m.is_loadable(path):
+                    m.load(path)
                     entry.set_lcao(runtype, itr, m)
 
     def set_pop(self, pop_types = [], iteration = 0):
