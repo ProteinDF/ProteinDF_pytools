@@ -26,7 +26,7 @@ from setuptools import setup, find_packages
 shutil.copyfile('scripts/pdfcmd.py', 'scripts/pdf')
 
 setup(name='proteindf_tools',
-      version='2018.10.rc0',
+      version='2018.10.1',
       description='python scripts for ProteinDF package',
       author='Toshiyuki HIRANO',
       author_email='hiracchi@gmail.com',
