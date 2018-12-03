@@ -33,6 +33,8 @@ except:
 
 import proteindf_tools as pdf
 
+ANG2AU = 0.52917721067
+
 def main():
     # parse args
     parser = argparse.ArgumentParser(description='output XYZ file')
@@ -68,6 +70,9 @@ def main():
     elif args.param:
         pdfparam = pdf.load_pdfparam(args.param)
         atomgroup = pdfparam.molecule
+
+    # a.u, to angstroam
+    atomgroup *= ANG2AU
     print(atomgroup.get_xyz())
 
 if __name__ == '__main__':
