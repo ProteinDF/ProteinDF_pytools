@@ -22,6 +22,7 @@
 import os
 import struct
 import logging
+logger = logging.getLogger(__name__)
 
 import proteindf_bridge as bridge
 
@@ -30,7 +31,6 @@ class Vector(bridge.Vector):
     """
     """
     def __init__(self, obj = []):
-        self._logger = logging.getLogger(__name__)
         super(Vector, self).__init__(obj)
 
     @classmethod
@@ -98,7 +98,8 @@ class Vector(bridge.Vector):
                 self[i] = float(value[0])
                 start += size_of_double
         else:
-            self._logger.error("file not found: %s" % (file_path))
+            logger.error("file not found: %s" % (file_path))
+
 
     def save(self, file_path):
         size = len(self)

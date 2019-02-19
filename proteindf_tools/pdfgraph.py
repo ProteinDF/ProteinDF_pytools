@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import numpy
 import matplotlib
 matplotlib.use('Agg')
@@ -28,6 +29,9 @@ import matplotlib.cm as cm
 
 import math
 import types
+
+import logging
+logger = logging.getLogger(__name__)
 
 import proteindf_bridge as bridge
 
@@ -206,6 +210,7 @@ class DfGraph(object):
         self._draw()
         self._fig.savefig(path)
 
+
 class DfTotalEnergyHistGraph(DfGraph):
     def __init__(self):
         DfGraph.__init__(self)
@@ -358,6 +363,23 @@ class DfEnergyLevelHistoryGraphV(DfEnergyLevelHistoryGraphH):
     def _draw(self):
         self._ax.tick_params(labelleft=False)
         super(DfEnergyLevelHistoryGraphV, self)._draw()
+
+
+class DfPopulationGraph(DfGraph):
+    def __init__(self):
+        super().__init__()
+
+    def load_data(self, path):
+        self._x = []
+        self._y = []
+        with open(path) as f:
+            for line in f:
+                items = line.strip().split(',')
+                self._x.append(float(items[0]))
+                self._y.append(float(items[1]))
+
+    def _draw_data(self):
+        self._ax.bar(self._x, self._y)
 
 
 class DfLineChart(DfGraph):

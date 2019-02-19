@@ -106,6 +106,34 @@ class PdfSim(object):
         os.chdir(current_dir)
 
         return (itr, total_energy)
+
+    # ------------------------------------------------------------------
+    def pop(self, iteration = -1, *args, **kwargs):
+        """
+        calc population
+        """
+        workdir = kwargs.get('workdir', '')
+        dry_run = kwargs.get('dry_run', False)
+
+        current_dir = os.path.abspath(".")
+
+        pdf_workdir = os.path.join('.', workdir)
+        if not os.path.exists(pdf_workdir):
+            os.mkdir(pdf_workdir)
+        else:
+            logger.debug('already exist {}'.format(pdf_workdir))
+
+        os.chdir(pdf_workdir)
+
+        if not dry_run:
+            if iteration != -1:
+                run_pdf(['pop-mulliken', '-i', iteration])
+            else:
+                run_pdf(['pop-mulliken'])
+
+        os.chdir(current_dir)
+
+
     # ------------------------------------------------------------------
 
 
