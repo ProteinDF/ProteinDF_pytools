@@ -356,7 +356,7 @@ class DfEnergyLevelHistoryGraphV(DfEnergyLevelHistoryGraphH):
                          edgecolor=color, color=color)
 
     def _draw(self):
-        self._ax.tick_params(labelleft="off")
+        self._ax.tick_params(labelleft=False)
         super(DfEnergyLevelHistoryGraphV, self)._draw()
 
 
@@ -982,14 +982,17 @@ class GraphConvergenceCheck(Graph):
                 y.append(values[i])
         self.ax.semilogy(x, y, label = label, marker = marker, linestyle = linestyle)
 
-class BarGraph(Graph):
-    def __init__(self, size = None):
-        Graph.__init__(self, size)
+class BarGraph(DfGraph):
+    def __init__(self):
+        DfGraph.__init__(self)
         #self.ax = pylab.subplot(121)
-        params = {
-            'legend.fontsize' : 9
-            }
-        pylab.rcParams.update(params)
+        #params = {
+        #    'legend.fontsize' : 9
+        #    }
+        #pylab.rcParams.update(params)
+
+    def _draw_data(self):
+        pass
 
     def plot(self, data, labels = None):
         # prepare
