@@ -406,8 +406,8 @@ class DfMatrixGraph(DfGraph):
                               #vmin=0.0,
                               origin='upper')
 
-        # self._ax.tick_params(axis='x', labeltop='on', labelbottom='off')
-        self._ax.tick_params(axis='x', labeltop='off', labelbottom='on')
+        # self._ax.tick_params(axis='x', labeltop=True, labelbottom=False)
+        self._ax.tick_params(axis='x', labeltop=False, labelbottom=True)
 
         # self._fig.colorbar(cax, ticks=[ 0, 1], shrink=0.92)
         self._fig.colorbar(cax, shrink=0.92)
@@ -529,8 +529,8 @@ class DfLineChart(DfGraph):
                               #vmin=0.0,
                               origin='upper')
 
-        # self._ax.tick_params(axis='x', labeltop='on', labelbottom='off')
-        self._ax.tick_params(axis='x', labeltop='off', labelbottom='on')
+        # self._ax.tick_params(axis='x', labeltop=True, labelbottom=False)
+        self._ax.tick_params(axis='x', labeltop=False, labelbottom=True)
 
         # self._fig.colorbar(cax, ticks=[ 0, 1], shrink=0.92)
         self._fig.colorbar(cax, shrink=0.92)
