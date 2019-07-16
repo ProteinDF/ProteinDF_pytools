@@ -795,7 +795,7 @@ class PdfParamObject(object):
                     label = re.sub("\s+", "_", label)
 
                 charge = ""
-                if math.fabs(atom.charge) > 1.0E-5:
+                if abs(atom.charge) > 1.0E-5:
                     charge = str(atom.charge)
 
                 atom_symbol = atom.symbol
