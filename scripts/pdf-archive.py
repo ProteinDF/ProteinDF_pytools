@@ -187,7 +187,7 @@ class Pdf2Db(object):
         m = pdf.Matrix()
         for itr in range(start_itr, iterations +1):
             for runtype in pdfparam.runtypes():
-                path = pdfparam.get_cmat_path(runtype, itr)
+                path = pdfparam.get_c_mat_path(runtype, itr)
                 self._logger.debug('load %s' % (path))
                 if m.is_loadable(path):
                     m.load(path)
