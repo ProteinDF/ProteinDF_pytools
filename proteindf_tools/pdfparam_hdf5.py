@@ -26,6 +26,7 @@ import logging
 logger = logging.getLogger(__name__)
 import h5py
 
+from .pdfcommon import run_pdf
 from .pdfparam_object import PdfParamObject
 from .matrix import Matrix, SymmetricMatrix
 from .vector import Vector
