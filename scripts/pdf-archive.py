@@ -147,11 +147,14 @@ class Pdf2Db(object):
             v = pdf.Vector()
             # energy level
             for runtype in pdfparam.runtypes():
-                path = pdfparam.get_energy_level_path(itr, runtype)
+                path = pdfparam.get_energy_level_path(runtype, itr)
                 self._logger.debug('load %s' % (path))
                 if v.is_loadable(path):
                     v.load(path)
                     entry.set_energylevel(runtype, itr, v)
+                else:
+                    print("cannot load: ", path)
+                    pass
 
     def set_occ(self):
         """

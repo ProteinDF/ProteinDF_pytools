@@ -271,6 +271,9 @@ class DfEnergyLevelHistoryGraphH(DfGraph):
 
         self._data = []
         for line in lines:
+            line = line.strip()
+            if len(line) == 0:
+                continue
             (itr, level, value) = line.strip().split(',')
             itr = int(itr)
             self._max_itr = max(self._max_itr, itr)
@@ -280,25 +283,22 @@ class DfEnergyLevelHistoryGraphH(DfGraph):
         self._select_iterations = set(iterations)
 
     def _draw_data(self):
-        itr_vs_list = []
+        draw_iterations = []
         if len(self._select_iterations) == 0:
-            itr_vs_list = range(self._max_itr +1)
-            self.xmin = 1
-            self.xmax = self._max_itr +1
+            for itr in  range(self._max_itr +1):
+                draw_iterations.append(itr +1)
         else:
-            itr_vs_list = [ 0 for x in range(self._max_itr +1) ]
             for order, itr in enumerate(self._select_iterations):
-                self.xmin = min(self.xmin, order +1)
-                self.xmax = max(self.xmin, order +1)
-                itr_vs_list[itr] = order +1
+                draw_iterations.append(itr)
 
         for d in self._data:
             itr = d[0]
             level = d[1]
             value = d[2]
 
-            order = itr_vs_list[itr]
-            if order == 0:
+            if itr in draw_iterations:
+                order = draw_iterations.index(itr)
+            else:
                 continue
 
             strike = False

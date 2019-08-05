@@ -874,6 +874,8 @@ class PdfParamObject(object):
         '''
         return energy level vector file path
         '''
+        assert(isinstance(runtype, str))
+        assert(isinstance(itr, int))
         filename = self._get_file_base_name('eigenvalues')
         filename = filename.replace('%s', '{}{}'.format(runtype, itr))
         path = os.path.join(self.work_path, filename)
