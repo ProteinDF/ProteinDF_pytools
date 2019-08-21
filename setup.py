@@ -75,6 +75,6 @@ setup(name='proteindf_tools',
       ],
 
       package_data={
-          'pdfpytools': 'data/basis2.cache'
+          'pdfpytools': ['data/basis2.cache']
       }
 )
