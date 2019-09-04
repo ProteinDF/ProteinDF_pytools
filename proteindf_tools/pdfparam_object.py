@@ -281,21 +281,26 @@ class PdfParamObject(object):
 
     xc_engine = property(_get_xc_engine, _set_xc_engine)
 
-    # gridfree/dual_level
-    def _get_gridfree_dual_level(self):
-        return self._data.get('gridfree_dual_level', False)
+    # gridfree/dedicated_basis
+    def _get_gridfree_dedicated_basis(self):
+        return self._data.get('gridfree_dedicated_basis', False)
 
-    def _set_gridfree_dual_level(self, value):
+    def _set_gridfree_dedicated_basis(self, value):
         if isinstance(value, str):
             value = value.upper()
             if value in ['YES', 'TRUE', '1']:
                 value = True
             else:
                 value = False
-        self._data['gridfree_dual_level'] = bool(value)
+        self._data['gridfree_dedicated_basis'] = bool(value)
 
-    gridfree_dual_level = property(_get_gridfree_dual_level,
-                                   _set_gridfree_dual_level)
+    gridfree_dedicated_basis = property(_get_gridfree_dedicated_basis,
+                                        _set_gridfree_dedicated_basis)
+
+    # gridfree/dual_level [[ deprecated ]]
+    gridfree_dual_level = property(_get_gridfree_dedicated_basis,
+                                   _set_gridfree_dedicated_basis)
+
 
     # gridfree/orthogonalize_method
     def _get_gridfree_orthogonalize_method(self):
@@ -734,7 +739,7 @@ class PdfParamObject(object):
         output += "    J_engine = {0}\n".format(self.j_engine)
         output += "    K_engine = {0}\n".format(self.k_engine)
         output += "    XC_engine = {0}\n".format(self.xc_engine)
-        output += "    gridfree/dual_level = {0}\n".format('yes' if self.gridfree_dual_level else 'no')
+        output += "    gridfree/dedicated_basis = {0}\n".format('yes' if self.gridfree_dedicated_basis else 'no')
         output += "    gridfree/orthogonalize_method = {0}\n".format(self.gridfree_orthogonalize_method)
         output += "    level_shift = {0}\n".format('yes' if self.level_shift else 'no')
         output += "    level_shift/start_iteration = {0}\n".format(self.level_shift_start_iteration)
