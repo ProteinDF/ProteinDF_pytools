@@ -298,8 +298,8 @@ class PdfParamObject(object):
                                         _set_gridfree_dedicated_basis)
 
     # gridfree/dual_level [[ deprecated ]]
-    gridfree_dual_level = property(_get_gridfree_dedicated_basis,
-                                   _set_gridfree_dedicated_basis)
+    #gridfree_dual_level = property(_get_gridfree_dedicated_basis,
+    #                               _set_gridfree_dedicated_basis)
 
 
     # gridfree/orthogonalize_method
@@ -1044,9 +1044,9 @@ class PdfParamObject(object):
             self.gridfree_CD_epsilon = odict.get('gridfree/CD_epsilon')
             del odict['gridfree/CD_epsilon']
 
-        if 'gridfree/dual_level' in odict:
-            self.gridfree_dual_level = odict.get('gridfree/dual_level')
-            del odict['gridfree/dual_level']
+        if 'gridfree/dedicated_basis' in odict:
+            self.gridfree_dedicated_basis = odict.get('gridfree/dedicated_basis')
+            del odict['gridfree/dedicated_basis']
 
         # scf acceleration
         if 'scf_acceleration' in odict:
