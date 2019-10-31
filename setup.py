@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014 The ProteinDF development team.
+# Copyright (C) 2019 The ProteinDF development team.
 # see also AUTHORS and README if provided.
 #
 # This file is a part of the ProteinDF software package.
@@ -22,11 +22,12 @@
 import sys, os
 import shutil
 from setuptools import setup, find_packages
+exec(open("proteindf_tools/_version.py").read())
 
 shutil.copyfile('scripts/pdfcmd.py', 'scripts/pdf')
 
 setup(name='proteindf_tools',
-      version='2018.10.1',
+      version=__version__,
       description='python scripts for ProteinDF package',
       author='Toshiyuki HIRANO',
       author_email='hiracchi@gmail.com',
