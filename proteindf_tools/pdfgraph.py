@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import numpy
 import matplotlib
 matplotlib.use('Agg')
@@ -28,6 +29,9 @@ import matplotlib.cm as cm
 
 import math
 import types
+
+import logging
+logger = logging.getLogger(__name__)
 
 import proteindf_bridge as bridge
 
@@ -206,6 +210,7 @@ class DfGraph(object):
         self._draw()
         self._fig.savefig(path)
 
+
 class DfTotalEnergyHistGraph(DfGraph):
     def __init__(self):
         DfGraph.__init__(self)
@@ -266,6 +271,9 @@ class DfEnergyLevelHistoryGraphH(DfGraph):
 
         self._data = []
         for line in lines:
+            line = line.strip()
+            if len(line) == 0:
+                continue
             (itr, level, value) = line.strip().split(',')
             itr = int(itr)
             self._max_itr = max(self._max_itr, itr)
@@ -275,25 +283,22 @@ class DfEnergyLevelHistoryGraphH(DfGraph):
         self._select_iterations = set(iterations)
 
     def _draw_data(self):
-        itr_vs_list = []
+        draw_iterations = []
         if len(self._select_iterations) == 0:
-            itr_vs_list = range(self._max_itr +1)
-            self.xmin = 1
-            self.xmax = self._max_itr +1
+            for itr in  range(self._max_itr +1):
+                draw_iterations.append(itr +1)
         else:
-            itr_vs_list = [ 0 for x in range(self._max_itr +1) ]
             for order, itr in enumerate(self._select_iterations):
-                self.xmin = min(self.xmin, order +1)
-                self.xmax = max(self.xmin, order +1)
-                itr_vs_list[itr] = order +1
+                draw_iterations.append(itr)
 
         for d in self._data:
             itr = d[0]
             level = d[1]
             value = d[2]
 
-            order = itr_vs_list[itr]
-            if order == 0:
+            if itr in draw_iterations:
+                order = draw_iterations.index(itr)
+            else:
                 continue
 
             strike = False
@@ -356,8 +361,25 @@ class DfEnergyLevelHistoryGraphV(DfEnergyLevelHistoryGraphH):
                          edgecolor=color, color=color)
 
     def _draw(self):
-        self._ax.tick_params(labelleft="off")
+        self._ax.tick_params(labelleft=False)
         super(DfEnergyLevelHistoryGraphV, self)._draw()
+
+
+class DfPopulationGraph(DfGraph):
+    def __init__(self):
+        super().__init__()
+
+    def load_data(self, path):
+        self._x = []
+        self._y = []
+        with open(path) as f:
+            for line in f:
+                items = line.strip().split(',')
+                self._x.append(float(items[0]))
+                self._y.append(float(items[1]))
+
+    def _draw_data(self):
+        self._ax.bar(self._x, self._y)
 
 
 class DfLineChart(DfGraph):
@@ -406,8 +428,8 @@ class DfMatrixGraph(DfGraph):
                               #vmin=0.0,
                               origin='upper')
 
-        # self._ax.tick_params(axis='x', labeltop='on', labelbottom='off')
-        self._ax.tick_params(axis='x', labeltop='off', labelbottom='on')
+        # self._ax.tick_params(axis='x', labeltop=True, labelbottom=False)
+        self._ax.tick_params(axis='x', labeltop=False, labelbottom=True)
 
         # self._fig.colorbar(cax, ticks=[ 0, 1], shrink=0.92)
         self._fig.colorbar(cax, shrink=0.92)
@@ -529,8 +551,8 @@ class DfLineChart(DfGraph):
                               #vmin=0.0,
                               origin='upper')
 
-        # self._ax.tick_params(axis='x', labeltop='on', labelbottom='off')
-        self._ax.tick_params(axis='x', labeltop='off', labelbottom='on')
+        # self._ax.tick_params(axis='x', labeltop=True, labelbottom=False)
+        self._ax.tick_params(axis='x', labeltop=False, labelbottom=True)
 
         # self._fig.colorbar(cax, ticks=[ 0, 1], shrink=0.92)
         self._fig.colorbar(cax, shrink=0.92)
@@ -982,14 +1004,17 @@ class GraphConvergenceCheck(Graph):
                 y.append(values[i])
         self.ax.semilogy(x, y, label = label, marker = marker, linestyle = linestyle)
 
-class BarGraph(Graph):
-    def __init__(self, size = None):
-        Graph.__init__(self, size)
+class BarGraph(DfGraph):
+    def __init__(self):
+        DfGraph.__init__(self)
         #self.ax = pylab.subplot(121)
-        params = {
-            'legend.fontsize' : 9
-            }
-        pylab.rcParams.update(params)
+        #params = {
+        #    'legend.fontsize' : 9
+        #    }
+        #pylab.rcParams.update(params)
+
+    def _draw_data(self):
+        pass
 
     def plot(self, data, labels = None):
         # prepare

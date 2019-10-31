@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from pdfpytools.basis2 import Basis2
+from proteindf_tools.basis2 import Basis2
 
 class TestBasis2(unittest.TestCase):
     def setUp(self):
@@ -10,7 +10,7 @@ class TestBasis2(unittest.TestCase):
 
     def tearDown(self):
         pass
-        
+
     def test_crete(self):
         bs2 = Basis2()
 
@@ -23,7 +23,6 @@ class TestBasis2(unittest.TestCase):
         bs2 = Basis2()
         dzvp2 = bs2.get_basisset("O-DZVP2.C")
         print(dzvp2)
-        
+
 if __name__ == "__main__":
     unittest.main()
-    

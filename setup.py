@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014 The ProteinDF development team.
+# Copyright (C) 2019 The ProteinDF development team.
 # see also AUTHORS and README if provided.
 #
 # This file is a part of the ProteinDF software package.
@@ -22,11 +22,12 @@
 import sys, os
 import shutil
 from setuptools import setup, find_packages
+exec(open("proteindf_tools/_version.py").read())
 
 shutil.copyfile('scripts/pdfcmd.py', 'scripts/pdf')
 
 setup(name='proteindf_tools',
-      version='2018.10.1',
+      version=__version__,
       description='python scripts for ProteinDF package',
       author='Toshiyuki HIRANO',
       author_email='hiracchi@gmail.com',
@@ -36,6 +37,8 @@ setup(name='proteindf_tools',
       scripts=[
           'scripts/pdf',
           'scripts/pdf-archive.py',
+          'scripts/pdf-archive-h5.py',
+          'scripts/pdf-atom-index.py',
           'scripts/pdf-env.py',
           'scripts/pdf-info-geom.py',
           'scripts/pdf-info-orb.py',
@@ -46,8 +49,10 @@ setup(name='proteindf_tools',
           'scripts/pdf-plot-basisset.py',
           'scripts/pdf-plot-elevel.py',
           'scripts/pdf-plot-mat.py',
+          'scripts/pdf-plot-pop.py',
           'scripts/pdf-plot-decaymat.py',
           'scripts/pdf-report.py',
+          'scripts/pdf-report-h5.py',
           'scripts/pdf-reg-harris.py',
           'scripts/pdf-show-profile.py',
           'scripts/pdf-test.py',
@@ -65,6 +70,7 @@ setup(name='proteindf_tools',
       install_requires=[
           'configparser',
           'msgpack-python',
+          'h5py',
           'BeautifulSoup4',
           'numpy',
           'scipy',
