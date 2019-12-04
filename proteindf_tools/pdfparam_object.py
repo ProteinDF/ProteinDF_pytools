@@ -134,7 +134,7 @@ class PdfParamObject(object):
 
     # orbital_independence_threshold
     def _get_orbital_independence_threshold(self):
-        return self._data.get('orbital_independence_threshold', 0.007)
+        return self._data.get('orbital_independence_threshold', None)
 
     def _set_orbital_independence_threshold(self, value):
         if value != None:
@@ -146,7 +146,7 @@ class PdfParamObject(object):
 
     # orbital_independence_threshold_canonical
     def _get_orbital_independence_threshold_canonical(self):
-        return self._data.get('orbital_independence_threshold_canonical', 0.007)
+        return self._data.get('orbital_independence_threshold_canonical', None)
 
     def _set_orbital_independence_threshold_canonical(self, value):
         if value != None:
@@ -158,7 +158,7 @@ class PdfParamObject(object):
 
     # orbital_independence_threshold_lowdin
     def _get_orbital_independence_threshold_lowdin(self):
-        return self._data.get('orbital_independence_threshold_lowdin', 0.007)
+        return self._data.get('orbital_independence_threshold_lowdin', None)
 
     def _set_orbital_independence_threshold_lowdin(self, value):
         if value != None:
@@ -343,9 +343,10 @@ class PdfParamObject(object):
         return self._data.get('extra_keywords', {})
 
     def _set_extra_keywords(self, value):
-        if value != None:
-            value = dict(value)
+        if isinstance(value, dict):
             self._data['extra_keywords'] = value
+        else:
+            logger.warning("extra keywords accepts dict type only.")
 
     extra_keywords = property(_get_extra_keywords,
                               _set_extra_keywords)
@@ -724,9 +725,12 @@ class PdfParamObject(object):
         else:
             raise
         output += "    max_iteration = {0}\n".format(self.max_iterations)
-        output += "    orbital_independence_threshold  = {0}\n".format(self.orbital_independence_threshold)
-        output += "    orbital_independence_threshold/canonical = {0}\n".format(self.orbital_independence_threshold_canonical)
-        output += "    orbital_independence_threshold/lowdin = {0}\n".format(self.orbital_independence_threshold_lowdin)
+        if self.orbital_independence_threshold != None:
+            output += "    orbital_independence_threshold  = {0}\n".format(self.orbital_independence_threshold)
+        if self.orbital_independence_threshold_canonical != None:
+            output += "    orbital_independence_threshold/canonical = {0}\n".format(self.orbital_independence_threshold_canonical)
+        if self.orbital_independence_threshold_lowdin != None:
+            output += "    orbital_independence_threshold/lowdin = {0}\n".format(self.orbital_independence_threshold_lowdin)
         output += "    convergence/threshold_energy = {0}\n".format(self.convergence_threshold_energy)
         output += "    convergence/threshold = {0}\n".format(self.convergence_threshold)
         output += "    convergence/type = {0}\n".format(self.convergence_type)
@@ -746,6 +750,9 @@ class PdfParamObject(object):
         output += "    level_shift/virtual_mo = {0}\n".format(self.level_shift_virtual_mo)
         output += "    \n"
         output += "    # === extras === \n"
+        #print(">>>> pdfparamobject")
+        #print(self.extra_keywords)
+        #print("<<<<")
         for k, v in self.extra_keywords.items():
             output += "    {} = {}\n".format(k, v)
         output += "\n"

@@ -70,20 +70,20 @@ def get_default_pdfparam():
     pdfparam = PdfParam(tempdata)
     pdfparam.step_control = 'create integral guess scf'
 
-    pdfparam.guess = 'harris'
-    pdfparam.orbital_independence_threshold = 0.007
-    pdfparam.orbital_independence_threshold_canonical = 0.007
-    pdfparam.orbital_independence_threshold_lowdin = 0.007
-    pdfparam.scf_acceleration = 'damping'
-    pdfparam.scf_acceleration_damping_factor = 0.85
-    pdfparam.convergence_threshold_energy = 1.0E-4
-    pdfparam.convergence_threshold = 1.0E-3
-    pdfparam.scf_acceleration_damping_damping_type = 'density_matrix'
-    pdfparam.xc_functional = "b3lyp"
-    pdfparam.j_engine = "CD"
-    pdfparam.k_engine = "CD"
-    pdfparam.xc_engine = "grid"
-    pdfparam.gridfree_orthogonalize_method = "canonical"
+    # pdfparam.guess = 'harris'
+    # pdfparam.orbital_independence_threshold = 0.007
+    # pdfparam.orbital_independence_threshold_canonical = 0.007
+    # pdfparam.orbital_independence_threshold_lowdin = 0.007
+    # pdfparam.scf_acceleration = 'damping'
+    # pdfparam.scf_acceleration_damping_factor = 0.85
+    # pdfparam.convergence_threshold_energy = 1.0E-4
+    # pdfparam.convergence_threshold = 1.0E-3
+    # pdfparam.scf_acceleration_damping_damping_type = 'density_matrix'
+    # pdfparam.xc_functional = "b3lyp"
+    # pdfparam.j_engine = "CD"
+    # pdfparam.k_engine = "CD"
+    # pdfparam.xc_engine = "grid"
+    # pdfparam.gridfree_orthogonalize_method = "canonical"
 
     return pdfparam
 
