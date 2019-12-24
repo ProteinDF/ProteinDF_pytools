@@ -128,9 +128,12 @@ class PdfParam_H5(PdfParamObject):
         h5grp.attrs["max_iterations"] = self.max_iterations
         h5grp.attrs["scf_converged"] = self.scf_converged
 
-        h5grp.attrs["orbital_independence_threshold"] = self.orbital_independence_threshold
-        h5grp.attrs["orbital_independence_threshold_canonical"] = self.orbital_independence_threshold_canonical
-        h5grp.attrs["orbital_independence_threshold_lowdin"] = self.orbital_independence_threshold_lowdin
+        if self.orbital_independence_threshold != None:
+            h5grp.attrs["orbital_independence_threshold"] = self.orbital_independence_threshold
+        if self.orbital_independence_threshold_canonical != None:
+            h5grp.attrs["orbital_independence_threshold_canonical"] = self.orbital_independence_threshold_canonical
+        if self.orbital_independence_threshold_lowdin != None:
+            h5grp.attrs["orbital_independence_threshold_lowdin"] = self.orbital_independence_threshold_lowdin
         h5grp.attrs["scf_acceleration"] = self.scf_acceleration
         h5grp.attrs["scf_acceleration_damping_damping_factor"] = self.scf_acceleration_damping_damping_factor
 
