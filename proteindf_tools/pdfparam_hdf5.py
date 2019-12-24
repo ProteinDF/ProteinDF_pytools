@@ -47,7 +47,7 @@ class PdfParam_H5(PdfParamObject):
     # public
     # --------------------------------------------------------------------------
     def open(self, filepath):
-        self._h5file = h5py.File(filepath)
+        self._h5file = h5py.File(filepath, 'a')
         self._h5root = self._h5file["/"]
         self._load_sp(self._h5root)
 
