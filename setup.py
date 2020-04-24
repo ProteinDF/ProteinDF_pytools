@@ -19,7 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, os
+import sys
+import os
 import shutil
 from setuptools import setup, find_packages
 exec(open("proteindf_tools/_version.py").read())
@@ -40,6 +41,7 @@ setup(name='proteindf_tools',
           'scripts/pdf-archive-h5.py',
           'scripts/pdf-atom-index.py',
           'scripts/pdf-env.py',
+          'scripts/pdf-estimate-ao.py',
           'scripts/pdf-info-geom.py',
           'scripts/pdf-info-orb.py',
           'scripts/pdf-info-xyz.py',
@@ -77,10 +79,10 @@ setup(name='proteindf_tools',
           'pandas',
           'matplotlib',
           'scikit-learn',
-          #'proteindf_bridge'
+          # 'proteindf_bridge'
       ],
 
       package_data={
           'pdfpytools': ['data/basis2.cache']
       }
-)
+      )
