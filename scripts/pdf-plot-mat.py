@@ -36,6 +36,14 @@ def main():
                         nargs=1,
                         default=['matrix value'],
                         help='graph title')
+    parser.add_argument('--no-x-tick-labels',
+                        action='store_true',
+                        default=False,
+                        help='draw x-tick labels')
+    parser.add_argument('--no-y-tick-labels',
+                        action='store_true',
+                        default=False,
+                        help='draw y-tick labels')
     parser.add_argument('--cmap',
                         nargs=1,
                         default=['bwr'],
@@ -76,6 +84,11 @@ def main():
             print("vmin: {}".format(vmin))
 
     title = args.title[0]
+    x_tick_labels = not args.no_x_tick_labels
+    y_tick_labels = not args.no_y_tick_labels
+    if verbose:
+        print("draw x tick labels: {}".format(x_tick_labels))
+        print("draw y tick labels: {}".format(y_tick_labels))
 
     cmap = args.cmap[0]
     if verbose:
@@ -89,10 +102,6 @@ def main():
     mat = get_matrix(mat_path, verbose)
     rows = mat.rows
     cols = mat.cols
-    xticks = [x for x in range(0, rows)]
-    yticks = [y for y in range(0, cols)]
-    xticklabels = ["{}".format(x) for x in range(1, rows + 1)]
-    yticklabels = ["{}".format(y) for y in range(1, cols + 1)]
 
     # matrix elements
     mat_plot = pdf.DfMatrixGraph(mat, figsize=(20, 20))
@@ -100,10 +109,22 @@ def main():
         mat_plot.vmax = vmax
     if vmin:
         mat_plot.vmin = vmin
-    mat_plot.xticks = xticks
-    mat_plot.yticks = yticks
-    mat_plot.xticklabels = xticklabels
-    mat_plot.yticklabels = yticklabels
+
+    mat_plot.xticks = []
+    mat_plot.xticklabels = []
+    if x_tick_labels:
+        xticks = [x for x in range(0, rows)]
+        xticklabels = ["{}".format(x) for x in range(1, rows + 1)]
+        mat_plot.xticks = xticks
+        mat_plot.xticklabels = xticklabels
+
+    mat_plot.yticks = []
+    mat_plot.yticklabels = []
+    if y_tick_labels:
+        yticks = [y for y in range(0, cols)]
+        yticklabels = ["{}".format(y) for y in range(1, cols + 1)]
+        mat_plot.yticks = yticks
+        mat_plot.yticklabels = yticklabels
     mat_plot.title = title
     mat_plot.cmap = cmap
     mat_plot.should_write_values = write_values

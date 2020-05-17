@@ -49,7 +49,6 @@ class DfGraph(object):
     # ==========================================================================
     # property
     # ==========================================================================
-
     def _set_title(self, title):
         self._title = str(title)
 
@@ -208,6 +207,12 @@ class DfGraph(object):
 
         if self.aspect != None:
             self._ax.set_aspect(self.aspect)
+
+        # 枠
+        self._ax.spines['top'].set_linewidth(1.0)
+        self._ax.spines['bottom'].set_linewidth(1.0)
+        self._ax.spines['left'].set_linewidth(1.0)
+        self._ax.spines['right'].set_linewidth(1.0)
 
         if self.legend == True:
             self._ax.legend()
@@ -510,7 +515,11 @@ class DfMatrixGraph(DfGraph):
         self._ax.tick_params(axis='x', labeltop=False, labelbottom=True)
 
         # self._fig.colorbar(cax, ticks=[ 0, 1], shrink=0.92)
-        self._fig.colorbar(cax, shrink=0.92)
+        color_bar = self._fig.colorbar(cax, shrink=0.92)
+        color_bar.minorticks_off()
+        color_bar.set_ticks([self.vmin, 0.0, self.vmax])
+        color_bar.set_ticklabels(
+            ['< {}'.format(self.vmin), '0.0', '> {}'.format(self.vmax)])
 
         # data label
         rows = self._matrix.rows
