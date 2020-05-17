@@ -33,11 +33,11 @@ class PdfArchive(object):
     """
     ProteinDFの結果をDBに格納するクラス
     """
-    _format_version = 20121230 # DB format version
+    _format_version = 20121230  # DB format version
 
     def __init__(self,
-                 db_path ='pdfentry.db',
-                 pdfparam =None):
+                 db_path='pdfentry.db',
+                 pdfparam=None):
         """
         オブジェクトを作成する
         """
@@ -48,7 +48,7 @@ class PdfArchive(object):
         user_version = self._db.get_user_version()
         if user_version > PdfArchive._format_version:
             self._logger.warning('DB format version is later: code=%d < db=%d' % (
-                    PdfArchive._format_version, user_version))
+                PdfArchive._format_version, user_version))
         self._create_tables()
         self._read_db()
 
@@ -166,30 +166,30 @@ class PdfArchive(object):
         check_record = self._db.select(table_name, where=where_str)
         if check_record:
             self._db.update(table_name,
-                            contents={'comment':comment,
-                                      'num_of_atoms':num_of_atoms,
-                                      'num_of_AOs':num_of_AOs,
-                                      'num_of_MOs':num_of_MOs,
-                                      'method':method,
-                                      'guess':guess,
-                                      'xc_functional':xc_functional,
-                                      'iterations':iterations,
-                                      'max_iterations':max_iterations,
-                                      'scf_converged':scf_converged},
+                            contents={'comment': comment,
+                                      'num_of_atoms': num_of_atoms,
+                                      'num_of_AOs': num_of_AOs,
+                                      'num_of_MOs': num_of_MOs,
+                                      'method': method,
+                                      'guess': guess,
+                                      'xc_functional': xc_functional,
+                                      'iterations': iterations,
+                                      'max_iterations': max_iterations,
+                                      'scf_converged': scf_converged},
                             where=where_str)
         else:
             self._db.insert(table_name,
-                            {'pdf_id':self._pdf_id,
-                             'comment':comment,
-                             'num_of_atoms':num_of_atoms,
-                             'num_of_AOs':num_of_AOs,
-                             'num_of_MOs':num_of_MOs,
-                             'method':method,
-                             'guess':guess,
-                             'xc_functional':xc_functional,
-                             'iterations':iterations,
-                             'max_iterations':max_iterations,
-                             'scf_converged':scf_converged})
+                            {'pdf_id': self._pdf_id,
+                             'comment': comment,
+                             'num_of_atoms': num_of_atoms,
+                             'num_of_AOs': num_of_AOs,
+                             'num_of_MOs': num_of_MOs,
+                             'method': method,
+                             'guess': guess,
+                             'xc_functional': xc_functional,
+                             'iterations': iterations,
+                             'max_iterations': max_iterations,
+                             'scf_converged': scf_converged})
 
     def _set_pdfparam_coordinates(self, pdfparam):
         assert(isinstance(pdfparam, PdfParam))
@@ -213,22 +213,22 @@ class PdfArchive(object):
             check_record = self._db.select(table_name, where=where_str)
             if check_record:
                 self._db.update(table_name,
-                                contents = {'symbol':symbol,
-                                            'x':xyz.x,
-                                            'y':xyz.y,
-                                            'z':xyz.z,
-                                            'charge':charge,
-                                            'label':label},
+                                contents={'symbol': symbol,
+                                          'x': xyz.x,
+                                          'y': xyz.y,
+                                          'z': xyz.z,
+                                          'charge': charge,
+                                          'label': label},
                                 where=where_str)
             else:
                 self._db.insert(table_name,
-                                {'atom_id':atom_id,
-                                 'symbol':symbol,
-                                 'x':xyz.x,
-                                 'y':xyz.y,
-                                 'z':xyz.z,
-                                 'charge':charge,
-                                 'label':label})
+                                {'atom_id': atom_id,
+                                 'symbol': symbol,
+                                 'x': xyz.x,
+                                 'y': xyz.y,
+                                 'z': xyz.z,
+                                 'charge': charge,
+                                 'label': label})
 
     def _set_pdfparam_basisset(self, pdfparam):
         """
@@ -287,7 +287,7 @@ class PdfArchive(object):
                     self._db.update('basisset_CGTO',
                                     {'shell_type': shell_type,
                                      'scale_factor': scale_factor
-                                    },
+                                     },
                                     where='name="{name}" and CGTO_ID={CGTO_ID}'.format(
                                         name=name,
                                         CGTO_ID=cgto_id))
@@ -297,7 +297,7 @@ class PdfArchive(object):
                                      'CGTO_ID': cgto_id,
                                      'shell_type': shell_type,
                                      'scale_factor': scale_factor
-                                    })
+                                     })
 
                 for pgto_id, pgto in enumerate(cgto):
                     coef = pgto.coef
@@ -313,7 +313,7 @@ class PdfArchive(object):
                         self._db.update('basisset_PGTO',
                                         {'coef': coef,
                                          'exp': exp
-                                        },
+                                         },
                                         where='name="{name}" and CGTO_ID="{CGTO_ID}" and PGTO_ID="{PGTO_ID}"'.format(
                                             name=name,
                                             CGTO_ID=cgto_id,
@@ -325,7 +325,7 @@ class PdfArchive(object):
                                          'PGTO_ID': pgto_id,
                                          'coef': coef,
                                          'exp': exp
-                                        })
+                                         })
 
     def _set_pdfparam_total_energies(self, pdfparam):
         assert(isinstance(pdfparam, PdfParam))
@@ -343,12 +343,12 @@ class PdfArchive(object):
                 check_record = self._db.select(table_name, where=where_str)
                 if check_record:
                     self._db.update(table_name,
-                                    contents={'energy':energy},
+                                    contents={'energy': energy},
                                     where=where_str)
                 else:
                     self._db.insert(table_name,
-                                    {'iteration':iteration,
-                                     'energy':energy})
+                                    {'iteration': iteration,
+                                     'energy': energy})
 
     def _set_pdfparam_gradient(self, pdfparam):
         assert(isinstance(pdfparam, PdfParam))
@@ -360,10 +360,10 @@ class PdfArchive(object):
         for atom_index in range(num_of_atoms):
             v = pdfparam.get_gradient(atom_index)
             if v != None:
-                data = {'atom_id':atom_index,
-                        'x':v[0],
-                        'y':v[1],
-                        'z':v[2]}
+                data = {'atom_id': atom_index,
+                        'x': v[0],
+                        'y': v[1],
+                        'z': v[2]}
                 where_str = 'atom_id = %d' % (atom_index)
                 check_record = self._db.select(table_name, where=where_str)
                 if check_record:
@@ -490,10 +490,10 @@ class PdfArchive(object):
                 z = atom['z']
                 charge = atom['charge']
                 label = atom['label']
-                a = bridge.Atom(symbol = symbol,
-                                position = bridge.Position([x, y, z]),
-                                charge = charge,
-                                name = label)
+                a = bridge.Atom(symbol=symbol,
+                                position=bridge.Position([x, y, z]),
+                                charge=charge,
+                                name=label)
                 mol.set_atom(atom_id, a)
         return mol
 
@@ -517,7 +517,7 @@ class PdfArchive(object):
         与えられた名前の基底関数情報(Basisオブジェクト)を返す
         """
         name = str(name)
-        basisset = BasisSet();
+        basisset = BasisSet()
         cgto_table_name = 'basisset_CGTO'
         pgto_table_name = 'basisset_PGTO'
         if self._db.has_table(cgto_table_name):
@@ -557,7 +557,7 @@ class PdfArchive(object):
         """
         answer = None
         v = self.get_occupations(runtype)
-        for i in range(len(v) -1, 0, -1):
+        for i in range(len(v) - 1, 0, -1):
             if v[i] > 0.0:
                 answer = i
                 break
@@ -570,7 +570,7 @@ class PdfArchive(object):
         if self._db.has_table(table_name):
             values = self._db.select(table_name,
                                      fields=['energy'],
-                                     where={'iteration':iteration})
+                                     where={'iteration': iteration})
             if len(values) > 0:
                 value = values[0]['energy']
         return value
@@ -594,16 +594,16 @@ class PdfArchive(object):
         check_record = self._db.select(table_name, where=where_str)
         if check_record:
             self._db.update(table_name,
-                            contents={'size':len(v),
-                                      'data':sqlite3.Binary(v.get_buffer())},
+                            contents={'size': len(v),
+                                      'data': sqlite3.Binary(v.get_buffer())},
                             where=where_str)
         else:
             self._db.insert(table_name,
-                            {'dtype':dtype,
-                             'runtype':runtype,
-                             'iteration':iteration,
-                             'size':len(v),
-                             'data':sqlite3.Binary(v.get_buffer())})
+                            {'dtype': dtype,
+                             'runtype': runtype,
+                             'iteration': iteration,
+                             'size': len(v),
+                             'data': sqlite3.Binary(v.get_buffer())})
 
     def _get_vector(self, dtype, runtype, iteration):
         """
@@ -644,11 +644,13 @@ class PdfArchive(object):
         assert(isinstance(m, bridge.Matrix))
 
         if m.rows <= 0:
-            self._logger.warn('The row size of the input matrix is too small.: {}'.format(m.rows))
+            self._logger.warn(
+                'The row size of the input matrix is too small.: {}'.format(m.rows))
             self._logger.warn('cannnot register the matrix.')
             return
         if m.cols <= 0:
-            self._logger.warn('The col size of the input matrix is too small.: {}'.format(m.cols))
+            self._logger.warn(
+                'The col size of the input matrix is too small.: {}'.format(m.cols))
             self._logger.warn('cannnot register the matrix.')
             return
 
@@ -658,21 +660,21 @@ class PdfArchive(object):
         check_record = self._db.select(table_name, where=where_str)
         if check_record:
             self._db.update(table_name,
-                            contents={'rows':m.rows,
-                                      'cols':m.cols,
-                                      'format':m.type,
-                                      'data':sqlite3.Binary(m.get_buffer())
+                            contents={'rows': m.rows,
+                                      'cols': m.cols,
+                                      'format': m.type,
+                                      'data': sqlite3.Binary(m.get_buffer())
                                       },
                             where=where_str)
         else:
             self._db.insert(table_name,
-                            {'dtype':dtype,
-                             'runtype':runtype,
-                             'iteration':iteration,
-                             'rows':m.rows,
-                             'cols':m.cols,
-                             'format':m.type,
-                             'data':sqlite3.Binary(m.get_buffer())})
+                            {'dtype': dtype,
+                             'runtype': runtype,
+                             'iteration': iteration,
+                             'rows': m.rows,
+                             'cols': m.cols,
+                             'format': m.type,
+                             'data': sqlite3.Binary(m.get_buffer())})
 
     def _get_matrix(self, dtype, runtype, iteration):
         """
@@ -766,7 +768,8 @@ class PdfArchive(object):
         gradient = None
         table_name = 'gradient'
         if self._db.has_table(table_name):
-            results = self._db.select(table_name,fields=['x', 'y', 'z'], where={'atom_id': atom_id})
+            results = self._db.select(
+                table_name, fields=['x', 'y', 'z'], where={'atom_id': atom_id})
             if len(results) > 0:
                 gradient = [results[0]['x'], results[0]['y'], results[0]['z']]
         return gradient
@@ -784,8 +787,8 @@ class PdfArchive(object):
                 return None
         return math.sqrt(rms / (3 * self.num_of_atoms))
 
-
     # compare ------------------------------------------------------------------
+
     def __eq__(self, other):
         answer = True
         answer = answer & self.compare_info(other)
@@ -793,31 +796,32 @@ class PdfArchive(object):
 
         # check Total Energy
         iterations = max(self.iterations, other.iterations)
-        for itr in range(1, iterations +1):
+        for itr in range(1, iterations + 1):
             TE1 = self.get_total_energy(itr)
             TE2 = other.get_total_energy(itr)
             answer = answer & self._check(TE1, TE2, '#%d TE' % (itr))
 
         return answer
 
-    def _check(self, val1, val2, msg):
+    def _check(self, val1, val2, msg, allowable_error=pdf.error):
         answer = False
         if isinstance(val1, float) and isinstance(val2, float):
             v = math.fabs(val1 - val2)
-            answer = (v < pdf.error)
+            answer = (v < allowable_error)
         elif isinstance(val1, list) and isinstance(val2, list):
             if len(val1) == len(val2):
                 for i in range(len(val1)):
-                    answer = answer ^ self._check(val1[i], val2[i], '{0}[{1}]'.format(msg, i))
+                    answer = answer ^ self._check(
+                        val1[i], val2[i], '{0}[{1}]'.format(msg, i))
         else:
             answer = (val1 == val2)
 
         if answer:
             self._logger.debug('test: %s; %s == %s' % (
-                    str(msg), str(val1), str(val2)))
+                str(msg), str(val1), str(val2)))
         else:
             self._logger.error('test: %s; %s != %s' % (
-                    str(msg), str(val1), str(val2)))
+                str(msg), str(val1), str(val2)))
 
         return answer
 
@@ -894,6 +898,7 @@ class PdfArchive(object):
                                       rhs.get_gradient_rms(),
                                       'grad RMS')
         return answer
+
 
 if __name__ == '__main__':
     pass
