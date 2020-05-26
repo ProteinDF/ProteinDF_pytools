@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
+from .process import Process
+from .pdfparam import PdfParam
+import proteindf_bridge as bridge
+import traceback
 import io
 import sys
 import os
@@ -27,20 +31,16 @@ import shlex
 import tempfile
 import logging
 logger = logging.getLogger(__name__)
-import traceback
 
 try:
     import msgpack
 except:
     import msgpack_pure as msgpack
 
-import proteindf_bridge as bridge
-from .pdfparam import PdfParam
-from .process import Process
 
+epsilon = 1.0E-10  # 計算機イプシロン
+error = 1.0E-5  # 許容誤差
 
-epsilon = 1.0E-10 # 計算機イプシロン
-error = 1.0E-5 # 許容誤差
 
 def pdf_home():
     """
@@ -48,6 +48,7 @@ def pdf_home():
     """
     answer = os.environ.get('PDF_HOME', '')
     return answer
+
 
 def get_default_pdfparam():
     """
@@ -87,11 +88,12 @@ def get_default_pdfparam():
 
     return pdfparam
 
+
 def set_basisset(pdfparam,
-                 basisset_name_ao = "DZVP2",
-                 basisset_name_rij = "DZVP2",
-                 basisset_name_rixc = "DZVP2",
-                 basisset_name_gridfree = "cc-pVDZ-SP"):
+                 basisset_name_ao="DZVP2",
+                 basisset_name_rij="DZVP2",
+                 basisset_name_rixc="DZVP2",
+                 basisset_name_gridfree="cc-pVDZ-SP"):
     """
     pdfparamにbasissetを設定する
     """
@@ -107,10 +109,14 @@ def set_basisset(pdfparam,
         pdfparam.gridfree_dedicated_basis = True
 
     for atom in atoms:
-        basisset_ao = basis2.get_basisset('O-{}.{}'.format(basisset_name_ao, atom))
-        basisset_j = basis2.get_basisset_j('A-{}.{}'.format(basisset_name_rij, atom))
-        basisset_xc = basis2.get_basisset_xc('A-{}.{}'.format(basisset_name_rixc, atom))
-        basisset_gf = basis2.get_basisset('O-{}.{}'.format(basisset_name_gridfree, atom))
+        basisset_ao = basis2.get_basisset(
+            'O-{}.{}'.format(basisset_name_ao, atom))
+        basisset_j = basis2.get_basisset_j(
+            'A-{}.{}'.format(basisset_name_rij, atom))
+        basisset_xc = basis2.get_basisset_xc(
+            'A-{}.{}'.format(basisset_name_rixc, atom))
+        basisset_gf = basis2.get_basisset(
+            'O-{}.{}'.format(basisset_name_gridfree, atom))
 
         pdfparam.set_basisset(atom, basisset_ao)
         pdfparam.set_basisset_j(atom, basisset_j)
@@ -118,6 +124,7 @@ def set_basisset(pdfparam,
         pdfparam.set_basisset_gridfree(atom, basisset_gf)
 
     return pdfparam
+
 
 def run_pdf(subcmd):
     """
@@ -127,7 +134,7 @@ def run_pdf(subcmd):
 
     try:
         if isinstance(subcmd, list):
-            subcmd_tmp = [str(x) for x in subcmd ]
+            subcmd_tmp = [str(x) for x in subcmd]
             subcmd = " ".join(subcmd_tmp)
     except:
         print(subcmd)
@@ -162,11 +169,13 @@ def mpac2py(path):
 
     return data
 
+
 def load_pdfparam(pdfparam_path='pdfparam.mpac'):
     data = mpac2py(pdfparam_path)
     param = PdfParam(data)
 
     return param
+
 
 def save_pdfparam(pdfparam_data, pdfparam_path):
     assert(isinstance(pdfparam_path, str))
