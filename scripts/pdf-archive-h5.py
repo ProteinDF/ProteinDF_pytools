@@ -77,40 +77,6 @@ def main():
         print('-'*60)
 
 
-# class Pdf2Db(object):
-#     def __init__(self, pdfparam, entry, pop_types=[]):
-#         self._logger = logging.getLogger(__name__)
-#
-#         #self._is_little_endian = True
-#
-#         assert(isinstance(pdfparam, pdf.PdfParam))
-#         assert(isinstance(entry, pdf.PdfArchive))
-#         self._pdfparam = pdfparam
-#         self._entry = entry
-#         self._pop_types = pop_types
-#
-#     def regist(self):
-#         # calc population
-#         if self._pdfparam.scf_converged:
-#             self.set_pop(self._pop_types)
-#
-#
-#
-#     def set_pop(self, pop_types = [], iteration = 0):
-#         for pop_type in pop_types:
-#             if pop_type == 'mulliken':
-#                 self._logger.info('calc pop mulliken')
-#                 if iteration == 0:
-#                     iteration = self._pdfparam.iterations
-#                 pop_matrix_path = 'mulliken_{}.mat'.format(iteration)
-#                 pdf.run_pdf(['pop-mulliken', '-i', iteration, '-s', pop_matrix_path])
-#                 m = pdf.Matrix()
-#                 m.load(pop_matrix_path)
-#                 self._entry.set_population('mulliken', iteration, m)
-#             else:
-#                 self._logger.warning('unknown pop type: {}'.format(pop_type))
-
-
 if __name__ == '__main__':
     logconfig_file = 'logconfig.ini'
     if os.path.exists(logconfig_file):

@@ -811,17 +811,16 @@ class PdfArchive(object):
         elif isinstance(val1, list) and isinstance(val2, list):
             if len(val1) == len(val2):
                 for i in range(len(val1)):
-                    answer = answer ^ self._check(
-                        val1[i], val2[i], '{0}[{1}]'.format(msg, i))
+                    answer = answer ^ self._check(val1[i], val2[i], '{0}[{1}]'.format(msg, i), threshold)
         else:
             answer = (val1 == val2)
 
         if answer:
-            self._logger.debug('test: %s; %s == %s' % (
-                str(msg), str(val1), str(val2)))
+            self._logger.debug('test: {msg}; {val1} == {val2} (threshold={threshold})'.format(
+                    msg=str(msg), val1=val1, sval2=val2, threshold=threshold))
         else:
-            self._logger.error('test: %s; %s != %s' % (
-                str(msg), str(val1), str(val2)))
+            self._logger.error('test: {msg}; {val1} != {val2} (threshold={threshold})'.format(
+                    msg=str(msg), val1=val1, val2=val2, threshold=threshold))
 
         return answer
 
@@ -837,13 +836,13 @@ class PdfArchive(object):
 
         return answer
 
-    def compare_energy(self, rhs):
+    def compare_energy(self, rhs, threshold=pdf.error):
         answer = True
 
         TE_self = self.get_total_energy(self.iterations)
         TE_other = rhs.get_total_energy(rhs.iterations)
         answer = answer & self._check(TE_self, TE_other,
-                                      'TE')
+                                      'TE', threshold)
 
         return answer
 

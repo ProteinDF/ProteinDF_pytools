@@ -13,6 +13,7 @@ import proteindf_bridge as bridge
 from .basisset import BasisSet
 from .basis2 import Basis2
 
+error_threshold = 1.0E-5
 
 class PdfParamObject(object):
     """ ProteinDF parameter object
@@ -648,12 +649,19 @@ class PdfParamObject(object):
         else:
             raise "type mispatch"
 
-    # TEs
+    # total energies (each iteration)
     def _get_TEs(self):
         return self._data.get('TEs', {})
     def _set_TEs(self, value):
         self._data['TEs'] = value
     TEs = property(_get_TEs, _set_TEs)
+
+    def get_total_energy(self, iteration):
+        return self.TEs[iteration]
+
+    def set_total_energy(self, iteration, value):
+        self.TEs[iteration] = value
+
 
     # counterpoise
     def _get_counterpoise(self):
@@ -701,6 +709,21 @@ class PdfParamObject(object):
         assert(0 <= atom_index < self.num_of_atoms)
         self._data.setdefault('gradient', [[] for x in range(self.num_of_atoms)])
         self._data['gradient'][atom_index] = [fx, fy, fz]
+
+
+    def get_gradient_rms(self):
+        """
+        gradientのRMSを返す
+        """
+        rms = 0.0
+        for atom_index in range(self.num_of_atoms):
+            v = self.get_gradient(atom_index)
+            if v != None:
+                rms += v[0]*v[0] + v[1]*v[1] + v[2]*v[2]
+            else:
+                return None
+        return math.sqrt(rms / (3 * self.num_of_atoms))
+
 
     # --------------------------------------------------------------------------
     def get_inputfile_contents(self):
@@ -993,6 +1016,23 @@ class PdfParamObject(object):
         return self._data['control']['file_base_name'].get(key, '')
 
     # --------------------------------------------------------------------------
+    # results
+    # --------------------------------------------------------------------------
+    def get_mulliken_atom_population(self, atomindex):
+        atomindex = int(atomindex)
+        answer = None
+        if 'population/atom/mulliken' in self._data:
+            answer = self._data['population/atom/mulliken'].get(atomindex, None)
+        return answer
+
+    def set_mulliken_atom_population(self, atomindex, value):
+        atomindex = int(atomindex)
+        self._data.setdefault('population/atom/mulliken', {})
+        self._data['population/atom/mulliken'][atomindex] = value
+        
+
+
+    # --------------------------------------------------------------------------
     # (python) raw data
     # --------------------------------------------------------------------------
     def set_by_raw_data(self, odict):
@@ -1182,7 +1222,6 @@ class PdfParamObject(object):
                 self.set_gradient(atom_index, gradient[0], gradient[1], gradient[2])
             del odict['force']
 
-
         # 未入力部分をマージ
         self._data.update(odict)
 
@@ -1254,6 +1293,118 @@ class PdfParamObject(object):
             else:
                 answer[k] = v
 
+        return answer
+
+    # --------------------------------------------------------------------------
+    # compare 
+    # --------------------------------------------------------------------------
+    def __eq__(self, other):
+        answer = True
+        answer = answer & self.compare_info(other)
+        answer = answer & self.compare_energy(other)
+
+        # check Total Energy
+        iterations = max(self.iterations, other.iterations)
+        for itr in range(1, iterations +1):
+            TE1 = self.get_total_energy(itr)
+            TE2 = other.get_total_energy(itr)
+            answer = answer & self._check(TE1, TE2, '#%d TE' % (itr))
+
+        return answer
+
+    def _check(self, val1, val2, msg, threshold=error_threshold):
+        answer = False
+        if isinstance(val1, float) and isinstance(val2, float):
+            v = abs(val1 - val2)
+            answer = (v < threshold)
+        elif isinstance(val1, list) and isinstance(val2, list):
+            if len(val1) == len(val2):
+                for i in range(len(val1)):
+                    answer = answer ^ self._check(val1[i], val2[i], '{0}[{1}]'.format(msg, i), threshold)
+        else:
+            answer = (val1 == val2)
+
+        if answer:
+            logger.debug('test: {msg}; {val1} == {val2} (threshold={threshold})'.format(
+                        msg=str(msg), val1=val1, val2=val2, threshold=threshold))
+        else:
+            logger.error('test: {msg}; {val1} != {val2} (threshold={threshold})'.format(
+                        msg=str(msg), val1=val1, val2=val2, threshold=threshold))
+
+        return answer
+
+    def compare_info(self, rhs):
+        answer = True
+
+        answer = answer & self._check(self.num_of_AOs, rhs.num_of_AOs,
+                                      'num_of_AOs')
+        answer = answer & self._check(self.num_of_MOs, rhs.num_of_MOs,
+                                      'num_of_MOs')
+        answer = answer & self._check(self.scf_converged, rhs.scf_converged,
+                                      'scf_converged')
+
+        return answer
+
+    def compare_energy(self, rhs, threshold=error_threshold):
+        answer = True
+
+        TE_self = self.get_total_energy(self.iterations)
+        TE_other = rhs.get_total_energy(rhs.iterations)
+        answer = answer & self._check(TE_self, TE_other,
+                                      'TE', threshold)
+
+        return answer
+
+    def compare_pop(self, rhs):
+        answer = True
+
+        answer = answer & self._check(self.num_of_atoms,
+                                      rhs.num_of_atoms,
+                                      'num of atoms')
+        num_of_atoms = self.num_of_atoms
+
+        itr1 = self.iterations
+        itr2 = rhs.iterations
+        pop1 = self.get_population('mulliken', itr1)
+        pop2 = rhs.get_population('mulliken', itr2)
+
+        if isinstance(pop1, bridge.Matrix):
+            if isinstance(pop2, bridge.Matrix):
+                answer = answer & self._check(pop1.rows,
+                                              pop2.rows,
+                                              'pop rows')
+                answer = answer & self._check(pop1.cols,
+                                              pop2.cols,
+                                              'pop cols')
+                answer = answer & self._check(pop1, pop2,
+                                              'pop matrix')
+            else:
+                logger.warning('type mismatch(rhs): POP not found')
+                answer = False
+        else:
+            logger.warning('type mismatch(lhs): POP not found')
+            answer = False
+
+        return answer
+
+    def compare_grad(self, rhs):
+        answer = True
+
+        # check gradient elements
+        max1 = 0.0
+        max2 = 0.0
+        for atom_index in range(self.num_of_atoms):
+            xyz1 = self.get_gradient(atom_index)
+            xyz2 = rhs.get_gradient(atom_index)
+            answer = answer & self._check(xyz1, xyz2, 'grad')
+            max1 = max(max1, max(max(xyz1), -min(xyz1)))
+            max2 = max(max2, max(max(xyz2), -min(xyz2)))
+        answer = answer & self._check(max1, max2, 'grad max')
+
+        # check gradient RMS
+        answer = answer & self._check(self.get_gradient_rms(),
+                                      rhs.get_gradient_rms(),
+                                      'grad RMS')
         return answer
 
 
