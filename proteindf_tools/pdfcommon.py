@@ -26,7 +26,6 @@ import traceback
 import io
 import sys
 import os
-import subprocess
 import shlex
 import tempfile
 import logging
