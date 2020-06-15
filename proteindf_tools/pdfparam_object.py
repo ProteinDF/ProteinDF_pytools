@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from .basis2 import Basis2
+from .basisset import BasisSet
+import proteindf_bridge as bridge
 import sys
 import os
 import pickle
@@ -9,15 +12,14 @@ import copy
 import logging
 logger = logging.getLogger(__name__)
 
-import proteindf_bridge as bridge
-from .basisset import BasisSet
-from .basis2 import Basis2
 
 error_threshold = 1.0E-5
+
 
 class PdfParamObject(object):
     """ ProteinDF parameter object
     """
+
     def __init__(self, rhs=None):
         self._data = {}
 
@@ -29,11 +31,10 @@ class PdfParamObject(object):
     def _copy_from_pdfparam(self, pdfparam):
         self._data = copy.deepcopy(pdfparam._data)
 
-
-
     # --------------------------------------------------------------------------
     # properties
     # --------------------------------------------------------------------------
+
     def digest(self):
         logger.warning("deprecated: {}".format(sys._getframe().f_code.co_name))
         import hashlib
@@ -45,12 +46,13 @@ class PdfParamObject(object):
 
     def _get_work_path(self):
         return self._data.get('work_path', './fl_Work')
+
     def _set_work_path(self, value):
         self._data['work_path'] = str(value)
     work_path = property(_get_work_path, _set_work_path)
 
-
     # run type
+
     def runtypes(self):
         """
         """
@@ -63,8 +65,8 @@ class PdfParamObject(object):
             runtypes = ['roks_close', 'roks_open']
         return runtypes
 
-
     # step_control
+
     def _get_step_control(self):
         return self._data.get('step_control', '')
 
@@ -101,6 +103,7 @@ class PdfParamObject(object):
     # accuracy
     def _get_cut_value(self):
         return self._data.get('cut_value', 1.0E-10)
+
     def _set_cut_value(self, value):
         if value != None:
             value = float(value)
@@ -109,6 +112,7 @@ class PdfParamObject(object):
 
     def _get_CDAM_tau(self):
         return self._data.get('CDAM_tau', 1.0E-10)
+
     def _set_CDAM_tau(self, value):
         if value != None:
             value = float(value)
@@ -117,6 +121,7 @@ class PdfParamObject(object):
 
     def _get_CD_epsilon(self):
         return self._data.get('CD_epsilon', 1.E-4)
+
     def _set_CD_epsilon(self, value):
         if value != None:
             value = float(value)
@@ -299,11 +304,11 @@ class PdfParamObject(object):
                                         _set_gridfree_dedicated_basis)
 
     # gridfree/dual_level [[ deprecated ]]
-    #gridfree_dual_level = property(_get_gridfree_dedicated_basis,
+    # gridfree_dual_level = property(_get_gridfree_dedicated_basis,
     #                               _set_gridfree_dedicated_basis)
 
-
     # gridfree/orthogonalize_method
+
     def _get_gridfree_orthogonalize_method(self):
         return self._data.get('gridfree_orthogonalize_method', 'canonical')
 
@@ -440,6 +445,7 @@ class PdfParamObject(object):
     # convergence_threshold
     def _get_convergence_threshold(self):
         return self._data.get('convergence_threshold', 1.0E-3)
+
     def _set_convergence_threshold(self, value):
         if value != None:
             self._data['convergence_threshold'] = float(value)
@@ -449,6 +455,7 @@ class PdfParamObject(object):
     # convergence_type
     def _get_convergence_type(self):
         return self._data.get('convergence_type', 'density')
+
     def _set_convergence_type(self, value):
         if value != None:
             self._data['convergence_type'] = str(value)
@@ -458,6 +465,7 @@ class PdfParamObject(object):
     # convergence_threshold_energy
     def _get_convergence_threshold_energy(self):
         return self._data.get('convergence_threshold_energy', 1.0E-4)
+
     def _set_convergence_threshold_energy(self, value):
         if value != None:
             self._data['convergence_threshold_energy'] = float(value)
@@ -473,7 +481,7 @@ class PdfParamObject(object):
         v = False
         if (value == 'YES' or
             value == 'TRUE' or
-            value == 1):
+                value == 1):
             v = True
         self._data['level_shift'] = v
 
@@ -496,7 +504,6 @@ class PdfParamObject(object):
 
     level_shift_virtual_mo = property(_get_level_shift_virtual_mo,
                                       _set_level_shift_virtual_mo)
-
 
     # SCF converged
     @property
@@ -552,7 +559,6 @@ class PdfParamObject(object):
         self._data.setdefault('basisset_name', {})
         self._data['basisset_name'][atomlabel] = bridge.Utils.to_unicode(value)
 
-
     def get_basisset_j_name(self, atomlabel):
         atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_j_name', {})
@@ -561,8 +567,8 @@ class PdfParamObject(object):
     def set_basisset_j_name(self, atomlabel, value):
         atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_j_name', {})
-        self._data['basisset_j_name'][atomlabel] = bridge.Utils.to_unicode(value)
-
+        self._data['basisset_j_name'][atomlabel] = bridge.Utils.to_unicode(
+            value)
 
     def get_basisset_xc_name(self, atomlabel):
         atomlabel = bridge.Utils.to_unicode(atomlabel)
@@ -572,8 +578,8 @@ class PdfParamObject(object):
     def set_basisset_xc_name(self, atomlabel, value):
         atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_xc_name', {})
-        self._data['basisset_xc_name'][atomlabel] = bridge.Utils.to_unicode(value)
-
+        self._data['basisset_xc_name'][atomlabel] = bridge.Utils.to_unicode(
+            value)
 
     def get_basisset_gridfree_name(self, atomlabel):
         atomlabel = bridge.Utils.to_unicode(atomlabel)
@@ -583,7 +589,8 @@ class PdfParamObject(object):
     def set_basisset_gridfree_name(self, atomlabel, value):
         atomlabel = bridge.Utils.to_unicode(atomlabel)
         self._data.setdefault('basisset_gridfree_name', {})
-        self._data['basisset_gridfree_name'][atomlabel] = bridge.Utils.to_unicode(value)
+        self._data['basisset_gridfree_name'][atomlabel] = bridge.Utils.to_unicode(
+            value)
 
     def get_basisset(self, atom_label):
         return self._get_basisset_common(atom_label, 'basis_set')
@@ -652,16 +659,18 @@ class PdfParamObject(object):
     # total energies (each iteration)
     def _get_TEs(self):
         return self._data.get('TEs', {})
+
     def _set_TEs(self, value):
         self._data['TEs'] = value
+
     TEs = property(_get_TEs, _set_TEs)
 
     def get_total_energy(self, iteration):
-        return self.TEs[iteration]
-
-    def set_total_energy(self, iteration, value):
-        self.TEs[iteration] = value
-
+        iteration = int(iteration)
+        value = None
+        if iteration in self._data['TEs']:
+            value = float(self._data['TEs'][iteration])
+        return value
 
     # counterpoise
     def _get_counterpoise(self):
@@ -700,16 +709,15 @@ class PdfParamObject(object):
 
         return gradient
 
-
     def set_gradient(self, atom_index, fx, fy, fz):
         atom_index = int(atom_index)
         fx = float(fx)
         fy = float(fy)
         fz = float(fz)
         assert(0 <= atom_index < self.num_of_atoms)
-        self._data.setdefault('gradient', [[] for x in range(self.num_of_atoms)])
+        self._data.setdefault('gradient', [[]
+                                           for x in range(self.num_of_atoms)])
         self._data['gradient'][atom_index] = [fx, fy, fz]
-
 
     def get_gradient_rms(self):
         """
@@ -724,8 +732,8 @@ class PdfParamObject(object):
                 return None
         return math.sqrt(rms / (3 * self.num_of_atoms))
 
-
     # --------------------------------------------------------------------------
+
     def get_inputfile_contents(self):
         """
         ProteinDF入力ファイル(fl_Userinput)の内容を作成する
@@ -749,40 +757,56 @@ class PdfParamObject(object):
             raise
         output += "    max_iteration = {0}\n".format(self.max_iterations)
         if self.orbital_independence_threshold != None:
-            output += "    orbital_independence_threshold  = {0}\n".format(self.orbital_independence_threshold)
+            output += "    orbital_independence_threshold  = {0}\n".format(
+                self.orbital_independence_threshold)
         if self.orbital_independence_threshold_canonical != None:
-            output += "    orbital_independence_threshold/canonical = {0}\n".format(self.orbital_independence_threshold_canonical)
+            output += "    orbital_independence_threshold/canonical = {0}\n".format(
+                self.orbital_independence_threshold_canonical)
         if self.orbital_independence_threshold_lowdin != None:
-            output += "    orbital_independence_threshold/lowdin = {0}\n".format(self.orbital_independence_threshold_lowdin)
-        output += "    convergence/threshold_energy = {0}\n".format(self.convergence_threshold_energy)
-        output += "    convergence/threshold = {0}\n".format(self.convergence_threshold)
+            output += "    orbital_independence_threshold/lowdin = {0}\n".format(
+                self.orbital_independence_threshold_lowdin)
+        output += "    convergence/threshold_energy = {0}\n".format(
+            self.convergence_threshold_energy)
+        output += "    convergence/threshold = {0}\n".format(
+            self.convergence_threshold)
         output += "    convergence/type = {0}\n".format(self.convergence_type)
         output += "    scf_acceleration = {0}\n".format(self.scf_acceleration)
-        output += "    scf_acceleration/damping/damping_type = {0}\n".format(self.scf_acceleration_damping_damping_type)
-        output += "    scf_acceleration/damping/damping_factor = {0}\n".format(self.scf_acceleration_damping_damping_factor)
-        output += "    scf_acceleration/anderson/start_number = {0}\n".format(self.scf_acceleration_anderson_start_number)
-        output += "    scf_acceleration/anderson/damping_factor = {0}\n".format(self.scf_acceleration_anderson_damping_factor)
+        output += "    scf_acceleration/damping/damping_type = {0}\n".format(
+            self.scf_acceleration_damping_damping_type)
+        output += "    scf_acceleration/damping/damping_factor = {0}\n".format(
+            self.scf_acceleration_damping_damping_factor)
+        output += "    scf_acceleration/anderson/start_number = {0}\n".format(
+            self.scf_acceleration_anderson_start_number)
+        output += "    scf_acceleration/anderson/damping_factor = {0}\n".format(
+            self.scf_acceleration_anderson_damping_factor)
         output += "    xc_functional = {0}\n".format(self.xc_functional)
         output += "    J_engine = {0}\n".format(self.j_engine)
         output += "    K_engine = {0}\n".format(self.k_engine)
         output += "    XC_engine = {0}\n".format(self.xc_engine)
-        output += "    gridfree/dedicated_basis = {0}\n".format('yes' if self.gridfree_dedicated_basis else 'no')
-        output += "    gridfree/orthogonalize_method = {0}\n".format(self.gridfree_orthogonalize_method)
-        output += "    level_shift = {0}\n".format('yes' if self.level_shift else 'no')
-        output += "    level_shift/start_iteration = {0}\n".format(self.level_shift_start_iteration)
-        output += "    level_shift/virtual_mo = {0}\n".format(self.level_shift_virtual_mo)
+        output += "    gridfree/dedicated_basis = {0}\n".format(
+            'yes' if self.gridfree_dedicated_basis else 'no')
+        output += "    gridfree/orthogonalize_method = {0}\n".format(
+            self.gridfree_orthogonalize_method)
+        output += "    level_shift = {0}\n".format(
+            'yes' if self.level_shift else 'no')
+        output += "    level_shift/start_iteration = {0}\n".format(
+            self.level_shift_start_iteration)
+        output += "    level_shift/virtual_mo = {0}\n".format(
+            self.level_shift_virtual_mo)
         output += "    \n"
         output += "    # === extras === \n"
         #print(">>>> pdfparamobject")
-        #print(self.extra_keywords)
-        #print("<<<<")
+        # print(self.extra_keywords)
+        # print("<<<<")
         for k, v in self.extra_keywords.items():
             output += "    {} = {}\n".format(k, v)
         output += "\n"
         output += ">>>>MOLECULE\n"
         output += "    geometry/cartesian/unit = angstrom\n"
         output += "    geometry/cartesian/input = {\n"
-        output += "        " + self._get_input_geometry(self.molecule).replace('\n', '\n        ').rstrip()
+        output += "        " + \
+            self._get_input_geometry(self.molecule).replace(
+                '\n', '\n        ').rstrip()
         output += "\n"
         output += "        }\n"
         output += "\n"
@@ -813,7 +837,7 @@ class PdfParamObject(object):
 
         return output
 
-    def _get_input_geometry(self, atom_group = None):
+    def _get_input_geometry(self, atom_group=None):
         output = ""
         if (atom_group == None):
             output += self._get_geometry_input(self.molecule)
@@ -836,51 +860,55 @@ class PdfParamObject(object):
                 atom_symbol = atom.symbol
                 if atom_symbol != 'X':
                     output += "{atom_symbol}{label} {x: f} {y: f} {z: 6f} // {path}:{name}\n".format(
-                        atom_symbol = atom_symbol,
-                        label = label,
-                        x = atom.xyz.x,
-                        y = atom.xyz.y,
-                        z = atom.xyz.z,
-                        path = atom.path,
-                        name = atom.name)
+                        atom_symbol=atom_symbol,
+                        label=label,
+                        x=atom.xyz.x,
+                        y=atom.xyz.y,
+                        z=atom.xyz.z,
+                        path=atom.path,
+                        name=atom.name)
                 else:
                     output += "{atom_symbol}{label} {x: f} {y: f} {z: 6f} {charge} // {path}:{name}\n".format(
-                        atom_symbol = atom_symbol,
-                        label = label,
-                        x = atom.xyz.x,
-                        y = atom.xyz.y,
-                        z = atom.xyz.z,
-                        charge = charge,
-                        path = atom.path,
-                        name = atom.name)
+                        atom_symbol=atom_symbol,
+                        label=label,
+                        x=atom.xyz.x,
+                        y=atom.xyz.y,
+                        z=atom.xyz.z,
+                        charge=charge,
+                        path=atom.path,
+                        name=atom.name)
 
         return output
 
     def _get_input_basisset(self):
         output = ""
         for atom_kind in self._pickup_atom_kinds():
-            output += '%s = "%s"\n' % (atom_kind, self.get_basisset_name(atom_kind))
+            output += '%s = "%s"\n' % (atom_kind,
+                                       self.get_basisset_name(atom_kind))
         return output
 
     def _get_input_basisset_j(self):
         output = ""
         for atom_kind in self._pickup_atom_kinds():
-            output += '%s = "%s"\n' % (atom_kind, self.get_basisset_j_name(atom_kind))
+            output += '%s = "%s"\n' % (atom_kind,
+                                       self.get_basisset_j_name(atom_kind))
         return output
 
     def _get_input_basisset_xc(self):
         output = ""
         for atom_kind in self._pickup_atom_kinds():
-            output += '%s = "%s"\n' % (atom_kind, self.get_basisset_xc_name(atom_kind))
+            output += '%s = "%s"\n' % (atom_kind,
+                                       self.get_basisset_xc_name(atom_kind))
         return output
 
     def _get_input_basisset_gridfree(self):
         output = ""
         for atom_kind in self._pickup_atom_kinds():
-            output += '%s = "%s"\n' % (atom_kind, self.get_basisset_gridfree_name(atom_kind))
+            output += '%s = "%s"\n' % (atom_kind,
+                                       self.get_basisset_gridfree_name(atom_kind))
         return output
 
-    def _pickup_atom_kinds(self, atom_group = None):
+    def _pickup_atom_kinds(self, atom_group=None):
         '''
         counterpoise =
         '''
@@ -901,10 +929,10 @@ class PdfParamObject(object):
                     answer.add(atom_kind)
         return answer
 
-
     # --------------------------------------------------------------------------
     # file path information
     # --------------------------------------------------------------------------
+
     def get_energy_level_path(self, runtype, itr):
         '''
         return energy level vector file path
@@ -1007,7 +1035,8 @@ class PdfParamObject(object):
         filename = self._get_file_base_name('pop/mulliken')
         if len(filename) == 0:
             filename = "pop.mulliken.%s.vtr"
-        filename = filename.replace('%s', '{run_type}{itr}'.format(run_type=run_type, itr=iteration))
+        filename = filename.replace(
+            '%s', '{run_type}{itr}'.format(run_type=run_type, itr=iteration))
         return os.path.join(self.work_path, filename)
 
     def _get_file_base_name(self, key):
@@ -1022,19 +1051,19 @@ class PdfParamObject(object):
         atomindex = int(atomindex)
         answer = None
         if 'population/atom/mulliken' in self._data:
-            answer = self._data['population/atom/mulliken'].get(atomindex, None)
+            answer = self._data['population/atom/mulliken'].get(
+                atomindex, None)
         return answer
 
     def set_mulliken_atom_population(self, atomindex, value):
         atomindex = int(atomindex)
         self._data.setdefault('population/atom/mulliken', {})
         self._data['population/atom/mulliken'][atomindex] = value
-        
-
 
     # --------------------------------------------------------------------------
     # (python) raw data
     # --------------------------------------------------------------------------
+
     def set_by_raw_data(self, odict):
         odict = self._alias_conversion(odict)
 
@@ -1042,7 +1071,8 @@ class PdfParamObject(object):
             self.TEs = odict.get('TEs', {})
             del odict['TEs']
 
-        basisset_kinds = ['basis_set', 'basis_set_j', 'basis_set_xc', 'basis_set_gridfree']
+        basisset_kinds = ['basis_set', 'basis_set_j',
+                          'basis_set_xc', 'basis_set_gridfree']
         for bsk in basisset_kinds:
             if bsk in odict:
                 if isinstance(odict[bsk], dict):
@@ -1064,23 +1094,28 @@ class PdfParamObject(object):
                 del odict['control']['file_base_name']
 
             if 'scf_converged' in odict['control']:
-                self._data['control']['scf_converged'] = odict['control'].get('scf_converged', False)
+                self._data['control']['scf_converged'] = odict['control'].get(
+                    'scf_converged', False)
                 del odict['control']['scf_converged']
         del odict['control']
 
         if 'orbital_independence_threshold' in odict:
-            self.orbital_independence_threshold = odict.get('orbital_independence_threshold', None)
+            self.orbital_independence_threshold = odict.get(
+                'orbital_independence_threshold', None)
             del odict['orbital_independence_threshold']
         if 'orbital_independence_threshold/canonical' in odict:
-            self.orbital_independence_threshold_canonical = odict.get('orbital_independence_threshold/canonical', None)
+            self.orbital_independence_threshold_canonical = odict.get(
+                'orbital_independence_threshold/canonical', None)
             del odict['orbital_independence_threshold/canonical']
         if 'orbital_independence_threshold/lowdin' in odict:
-            self.orbital_independence_threshold_lowdin = odict.get('orbital_independence_threshold/lowdin', None)
+            self.orbital_independence_threshold_lowdin = odict.get(
+                'orbital_independence_threshold/lowdin', None)
             del odict['orbital_independence_threshold/lowdin']
 
         # gridfree
         if 'gridfree/orthogonalize_method' in odict:
-            self.gridfree_orthogonalize_method = odict.get('gridfree/orthogonalize_method')
+            self.gridfree_orthogonalize_method = odict.get(
+                'gridfree/orthogonalize_method')
             del odict['gridfree/orthogonalize_method']
 
         if 'gridfree/CDAM_tau' in odict:
@@ -1092,7 +1127,8 @@ class PdfParamObject(object):
             del odict['gridfree/CD_epsilon']
 
         if 'gridfree/dedicated_basis' in odict:
-            self.gridfree_dedicated_basis = odict.get('gridfree/dedicated_basis')
+            self.gridfree_dedicated_basis = odict.get(
+                'gridfree/dedicated_basis')
             del odict['gridfree/dedicated_basis']
 
         # scf acceleration
@@ -1101,24 +1137,29 @@ class PdfParamObject(object):
             del odict['scf_acceleration']
 
         if 'scf_acceleration/damping/damping_factor' in odict:
-            self.scf_acceleration_damping_damping_factor = odict.get('scf_acceleration/damping/damping_factor', None)
+            self.scf_acceleration_damping_damping_factor = odict.get(
+                'scf_acceleration/damping/damping_factor', None)
             del odict['scf_acceleration/damping/damping_factor']
 
         if 'scf_acceleration/damping/damping_type' in odict:
-            self.scf_acceleration_damping_damping_type = odict.get('scf_acceleration/damping/damping_type', None)
+            self.scf_acceleration_damping_damping_type = odict.get(
+                'scf_acceleration/damping/damping_type', None)
             del odict['scf_acceleration/damping/damping_type']
 
         if 'scf_acceleration/anderson/start_number' in odict:
-            self.scf_acceleration_anderson_start_number = odict.get('scf_acceleration/anderson/start_number', None)
+            self.scf_acceleration_anderson_start_number = odict.get(
+                'scf_acceleration/anderson/start_number', None)
             del odict['scf_acceleration/anderson/start_number']
 
         if 'scf_acceleration/anderson/damping_factor' in odict:
-            self.scf_acceleration_anderson_damping_factor = odict.get('scf_acceleration/anderson/damping_factor', None)
+            self.scf_acceleration_anderson_damping_factor = odict.get(
+                'scf_acceleration/anderson/damping_factor', None)
             del odict['scf_acceleration/anderson/damping_factor']
 
         # convergence
         if 'convergence/threshold' in odict:
-            self.convergence_threshold = odict.get('convergence/threshold', None)
+            self.convergence_threshold = odict.get(
+                'convergence/threshold', None)
             del odict['convergence/threshold']
 
         if 'convergence/type' in odict:
@@ -1126,11 +1167,12 @@ class PdfParamObject(object):
             del odict['convergence/type']
 
         if 'convergence/threshold_energy' in odict:
-            self.convergence_threshold_energy = odict.get('convergence/threshold_energy', None)
+            self.convergence_threshold_energy = odict.get(
+                'convergence/threshold_energy', None)
             del odict['convergence/threshold_energy']
 
-
         # coordinates
+
         def setup_coordinates(data):
             answer = bridge.AtomGroup()
             if 'groups' in data:
@@ -1164,7 +1206,8 @@ class PdfParamObject(object):
         del odict['lo/satisfied']
 
         odict.setdefault('lo/num_of_iterations', None)
-        self._data['lo/num_of_iterations'] = odict.get('lo/num_of_iterations', None)
+        self._data['lo/num_of_iterations'] = odict.get(
+            'lo/num_of_iterations', None)
         del odict['lo/num_of_iterations']
 
         odict.setdefault('max_iterations', self.max_iterations)
@@ -1212,14 +1255,16 @@ class PdfParamObject(object):
             gradient_dat = odict.get('gradient')
             for atom_index in range(len(gradient_dat)):
                 gradient = gradient_dat[atom_index]
-                self.set_gradient(atom_index, gradient[0], gradient[1], gradient[2])
+                self.set_gradient(
+                    atom_index, gradient[0], gradient[1], gradient[2])
             del odict['gradient']
         elif 'force' in odict:
             logger.warning('parameter "force" is ABSOLUTE.')
             gradient_dat = odict.get('force')
             for atom_index in range(len(gradient_dat)):
                 gradient = gradient_dat[atom_index]
-                self.set_gradient(atom_index, gradient[0], gradient[1], gradient[2])
+                self.set_gradient(
+                    atom_index, gradient[0], gradient[1], gradient[2])
             del odict['force']
 
         # 未入力部分をマージ
@@ -1231,7 +1276,8 @@ class PdfParamObject(object):
         # basis_set
         odict['basis_set'] = {}
         for atomlabel in self.get_basisset_atomlabels():
-            odict['basis_set'][atomlabel] = self.get_basisset(atomlabel).get_raw_data()
+            odict['basis_set'][atomlabel] = self.get_basisset(
+                atomlabel).get_raw_data()
 
         odict['basis_set_j'] = {}
         for atomlabel in self.get_basisset_j_atomlabels():
@@ -1240,11 +1286,13 @@ class PdfParamObject(object):
 
         odict['basis_set_xc'] = {}
         for atomlabel in self.get_basisset_atomlabels():
-            odict['basis_set_xc'][atomlabel] = self.get_basisset_xc(atomlabel).get_raw_data()
+            odict['basis_set_xc'][atomlabel] = self.get_basisset_xc(
+                atomlabel).get_raw_data()
 
         odict['basis_set_gridfree'] = {}
         for atomlabel in self.get_basisset_atomlabels():
-            odict['basis_set_gridfree'][atomlabel] = self.get_basisset_gridfree(atomlabel).get_raw_data()
+            odict['basis_set_gridfree'][atomlabel] = self.get_basisset_gridfree(
+                atomlabel).get_raw_data()
 
         # coordinates
         # transform ProteinDF coordinates data
@@ -1269,7 +1317,6 @@ class PdfParamObject(object):
         del odict['molecule']
 
         return odict
-
 
     def _alias_conversion(self, rhs):
         """
@@ -1296,7 +1343,7 @@ class PdfParamObject(object):
         return answer
 
     # --------------------------------------------------------------------------
-    # compare 
+    # compare
     # --------------------------------------------------------------------------
     def __eq__(self, other):
         answer = True
@@ -1305,7 +1352,7 @@ class PdfParamObject(object):
 
         # check Total Energy
         iterations = max(self.iterations, other.iterations)
-        for itr in range(1, iterations +1):
+        for itr in range(1, iterations + 1):
             TE1 = self.get_total_energy(itr)
             TE2 = other.get_total_energy(itr)
             answer = answer & self._check(TE1, TE2, '#%d TE' % (itr))
@@ -1320,16 +1367,17 @@ class PdfParamObject(object):
         elif isinstance(val1, list) and isinstance(val2, list):
             if len(val1) == len(val2):
                 for i in range(len(val1)):
-                    answer = answer ^ self._check(val1[i], val2[i], '{0}[{1}]'.format(msg, i), threshold)
+                    answer = answer ^ self._check(
+                        val1[i], val2[i], '{0}[{1}]'.format(msg, i), threshold)
         else:
             answer = (val1 == val2)
 
         if answer:
             logger.debug('test: {msg}; {val1} == {val2} (threshold={threshold})'.format(
-                        msg=str(msg), val1=val1, val2=val2, threshold=threshold))
+                msg=str(msg), val1=val1, val2=val2, threshold=threshold))
         else:
             logger.error('test: {msg}; {val1} != {val2} (threshold={threshold})'.format(
-                        msg=str(msg), val1=val1, val2=val2, threshold=threshold))
+                msg=str(msg), val1=val1, val2=val2, threshold=threshold))
 
         return answer
 
@@ -1407,15 +1455,15 @@ class PdfParamObject(object):
                                       'grad RMS')
         return answer
 
-
     # --------------------------------------------------------------------------
     # utilities
     # --------------------------------------------------------------------------
+
     def find_atom_index(self, atom):
         """入力された原子が登録されている場合、そのインデックス(0スタート)を返す。
         該当するものがない場合は-1を返す。
         """
-        answer = -1;
+        answer = -1
         (index, found) = PdfParamObject._find_atom_index(self.molecule, atom)
         if found:
             answer = index
@@ -1423,32 +1471,34 @@ class PdfParamObject(object):
         return answer
 
     @staticmethod
-    def _find_atom_index(in_atomgroup, in_atom, index = 0):
+    def _find_atom_index(in_atomgroup, in_atom, index=0):
         assert(isinstance(in_atomgroup, bridge.AtomGroup))
         assert(isinstance(in_atom, bridge.Atom))
 
         found = False
         for grp_key, subgrp in in_atomgroup.groups():
-            (index, found) = PdfParamObject._find_atom_index(subgrp, in_atom, index)
+            (index, found) = PdfParamObject._find_atom_index(
+                subgrp, in_atom, index)
             if found:
                 return (index, True)
 
-        #print(">>>>")
-        #print(in_atom)
-        #print("----")
+        # print(">>>>")
+        # print(in_atom)
+        # print("----")
         for atom_key, atom in in_atomgroup.atoms():
-            #print(atom)
+            # print(atom)
             if (atom.symbol == in_atom.symbol and
-                atom.xyz == in_atom.xyz):
+                    atom.xyz == in_atom.xyz):
                 found = True
                 #print("FOUND! index={}".format(index))
                 break
             index += 1
-        #print("<<<<")
+        # print("<<<<")
 
         return (index, found)
 
 # ==============================================================================
+
 
 if __name__ == '__main__':
     import doctest
