@@ -22,16 +22,14 @@
 import os
 import sys
 import argparse
+
+import proteindf_bridge as bridge
+import proteindf_tools as pdf
+
 import logging
 import logging.config
 logger = logging.getLogger(__name__)
 
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
-
-import proteindf_tools as pdf
 
 def main():
     # parse args
@@ -64,7 +62,7 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
     do_profile = args.profile
 
-    output_dir=args.output_dir
+    output_dir = args.output_dir
     entry = pdf.PdfArchive(args.pdfresults_db)
 
     # run
@@ -75,7 +73,6 @@ def main():
                         do_profile)
     else:
         do_report(output_dir, entry)
-
 
 
 def do_report(output_dir, entry):
@@ -90,7 +87,7 @@ def do_report(output_dir, entry):
     plot_convergence_check(entry, output_dir)
     plot_convergence_energy_level(entry, output_dir)
 
-    #plot_energy_level(pdfdata,
+    # plot_energy_level(pdfdata,
     #                  workdir + '/level.png')
 
     #plot_elapsed_time(entry, output_dir)
@@ -106,7 +103,7 @@ def plot_convergence_check(entry,
     """
     assert(isinstance(entry, pdf.PdfArchive))
     itr = entry.iterations
-    iterations = range(1, itr +1)
+    iterations = range(1, itr + 1)
 
     # TE
     TEs = [entry.get_total_energy(i) for i in iterations]
@@ -134,7 +131,7 @@ def plot_convergence_energy_level(entry,
 
     data_path = os.path.join(output_dir, 'eigvals_hist.dat')
     dat = open(data_path, 'w')
-    for itr in range(1, entry.iterations +1):
+    for itr in range(1, entry.iterations + 1):
         eigvals = entry.get_energylevel(method, itr)
         if eigvals:
             for level, e in enumerate(eigvals):
@@ -144,29 +141,27 @@ def plot_convergence_energy_level(entry,
 
     graphH_path = os.path.join(output_dir, 'eigvals_hist.png')
     graphH = pdf.DfEnergyLevelHistoryGraphH()
-    graphH.set_HOMO_level(HOMO_level) # option base 0
+    graphH.set_HOMO_level(HOMO_level)  # option base 0
     graphH.load_data(data_path)
     graphH.save(graphH_path)
 
     # lastのグラフを作成する
     graphV_path = os.path.join(output_dir, 'eigvals_last.png')
     graphV = pdf.DfEnergyLevelHistoryGraphV()
-    graphV.set_HOMO_level(HOMO_level) # option base 0
-    graphV.set_LUMO_level(HOMO_level +1) # option base 0
+    graphV.set_HOMO_level(HOMO_level)  # option base 0
+    graphV.set_LUMO_level(HOMO_level + 1)  # option base 0
     graphV.load_data(data_path)
     if entry.scf_converged:
         graphV.select_iterations([itr])
     else:
-        graphV.select_iterations([itr -1])
+        graphV.select_iterations([itr - 1])
     graphV.ylabel = ''
     graphV.is_draw_grid = False
     graphV.y_ticks = [-1]
     graphV.y_ticklabels = [""]
     graphV.save(graphV_path)
 
-
-
-#def plot_energy_level(entry, output_path):
+# def plot_energy_level(entry, output_path):
 #    graph = EnergyLevelSingle()
 #
 #    HOMO_level = entry.get_HOMO_level('ALPHA') # TODO
@@ -189,7 +184,7 @@ def plot_convergence_energy_level(entry,
 #    graph.save(graph_path)
 
 
-#def get_eigenvalues(iterations):
+# def get_eigenvalues(iterations):
 #    eigval_vtr_path = 'fl_Work/eigenvalues.rks%d.vtr' % (iterations) # TODO
 #    v = pdf.Vector()
 #    if v.is_loadable(eigval_vtr_path):
@@ -209,19 +204,20 @@ def plot_convergence_check0(pdfdata, output_path):
 
     itr = pdfdata.get_num_of_iterations()
     # total energy
-    TE_history = range(itr +1)
+    TE_history = range(itr + 1)
     TE_history[0] = None
     # delta TE
-    deltaTE_history = range(itr +1)
+    deltaTE_history = range(itr + 1)
     deltaTE_history[0] = None
     # delta Density Matrix
-    deltaDensMat_history = range(itr +1)
+    deltaDensMat_history = range(itr + 1)
     deltaDensMat_history[0] = None
-    for itr in range(1, iterations +1):
+    for itr in range(1, iterations + 1):
         TE_history[itr] = dfdata.get_total_energy(itr)
         info = dfdata.get_convergence_info(itr)
         deltaTE_history[itr] = info.get('max_deviation_of_total_energy', None)
-        deltaDensMat_history[itr] = info.get('max_deviation_of_density_matrix', None)
+        deltaDensMat_history[itr] = info.get(
+            'max_deviation_of_density_matrix', None)
 
     #graph.plot(TE_history, "Total Energy")
     graph.plotLog(deltaTE_history, "delta Total Energy")
@@ -241,9 +237,9 @@ def plot_convergence_TE(pdfdata, output_path):
 
     iterations = dfdata.get_number_of_iterations()
     # total energy
-    TE_history = range(iterations +1)
+    TE_history = range(iterations + 1)
     TE_history[0] = None
-    for itr in range(1, iterations +1):
+    for itr in range(1, iterations + 1):
         TE_history[itr] = dfdata.get_total_energy(itr)
 
     graph.plot(TE_history, "Total Energy")
@@ -267,7 +263,7 @@ def plot_elapsed_time(pdfdata, output_dir):
     for itr in range(num_of_iterations):
         contents = [None] * len(scf_sections)
         for entry, scf_section in enumerate(scf_sections):
-            contents[entry] = pdfdata.get_elapsed_time(scf_section, itr +1)
+            contents[entry] = pdfdata.get_elapsed_time(scf_section, itr + 1)
         data[itr] = contents
 
     with open(data_path, "wt") as f:
@@ -275,12 +271,11 @@ def plot_elapsed_time(pdfdata, output_dir):
             for entry, elapsed_time in enumerate(itr_data):
                 f.write("{}, {}, {}".format(itr, entry, elapsed_time))
 
-
     graph_path = os.path.join(output_dir, 'elapsed_time.png')
     #graph.plot(data, scf_sections)
 
-    #graph.prepare()
-    #graph.file_out(graph_path)
+    # graph.prepare()
+    # graph.file_out(graph_path)
 
 
 def get_rst(pdfdata):

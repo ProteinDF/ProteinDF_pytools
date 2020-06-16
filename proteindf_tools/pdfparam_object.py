@@ -1346,6 +1346,9 @@ class PdfParamObject(object):
     # compare
     # --------------------------------------------------------------------------
     def __eq__(self, other):
+        if isinstance(other, PdfParamObject) == False:
+            return False
+
         answer = True
         answer = answer & self.compare_info(other)
         answer = answer & self.compare_energy(other)

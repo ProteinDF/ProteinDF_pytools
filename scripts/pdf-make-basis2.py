@@ -10,18 +10,18 @@ import re
 import pprint
 import pickle
 import copy
+from bs4 import BeautifulSoup
 try:
     set
 except NameError:
     from sets import Set as set
 
+import proteindf_tools as pdf
+import proteindf_bridge as bridge
+
 import logging.config
 from logging import getLogger, DEBUG, INFO
 logger = getLogger(__name__)
-
-from bs4 import BeautifulSoup
-import proteindf_bridge as bridge
-import proteindf_tools as pdf
 
 
 class MakeBasis2(object):
@@ -32,7 +32,7 @@ class MakeBasis2(object):
                  cache_path=None,
                  output_path=None,
                  uncontract_shells='spd',
-                 force_download = False,
+                 force_download=False,
                  verbose=False,
                  debug=False):
         self._uncontract_shells = uncontract_shells
@@ -50,7 +50,7 @@ class MakeBasis2(object):
         if output_path != None:
             self._stdout = open(output_path, 'w')
         # self._stderr = open(os.devnull, 'a')
-        #if verbose:
+        # if verbose:
         #    self._stderr = sys.stderr
 
         self._load_cache()
@@ -84,11 +84,10 @@ class MakeBasis2(object):
         num_of_items = len(basisset_names)
         count = 0
         for basisset_name in basisset_names:
-            logger.info('### {0:>4}/{1:>4}'.format(count +1, num_of_items))
+            logger.info('### {0:>4}/{1:>4}'.format(count + 1, num_of_items))
             self._run_basisset(basisset_info, basisset_name)
             count += 1
         assert(num_of_items == count)
-
 
     def _run_basisset(self, basisset_info, alias):
         basisset_name = self._alias2real(alias)
@@ -112,16 +111,15 @@ class MakeBasis2(object):
                                                                   status=basisset_info[basisset_name]['status'],
                                                                   bs_type=basisset_info[basisset_name]['type']))
         else:
-            logger.error("basisset \"{}\" is not found. ".format(basisset_name))
-
+            logger.error(
+                "basisset \"{}\" is not found. ".format(basisset_name))
 
     def _sort_atom_symbols(self, atom_symbols):
-        atom_table = [ None ] * bridge.PeriodicTable.get_num_of_atoms()
+        atom_table = [None] * bridge.PeriodicTable.get_num_of_atoms()
         for atom_symbol in atom_symbols:
             atom_num = bridge.PeriodicTable.get_atomic_number(atom_symbol)
             atom_table[atom_num] = atom_symbol
-        return [ x for x in atom_table if x != None ]
-
+        return [x for x in atom_table if x != None]
 
     def _run_for_orbital(self, basisset_info, alias):
         """
@@ -166,14 +164,15 @@ class MakeBasis2(object):
                 if db_basisset_name_uncontract in self._cache["ProteinDF-MRD"]:
                     basis2_MRD = self._cache["ProteinDF-MRD"][db_basisset_name_uncontract]
                 else:
-                    basis2_MRD = self._get_basis2_MRD(db_basisset_name, basissets, uncontract_shell)
+                    basis2_MRD = self._get_basis2_MRD(
+                        db_basisset_name, basissets, uncontract_shell)
                     self._cache["ProteinDF-MRD"][db_basisset_name_uncontract] = basis2_MRD
                     self._save_cache()
 
                 if len(basis2_MRD) > 0:
-                    self._stdout.write('# {} -------------\n'.format(alias + "-" + uncontract_shell))
+                    self._stdout.write(
+                        '# {} -------------\n'.format(alias + "-" + uncontract_shell))
                     self._stdout.write(basis2_MRD + '\n')
-
 
     def _run_for_dftorb(self, basisset_info, alias):
         """
@@ -213,7 +212,8 @@ class MakeBasis2(object):
         if db_basisset_name in self._cache["ProteinDF-DFT"]:
             basis2_dft = self._cache["ProteinDF-DFT"][db_basisset_name]
         else:
-            basis2_dft = self._get_basis2(db_basisset_name, basissets_density, basissets_xc)
+            basis2_dft = self._get_basis2(
+                db_basisset_name, basissets_density, basissets_xc)
             self._cache["ProteinDF-DFT"][db_basisset_name] = basis2_dft
             self._save_cache()
         if len(basis2_dft) > 0:
@@ -230,14 +230,15 @@ class MakeBasis2(object):
                 if db_basisset_name_uncontract in self._cache["ProteinDF-MRD"]:
                     basis2_MRD = self._cache["ProteinDF-MRD"][db_basisset_name_uncontract]
                 else:
-                    basis2_MRD = self._get_basis2_MRD(db_basisset_name, basissets, uncontract_shell)
+                    basis2_MRD = self._get_basis2_MRD(
+                        db_basisset_name, basissets, uncontract_shell)
                     self._cache["ProteinDF-MRD"][db_basisset_name_uncontract] = basis2_MRD
                     self._save_cache()
 
                 if len(basis2_MRD) > 0:
-                    self._stdout.write('# {} -------------\n'.format(alias + "-" + uncontract_shell))
+                    self._stdout.write(
+                        '# {} -------------\n'.format(alias + "-" + uncontract_shell))
                     self._stdout.write(basis2_MRD + '\n')
-
 
     def _run_for_others(self, basisset_info, alias):
         basisset_name = self._alias2real(alias)
@@ -246,7 +247,6 @@ class MakeBasis2(object):
             "# reg: {name} ({status}; {bs_type})".format(name=basisset_name,
                                                          status=basisset_info[basisset_name]['status'],
                                                          bs_type=basisset_info[basisset_name]['type']))
-
 
     def _download_gaussian94(self, basisset_info, basisset_name):
         if (self._force_download == True) or (basisset_name not in self._cache['Gaussian94']):
@@ -260,7 +260,6 @@ class MakeBasis2(object):
             self._cache['Gaussian94'][basisset_name] = bs_content
             self._save_cache()
         return self._cache['Gaussian94'][basisset_name]
-
 
     def _load_alias(self, path):
         self._alias = {}
@@ -277,13 +276,14 @@ class MakeBasis2(object):
                             alias_name, real_name = re_result.group(1, 2)
                             self._alias[alias_name] = real_name
                         else:
-                            logger.error("illegal alias format: {}".format(line))
+                            logger.error(
+                                "illegal alias format: {}".format(line))
                     line = f.readline()
 
         # debug out
         for alias in self._alias.keys():
-            logger.debug("alias: [{}] -> [{}]".format(alias, self._alias[alias]))
-
+            logger.debug(
+                "alias: [{}] -> [{}]".format(alias, self._alias[alias]))
 
     def _load_cache(self):
         if os.path.exists(self._cache_path):
@@ -299,7 +299,6 @@ class MakeBasis2(object):
         with open(self._cache_path, mode='wb') as f:
             pickle.dump(self._cache, f)
 
-
     def _get_content(self, url, params={}):
         cache_key = tuple((url, tuple(params.items())))
         if cache_key not in self._cache:
@@ -310,7 +309,6 @@ class MakeBasis2(object):
             self._save_cache()
 
         return self._cache[cache_key]
-
 
     def _get_basissets_info(self):
         '''download basisset information
@@ -324,7 +322,6 @@ class MakeBasis2(object):
         db_info = self._parse_basissets_index(index_html)
 
         return db_info
-
 
     def _parse_basissets_index(self, html):
         '''
@@ -340,14 +337,15 @@ class MakeBasis2(object):
         '''
         answer = {}
 
-        re_bs = re.compile('new basisSet\("?(.+?)"?,\s*"(.+?)",\s*"?(.+?)"?,\s*"?\[(.+?)\]"?,\s*"?(.+?)"?,\s*"?(.+?)"?,\s*"?(.+?)"?,\s*"?(.+?)"?.*\)')
+        re_bs = re.compile(
+            'new basisSet\("?(.+?)"?,\s*"(.+?)",\s*"?(.+?)"?,\s*"?\[(.+?)\]"?,\s*"?(.+?)"?,\s*"?(.+?)"?,\s*"?(.+?)"?,\s*"?(.+?)"?.*\)')
         lines = re_bs.findall(html)
         for l in lines:
             url = l[0]
             name = l[1]
             bs_type = l[2]
             elements = l[3]
-            elements = filter(lambda w: len(w)>0, re.split(', ', elements))
+            elements = filter(lambda w: len(w) > 0, re.split(', ', elements))
             status = l[4]
             has_ECP = (l[5][0].upper() == 'T')
             has_spin = (l[6][0].upper() == 'T')
@@ -360,10 +358,9 @@ class MakeBasis2(object):
                             'has_ESP': has_ECP,
                             'has_spin': has_spin,
                             'last_modified': last_modified
-            }
+                            }
 
         return answer
-
 
     def _get_bs_data(self, name, bsurl, elements, text_format='Gaussian94'):
         contraction = 'True'
@@ -381,7 +378,6 @@ class MakeBasis2(object):
         text = soup.pre.get_text()
 
         return text
-
 
     def _get_basis2(self, basisset_name, basissets, basissets2=None):
         assert isinstance(basissets, dict)
@@ -405,7 +401,7 @@ class MakeBasis2(object):
                 bs2 = basissets2[atom_symbol]
                 assert(isinstance(bs2, pdf.BasisSet))
                 if ((bs.max_shell_type in max_shell_type) and
-                    (bs2.max_shell_type in max_shell_type)):
+                        (bs2.max_shell_type in max_shell_type)):
                     basis2 += str(bs) + '\n' + str(bs2) + '\n'
                 else:
                     logger.warning('# {basisset_name} is not supported: (max shell type: "{shell_type}")'.format(basisset_name=bs.name,
@@ -420,7 +416,6 @@ class MakeBasis2(object):
 
         return basis2
 
-
     def _get_basis2_MRD(self, basisset_name, basissets, uncontract_shell):
         assert isinstance(basissets, dict)
         max_shell_type = self.MAX_SHELL_TYPE
@@ -433,7 +428,8 @@ class MakeBasis2(object):
             bs = basissets[atom_symbol]
             assert(isinstance(bs, pdf.BasisSet))
             bs_MRD = self._makeBasisSet_MRD(bs, uncontract_shell)
-            bs_MRD.name = basisset_name + '-{}'.format(uncontract_shell) + '.' + atom_symbol
+            bs_MRD.name = basisset_name + \
+                '-{}'.format(uncontract_shell) + '.' + atom_symbol
 
             # for orbital basis
             if bs_MRD.max_shell_type in max_shell_type:
@@ -443,7 +439,6 @@ class MakeBasis2(object):
                                                                                                              shell_type=bs_MRD.max_shell_type))
 
         return basis2
-
 
     def _makeBasisSet_MRD(self, basisset, uncontract_shell='spd'):
         assert isinstance(basisset, pdf.BasisSet)
@@ -460,13 +455,14 @@ class MakeBasis2(object):
             else:
                 new_cgtos.append(pdf.ContractedGTO(cgto))
 
-        new_name = '-{}.'.format(uncontract_shell).join(basisset.name.rsplit('.', 1)) # reverse replace!
+        # reverse replace!
+        new_name = '-{}.'.format(uncontract_shell).join(
+            basisset.name.rsplit('.', 1))
         answer = pdf.BasisSet(new_name, len(new_cgtos))
         for i in range(len(new_cgtos)):
             answer[i] = new_cgtos[i]
 
         return answer
-
 
     def _escape_basisset_name(self, name):
         # escape and remove strings for basis set name
@@ -542,7 +538,6 @@ def main():
             logger.info('basisset: ')
             for basisset_name in basisset_names:
                 logger.info('{} '.format(basisset_name))
-
 
     header = ""
     # header += '##### basis2 file created by {}. #####\n'.format(parser.prog)

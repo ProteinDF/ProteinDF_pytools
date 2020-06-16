@@ -2,9 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+
+import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
 import logging
 logger = logging.getLogger(__name__)
+
 
 def main():
     # parse args
@@ -35,17 +39,18 @@ def main():
     if stdmat.is_loadable(mat_path):
         stdmat.load(mat_path)
         print("standard dens matrix")
-        print("size: {row} x {col}".format(row = stdmat.rows,
-                                           col = stdmat.cols))
+        print("size: {row} x {col}".format(row=stdmat.rows,
+                                           col=stdmat.cols))
         print(stdmat)
     elif symmat.is_loadable(mat_path):
         symmat.load(mat_path)
         print("symmetric dens matrix")
-        print("size: {row} x {col}".format(row = symmat.rows,
-                                           col = symmat.cols))
+        print("size: {row} x {col}".format(row=symmat.rows,
+                                           col=symmat.cols))
         print(symmat)
     else:
         print("cannot load file.")
+
 
 if __name__ == '__main__':
     main()

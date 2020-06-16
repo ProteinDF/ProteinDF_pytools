@@ -23,18 +23,17 @@ import os
 import sys
 from types import *
 import argparse
-import logging
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
 
+import logging
+
+
 def main():
     # parse args
-    parser = argparse.ArgumentParser(description='plot energy level(single; vertical)')
+    parser = argparse.ArgumentParser(
+        description='plot energy level(single; vertical)')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-e', '--elevel_vector',
                        nargs=1,
@@ -85,10 +84,10 @@ def main():
         entry = pdf.PdfArchive(args.db)
 
         itr = entry.iterations
-        HOMO_level = entry.get_HOMO_level('ALPHA') # TODO
+        HOMO_level = entry.get_HOMO_level('ALPHA')  # TODO
         data_path = 'tmp.dat'
 
-        eigvals = entry.get_energylevel('ALPHA', itr) # TODO
+        eigvals = entry.get_energylevel('ALPHA', itr)  # TODO
         if verbose:
             print('load: %s' % (eigval_path))
             print('output: %s' % (output_path))
@@ -117,6 +116,7 @@ def elevel2dat(itr, eigvals, data_path):
         dat.write('%d, %d, % 16.10f\n' % (itr, level, e))
     dat.close()
 
+
 def plot_elevel_single(data_path, itr, HOMO_level, output_path):
     """
     横向きのエネルギー準位グラフを描画する
@@ -127,7 +127,7 @@ def plot_elevel_single(data_path, itr, HOMO_level, output_path):
     output_path:
     """
     graphV = pdf.DfEnergyLevelHistoryGraphV()
-    graphV.set_HOMO_level(HOMO_level) # option base 0
+    graphV.set_HOMO_level(HOMO_level)  # option base 0
     graphV.load_data(data_path)
     graphV.select_iterations([itr])
     graphV.is_draw_grid = False
@@ -138,6 +138,7 @@ def plot_elevel_single(data_path, itr, HOMO_level, output_path):
     graphV.aspect = 3.0
 
     graphV.save(output_path)
+
 
 if __name__ == '__main__':
     main()

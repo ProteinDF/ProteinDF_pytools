@@ -26,16 +26,15 @@ output geometory in XYZ format
 import os
 import sys
 import argparse
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
 
+import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
 
 def main():
     # parse args
-    parser = argparse.ArgumentParser(description='output geometory in XYZ format')
+    parser = argparse.ArgumentParser(
+        description='output geometory in XYZ format')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-d', '--db',
                        nargs='?',

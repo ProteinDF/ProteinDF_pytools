@@ -21,21 +21,18 @@
 
 from .process import Process
 from .pdfparam import PdfParam
+
 import proteindf_bridge as bridge
+
 import traceback
 import io
 import sys
 import os
 import shlex
 import tempfile
+
 import logging
 logger = logging.getLogger(__name__)
-
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
-
 
 epsilon = 1.0E-10  # 計算機イプシロン
 error = 1.0E-5  # 許容誤差
@@ -59,10 +56,7 @@ def get_default_pdfparam():
 
     # 一時ファイルの初期化情報を読取る
     run_pdf(['init-param', '-v', '-o', tempfile_path])
-    f = open(tempfile_path, "rb")
-    tempdata = msgpack.unpackb(f.read())
-    tempdata = bridge.Utils.to_unicode_dict(tempdata)
-    f.close()
+    tempdata = bridge.load_msgpack(tempfile_path)
 
     # remove temp
     os.remove(tempfile_path)
@@ -155,22 +149,8 @@ def run_pdf(subcmd):
         raise
 
 
-def mpac2py(path):
-    """
-    load message pack binary file to python dictionary data
-    """
-    assert(isinstance(path, str) == True)
-
-    f = open(path, "rb")
-    contents = f.read()
-    data = bridge.Utils.to_unicode_dict(msgpack.unpackb(contents))
-    f.close()
-
-    return data
-
-
 def load_pdfparam(pdfparam_path='pdfparam.mpac'):
-    data = mpac2py(pdfparam_path)
+    data = bridge.load_msgpack(pdfparam_path)
     param = PdfParam(data)
 
     return param
@@ -179,7 +159,4 @@ def load_pdfparam(pdfparam_path='pdfparam.mpac'):
 def save_pdfparam(pdfparam_data, pdfparam_path):
     assert(isinstance(pdfparam_path, str))
     raw_data = pdfparam_data.get_raw_data()
-    data = msgpack.packb(raw_data)
-
-    with open(pdfparam_path, 'wb') as f:
-        f.write(data)
+    bridge.save_msgpack(raw_data, pdfparam_path)

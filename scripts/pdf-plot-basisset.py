@@ -23,18 +23,17 @@ import os
 import sys
 from types import *
 import argparse
-import logging
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
 
 import math
 import numpy
 import matplotlib as mpl
 #import matplotlib.pyplot as plt
 
+import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
+import logging
+
 
 def main():
     # parse args
@@ -83,7 +82,7 @@ def main():
     chart.save("basis_{}.png".format(basisset_name))
 
     # debug
-    #for cgto_id in range(num_of_CGTOs):
+    # for cgto_id in range(num_of_CGTOs):
     #    CGTO = bs[cgto_id]
     #    CGTO_norm = CGTO.normalize()
     #    print("shell_type: {}".format(CGTO.shell_type))
@@ -92,6 +91,7 @@ def main():
     #        PGTO_norm = PGTO.normalize(CGTO.shell_type)
     #        print("{} {} -> {} ".format(PGTO.exp, PGTO.coef,
     #                                    CGTO_norm * PGTO_norm * PGTO.coef))
+
 
 def func(CGTO, X):
     shell_type = CGTO.shell_type.upper()
@@ -124,12 +124,13 @@ def func(CGTO, X):
             #PGTO_norm = 1.0
             pgto_y = (CGTO_norm * PGTO_norm *
                       CGTO[j].coef * coef_x *
-                      math.exp(-1.0 *  CGTO[j].exp * xx))
+                      math.exp(-1.0 * CGTO[j].exp * xx))
 
             value += xx * math.fabs(pgto_y)
         Y[i] = value
 
     return Y
+
 
 if __name__ == '__main__':
     main()

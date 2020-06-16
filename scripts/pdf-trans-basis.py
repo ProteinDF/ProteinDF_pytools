@@ -23,7 +23,9 @@ import os
 import re
 import argparse
 
+import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
 
 class BasisSetParser(object):
     """
@@ -36,7 +38,7 @@ class BasisSetParser(object):
     def __init__(self):
         self._basissets = {}
 
-    def load(self, file_path, mode = 'Gaussian94'):
+    def load(self, file_path, mode='Gaussian94'):
         self._load_gaussian94(file_path)
 
     def _load_gaussian94(self, file_path):
@@ -111,6 +113,7 @@ class BasisSetParser(object):
 
         return answer
 
+
 def main():
     parser = argparse.ArgumentParser(description='parse EMSL BasisSet Data')
     parser.add_argument('FILE',
@@ -118,7 +121,7 @@ def main():
                         help='EMSL basisset html file')
     parser.add_argument("-v", "--verbose",
                         action="store_true",
-                        default = False)
+                        default=False)
     args = parser.parse_args()
 
     # setting

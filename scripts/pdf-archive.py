@@ -26,17 +26,15 @@ archive ProteinDF results.
 import os
 import sys
 import argparse
-import logging
-import logging.config
 import traceback
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
 #import pprint
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
+import logging
+import logging.config
+
 
 def main():
     parser = argparse.ArgumentParser(description='archive ProteinDF results')
@@ -94,7 +92,7 @@ def main():
     except:
         print('-'*60)
         traceback.print_exc(file=sys.stdout)
-        #print(traceback.format_exc())
+        # print(traceback.format_exc())
         print('-'*60)
 
 
@@ -124,16 +122,16 @@ class Pdf2Db(object):
         if self._pdfparam.scf_converged:
             self.set_pop(self._pop_types)
 
-    #def _get_is_little_endian(self):
+    # def _get_is_little_endian(self):
     #    return self._is_little_endian
 
-    #def _set_is_little_endian(self, value):
+    # def _set_is_little_endian(self, value):
     #    assert(isinstance(value, bool))
     #    self._is_little_endian = value
 
     #is_little_endian = property(_get_is_little_endian, _set_is_little_endian)
 
-    def set_energylevels(self, mode ='last'):
+    def set_energylevels(self, mode='last'):
         """
         エネルギー準位をDBに格納する
 
@@ -143,7 +141,7 @@ class Pdf2Db(object):
         entry = self._entry
         iterations = pdfparam.iterations
 
-        for itr in range(1, iterations +1):
+        for itr in range(1, iterations + 1):
             v = pdf.Vector()
             # energy level
             for runtype in pdfparam.runtypes():
@@ -173,7 +171,7 @@ class Pdf2Db(object):
             else:
                 self._logger.warning('could not load %s' % (path))
 
-    def set_lcao(self, mode ='last'):
+    def set_lcao(self, mode='last'):
         """
         LCAO行列をDBに格納する
 
@@ -188,7 +186,7 @@ class Pdf2Db(object):
             start_itr = iterations
 
         m = pdf.Matrix()
-        for itr in range(start_itr, iterations +1):
+        for itr in range(start_itr, iterations + 1):
             for runtype in pdfparam.runtypes():
                 path = pdfparam.get_c_mat_path(runtype, itr)
                 self._logger.debug('load %s' % (path))
@@ -196,14 +194,15 @@ class Pdf2Db(object):
                     m.load(path)
                     entry.set_lcao(runtype, itr, m)
 
-    def set_pop(self, pop_types = [], iteration = 0):
+    def set_pop(self, pop_types=[], iteration=0):
         for pop_type in pop_types:
             if pop_type == 'mulliken':
                 self._logger.info('calc pop mulliken')
                 if iteration == 0:
                     iteration = self._pdfparam.iterations
                 pop_matrix_path = 'mulliken_{}.mat'.format(iteration)
-                pdf.run_pdf(['pop-mulliken', '-i', iteration, '-s', pop_matrix_path])
+                pdf.run_pdf(
+                    ['pop-mulliken', '-i', iteration, '-s', pop_matrix_path])
                 m = pdf.Matrix()
                 m.load(pop_matrix_path)
                 self._entry.set_population('mulliken', iteration, m)

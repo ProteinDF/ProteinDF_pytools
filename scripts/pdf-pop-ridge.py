@@ -4,12 +4,12 @@
 import argparse
 import os
 
+import proteindf_bridge as bridge
+import proteindf_tools as pdf
+
 import logging
 import logging.config
 logger = logging.getLogger(__name__)
-
-import proteindf_bridge as bridge
-import proteindf_tools as pdf
 
 
 class Ridge(object):
@@ -33,7 +33,7 @@ class Ridge(object):
         rI *= self._alpha
 
         M = (tXX + rI)
-        Minv = M.inverse();
+        Minv = M.inverse()
 
         MinvX = Minv * tX
         self._coef = MinvX * y
@@ -52,12 +52,12 @@ class Ridge(object):
         tXX = tX * X
 
         rI = bridge.identity_matrix(b)
-        rI.set(b -1, b -1, 0.0)
+        rI.set(b - 1, b - 1, 0.0)
         rI *= self._alpha
 
         # 一般化逆行列を使う方法
         M = (tXX + rI)
-        Minv = M.inverse();
+        Minv = M.inverse()
 
         MinvX = Minv * tX
         self._coef = MinvX * y
@@ -73,13 +73,12 @@ class Ridge(object):
         assert(y.size() == n)
 
         rI = bridge.identity_matrix(n)
-        rI.set(n -1, n -1, 0.0)
+        rI.set(n - 1, n - 1, 0.0)
         rI *= self._alpha
 
         M = X + rI
         Minv = M.inverse()
         self._coef = Minv * y
-
 
     @property
     def coef(self):
@@ -88,7 +87,8 @@ class Ridge(object):
 
 def main():
     # parse args
-    parser = argparse.ArgumentParser(description='calculate ridge partial charges')
+    parser = argparse.ArgumentParser(
+        description='calculate ridge partial charges')
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-d', '--db',

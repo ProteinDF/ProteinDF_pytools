@@ -4,14 +4,14 @@
 import argparse
 import os
 
-import logging
-import logging.config
-logger = logging.getLogger(__name__)
-
 import sklearn.linear_model as lm
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
+import logging
+import logging.config
+logger = logging.getLogger(__name__)
 
 
 TOO_SMALL = 1.0E-5
@@ -73,8 +73,7 @@ class ConstrainedLasso(object):
         self.max_itr = 100
         self.step_size = 1.0
 
-        self.coef = [] # answer
-
+        self.coef = []  # answer
 
     def fit(self, X, y, C, b):
         '''
@@ -108,7 +107,6 @@ class ConstrainedLasso(object):
             self.step3()
             step_size_is_too_large = self.step4()
 
-
         # solved!
         answer = bridge.Vector(len(self._theta_bar) + len(self._theta))
         for i in range(len(self._theta_bar)):
@@ -117,10 +115,8 @@ class ConstrainedLasso(object):
             answer[i + len(self._theta_bar)] = self._theta[i]
         self.coef = answer
 
-
     def is_converged(self):
         return self._is_converged
-
 
     def _do_lasso(self, X, y, alpha):
         assert(isinstance(X, bridge.Matrix))
@@ -128,9 +124,10 @@ class ConstrainedLasso(object):
         assert(isinstance(alpha, float))
 
         logger.debug("begin LASSO...")
-        max_iter=100000 # default: 1000
-        tol=0.001 # default: 0.0001
-        lasso = lm.Lasso(alpha=alpha, fit_intercept=False, max_iter=max_iter, tol=tol)
+        max_iter = 100000  # default: 1000
+        tol = 0.001  # default: 0.0001
+        lasso = lm.Lasso(alpha=alpha, fit_intercept=False,
+                         max_iter=max_iter, tol=tol)
 
         lasso.fit(X.get_ndarray(), y.get_ndarray())
         beta = lasso.coef_[:]
@@ -156,7 +153,6 @@ class ConstrainedLasso(object):
 
         return (A, s)
 
-
     def _select_by_A(self, in_mat, A):
         '''
         see sec.3
@@ -173,7 +169,6 @@ class ConstrainedLasso(object):
         out_mat = in_mat * coef_mat
         return out_mat
 
-
     def _select_by_Abar(self, in_mat, A):
         assert(isinstance(in_mat, bridge.Matrix))
         assert(isinstance(A, (bridge.Vector, list)))
@@ -188,7 +183,6 @@ class ConstrainedLasso(object):
                 Abar[Abar_index] = i
                 Abar_index += 1
         return self._select_by_A(in_mat, Abar)
-
 
     def _get_Xstar(self, A):
         '''
@@ -208,7 +202,6 @@ class ConstrainedLasso(object):
 
         Xstar = XAtilda - XA * CAinv * CAtilda
         return Xstar
-
 
     def _get_Ystar(self, A):
         '''
@@ -236,7 +229,6 @@ class ConstrainedLasso(object):
 
         return Ystar
 
-
     def _get_Xtilda(self, A):
         '''
         calculate X~
@@ -258,7 +250,6 @@ class ConstrainedLasso(object):
         assert(Xtilda.cols == (X.rows - len(A)))
 
         return Xtilda
-
 
     def _get_Ytilda(self, lambda_, A, s):
         '''
@@ -303,7 +294,6 @@ class ConstrainedLasso(object):
         Ytilda = Ystar + term_vtr
         return Ytilda
 
-
     def _get_theta_bar(self, A, theta):
         assert(isinstance(theta, pdf.Vector))
 
@@ -319,7 +309,6 @@ class ConstrainedLasso(object):
         assert(len(theta_bar) == len(A))
 
         return theta_bar
-
 
     def _get_s(self, a):
         assert(isinstance(a, bridge.Vector))
@@ -345,7 +334,6 @@ class ConstrainedLasso(object):
         logger.debug("step1: beta={}".format(beta))
         self._beta = [beta]
 
-
     def step2(self):
         '''
         k: the number of step
@@ -355,22 +343,21 @@ class ConstrainedLasso(object):
         itr = self.itr
         logger.debug("step2: itr={}".format(itr))
         logger.debug("step2: len(beta)={}".format(len(self._beta)))
-        (A, s) = self._find_abs_max_elements(self._beta[itr -1])
+        (A, s) = self._find_abs_max_elements(self._beta[itr - 1])
         logging.debug("step2: A=\n{}".format(str(A)))
         logging.debug("step2: s=\n{}".format(str(s)))
         self._A.append(A)
         self._s.append(s)
-        assert(len(self._A) == self.itr +1)
-        assert(len(self._s) == self.itr +1)
+        assert(len(self._A) == self.itr + 1)
+        assert(len(self._s) == self.itr + 1)
 
-        lambda_val = pow(10.0, - self.step_size) * self._lambda[itr -1]
+        lambda_val = pow(10.0, - self.step_size) * self._lambda[itr - 1]
         self._lambda.append(lambda_val)
-        assert(len(self._lambda) == self.itr +1)
+        assert(len(self._lambda) == self.itr + 1)
         logger.debug("new lambda: {} at {}-th".format(lambda_val, self.itr))
 
         if self._lambda[itr] < self.lambda_min:
             self._is_converged = True
-
 
     def step3(self):
         '''
@@ -383,7 +370,6 @@ class ConstrainedLasso(object):
 
         self._theta = self._do_lasso(Xstar, Ytilda, alpha=self._lambda[itr])
         self._theta_bar = self._get_theta_bar(self._A[itr], self._theta)
-
 
     def step4(self):
         itr = self.itr
@@ -400,23 +386,23 @@ class ConstrainedLasso(object):
                 beta[len(theta_bar) + i] = theta[i]
             self._beta.append(beta)
         else:
-            self._beta.append(self._beta[itr -1])
+            self._beta.append(self._beta[itr - 1])
 
         logger.debug("step4: len(beta)=\n{}".format(len(self._beta)))
         return step_size_was_too_large
-
 
     def step5(self):
         itr = self.itr
 
         lambda_k = self._lambda[itr]
-        lambda_k1 = self._lambda_[itr -1]
-        self._lambda[itr] = lambda_k1 -0.5*(lambda_k1 - lambda_k)
+        lambda_k1 = self._lambda_[itr - 1]
+        self._lambda[itr] = lambda_k1 - 0.5*(lambda_k1 - lambda_k)
 
 
 def main():
     # parse args
-    parser = argparse.ArgumentParser(description='calculate Constrained LASSO partial atomic charges')
+    parser = argparse.ArgumentParser(
+        description='calculate Constrained LASSO partial atomic charges')
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-d', '--db',

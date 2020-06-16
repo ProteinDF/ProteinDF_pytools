@@ -5,13 +5,9 @@ import sys
 import argparse
 import math
 
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
 
-import proteindf_tools as pdf
 import proteindf_bridge as bridge
+import proteindf_tools as pdf
 
 
 def main():
@@ -39,12 +35,9 @@ def main():
     if (verbose == True):
         print("reading: {}}".format(mpac_file_path))
         print("basisset: {}".format(basisset_name))
-    mpac_file = open(mpac_file_path, "rb")
-    mpac_data = msgpack.unpackb(mpac_file.read())
-    mpac_file.close()
 
     # prepare atomgroup
-    atom_group = bridge.AtomGroup(mpac_data)
+    atom_group = bridge.load_atomgroup(mpac_file_path)
 
     basis2 = pdf.Basis2()
     number_of_AOs = get_number_of_AOs(basis2, basisset_name, atom_group)

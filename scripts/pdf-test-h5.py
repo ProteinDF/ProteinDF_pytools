@@ -27,11 +27,8 @@ import sys
 import os.path
 import argparse
 import logging
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
 
+import proteindf_bridge as bridge
 import proteindf_tools as pdf
 
 
@@ -142,6 +139,7 @@ def main():
     else:
         logger.error('ProteinDF results are not consistent.')
         sys.exit(1)
+
 
 if __name__ == '__main__':
     if os.path.exists("config.ini"):
