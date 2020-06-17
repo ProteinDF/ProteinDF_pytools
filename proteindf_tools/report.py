@@ -36,7 +36,8 @@ class PdfReport(object):
         # plot_elapsed_time(pdfdata,
         #                  workdir + '/elapsed_time.png')
 
-        self._plot_pop_mulliken()
+        if self._pdfparam.scf_converged:
+            self._plot_pop_mulliken()
 
         contents = self._get_rst()
         print(contents)

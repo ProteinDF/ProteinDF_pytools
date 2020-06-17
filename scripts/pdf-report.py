@@ -92,8 +92,9 @@ def do_report(output_dir, entry):
 
     #plot_elapsed_time(entry, output_dir)
 
-    contents = get_rst(entry)
-    print(contents)
+    if entry.scf_converged:
+        contents = get_rst(entry)
+        print(contents)
 
 
 def plot_convergence_check(entry,

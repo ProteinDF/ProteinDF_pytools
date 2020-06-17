@@ -74,9 +74,10 @@ class PdfParam_H5(PdfParamObject):
             self._write_sp_h_matrix(h5)
             for i in range(1, self.iterations + 1):
                 self._write_sp_energy_level(h5, run_type, i)
-            self._write_sp_c_matrix(h5, run_type, self.iterations)
-            self._write_sp_density_matrix(h5, run_type, self.iterations)
-            self._write_sp_pop_mulliken_atom(h5, run_type, self.iterations)
+            if self.scf_converged:
+                self._write_sp_c_matrix(h5, run_type, self.iterations)
+                self._write_sp_density_matrix(h5, run_type, self.iterations)
+                self._write_sp_pop_mulliken_atom(h5, run_type, self.iterations)
 
     def save_full(self, h5_path):
         with h5py.File(h5_path, 'w') as h5:
@@ -256,8 +257,13 @@ class PdfParam_H5(PdfParamObject):
 
         if iteration > 0:
             if (os.path.exists(file_path) != True) or (force == True):
-                logger.info("calculate pop(Mulliken) data ...")
-                run_pdf("pop-mulliken -i {}".format(iteration))
+                c_mat_path = self.get_c_mat_path(run_type, iteration)
+                if os.path.exists(c_mat_path):
+                    logger.info("calculate pop(Mulliken) data ...")
+                    run_pdf("pop-mulliken -i {}".format(iteration))
+                else:
+                    logger.info(
+                        "not found C ({}), give up calculate pop data.".format(c_mat_path))
 
             vtr = Vector()
             if vtr.load(file_path):
@@ -405,9 +411,9 @@ class PdfParam_H5(PdfParamObject):
         vector = None
         #dim = h5ds.attrs["dim"]
         #name = h5ds.attrs["name"]
-
-        array = numpy.array(h5ds[:])
-        vector = Vector(array)
+        if h5ds != None:
+            array = numpy.array(h5ds[:])
+            vector = Vector(array)
 
         return vector
 
