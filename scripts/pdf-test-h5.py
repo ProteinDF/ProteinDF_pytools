@@ -26,10 +26,11 @@ compare ProteinDF results
 import sys
 import os.path
 import argparse
-import logging
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
+import logging
 
 
 def get_OK_NG(yn):
