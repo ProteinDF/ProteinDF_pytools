@@ -35,7 +35,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 epsilon = 1.0E-10  # 計算機イプシロン
-error = 1.0E-5  # 許容誤差
+error = 1.0E-4  # 許容誤差
 
 
 def pdf_home():
