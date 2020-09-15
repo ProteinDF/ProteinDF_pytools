@@ -619,40 +619,40 @@ class DfDistanceVsElementGraph(DfGraph):
         self._ax_hist_y.set_xticks(numpy.arange(x_min, x_max, width_x))
 
 
-class DfLineChart(DfGraph):
-    def __init__(self):
-        DfGraph.__init__(self)
-        self._matrix = matrix
-        self._is_diverging = is_diverging
+# class DfLineChart(DfGraph):
+#     def __init__(self):
+#         DfGraph.__init__(self)
+#         self._matrix = matrix
+#         self._is_diverging = is_diverging
 
-        self.title = 'Matrix Value'
-        self.xlabel = ''
-        self.ylabel = ''
-        self.is_draw_grid = True
+#         self.title = 'Matrix Value'
+#         self.xlabel = ''
+#         self.ylabel = ''
+#         self.is_draw_grid = True
 
-        if self._is_diverging:
-            self._cmap = cm.coolwarm
-        else:
-            self._cmap = cm.bone_r
+#         if self._is_diverging:
+#             self._cmap = cm.coolwarm
+#         else:
+#             self._cmap = cm.bone_r
 
-    def _draw_data(self):
-        data = self._matrix.data
-        if not self._is_diverging:
-            data = numpy.absolute(data)
+#     def _draw_data(self):
+#         data = self._matrix.data
+#         if not self._is_diverging:
+#             data = numpy.absolute(data)
 
-        cax = self._ax.imshow(data,
-                              cmap=self._cmap,
-                              interpolation='none',
-                              norm=None,
-                              # vmax=1.0,
-                              # vmin=0.0,
-                              origin='upper')
+#         cax = self._ax.imshow(data,
+#                               cmap=self._cmap,
+#                               interpolation='none',
+#                               norm=None,
+#                               #vmax=1.0,
+#                               #vmin=0.0,
+#                               origin='upper')
 
-        # self._ax.tick_params(axis='x', labeltop=True, labelbottom=False)
-        self._ax.tick_params(axis='x', labeltop=False, labelbottom=True)
+#         # self._ax.tick_params(axis='x', labeltop=True, labelbottom=False)
+#         self._ax.tick_params(axis='x', labeltop=False, labelbottom=True)
 
-        # self._fig.colorbar(cax, ticks=[ 0, 1], shrink=0.92)
-        self._fig.colorbar(cax, shrink=0.92)
+#         # self._fig.colorbar(cax, ticks=[ 0, 1], shrink=0.92)
+#         self._fig.colorbar(cax, shrink=0.92)
 
 
 class DfDistanceVsElementGraph(DfGraph):
@@ -742,383 +742,393 @@ class DfDistanceVsElementGraph(DfGraph):
 
 # ******************************************************************************
 
-class LineChart(object):
-    def set_data(self, x, y):
-        self.__x = x
-        self.__y = y
-
-    def savefig(self, fname):
-        plt.figure()
-        plt.subplot(111)
-
-        # clear
-        plt.clf()
-
-        # line
-        line = plt.plot(self.__x,
-                        self.__y)
-        # range
-        is_tight = True
-        range = plt.axis()
-        if '__xmin' in self.__dict__:
-            range[0] = self.__xmin
-            is_tight = False
-        if '__xmax' in self.__dict__:
-            range[1] = self.__xmax
-            is_tight = False
-        if '__ymin' in self.__dict__:
-            range[2] = self.__ymin
-            is_tight = False
-        if '__ymax' in self.__dict__:
-            range[3] = self.__ymax
-            is_tight = False
-        if is_tight:
-            plt.axis('tight')
-        else:
-            plt.axis(range)
-
-        plt.savefig(fname)
-
-
-class EnergyLevelChart(object):
-    __values = {}
-
-    def set_data(self, itr, values):
-        self.__data[itr] = values
-
-    def savefig(self, fname):
-        plt.figure()
-        plt.subplot(111)
-
-        # clear
-        plt.clf()
-
-        # line
-        for itr in self.__data.keys():
-            for value in self.__data[itr]:
-                bottom = value
-                width = 0.8
-                height = 0
-                left = itr - 0.45
-                line = plt.barh(bottom, width, height, left)
-
-        # range
-        is_tight = True
-        range = plt.axis()
-        if '__xmin' in self.__dict__:
-            range[0] = self.__xmin
-            is_tight = False
-        if '__xmax' in self.__dict__:
-            range[1] = self.__xmax
-            is_tight = False
-        if '__ymin' in self.__dict__:
-            range[2] = self.__ymin
-            is_tight = False
-        if '__ymax' in self.__dict__:
-            range[3] = self.__ymax
-            is_tight = False
-        if is_tight:
-            plt.axis('tight')
-        else:
-            plt.axis(range)
-
-        plt.savefig(fname)
-
-
-class Graph(object):
-    colors = ['blue', 'green', 'red', 'cyan', 'magenta',
-              'yellow']
-
-    def __init__(self, size=None):
-        """
-        sizeはinchで指定する(width x height)
-        """
-        # clear the figure
-        # self.fig.clf()
-
-    def file_out(self, file_path):
-        self.__prepare()
-        self.fig.savefig(file_path)
-
-    def set_xrange(self, min_value, max_value):
-        self.param['min_x'] = min_value
-        self.param['max_x'] = max_value
-
-    def set_yrange(self, min_value, max_value):
-        self.param['min_y'] = min_value
-        self.param['max_y'] = max_value
-
-    def set_xscale(self, value):
-        assert(value in ['linear', 'log', 'symlog'])
-        self.param['xscale'] = value
-
-    def set_yscale(self, value):
-        assert(value in ['linear', 'log', 'symlog'])
-        self.param['yscale'] = value
-
-    def set_xlabel(self, label):
-        self.param['xlabel'] = label
-
-    def set_ylabel(self, label):
-        self.param['ylabel'] = label
-
-    def draw_grid(self, yn):
-        assert((yn == True) or (yn == False))
-        self.param['draw_grid'] = yn
-
-    def draw_legend(self, yn):
-        assert((yn == True) or (yn == False))
-        self.param['draw_legend'] = yn
-
-    def plot_basis(self, type='s', coef=[], exponent=[], color='blue'):
-        """
-        print Gaussian
-        """
-        assert(len(coef) == len(exponent))
-
-        max_value = 5
-        x = []
-        for i in range(max_value * 100):
-            v = 0.01 * float(i)
-            x.append(v)
-
-        y = []
-        if (type == 's'):
-            for i in x:
-                i = float(i)
-                numOfItems = len(coef)
-                v = 0.0
-                for t in range(numOfItems):
-                    tmp = float(exponent[t]) * (i * i)
-                    if (fabs(tmp) > log(10000.0)):
-                        continue
-                    tmp2 = exp(- tmp)
-                    v += float(coef[t]) * tmp2
-                y.append(v)
-        elif (type == 'p'):
-            for i in x:
-                i = float(i)
-                numOfItems = len(coef)
-                v = 0.0
-                for t in range(numOfItems):
-                    tmp = float(exponent[t]) * (i * i)
-                    if (fabs(tmp) > log(10000.0)):
-                        continue
-                    tmp2 = exp(- tmp)
-                    v += float(coef[t]) * tmp2 * i
-                y.append(v)
-        elif (type == 'd'):
-            for i in x:
-                i = float(i)
-                numOfItems = len(coef)
-                v = 0.0
-                for t in range(numOfItems):
-                    tmp = float(exponent[t]) * (i * i)
-                    if (fabs(tmp) > log(10000.0)):
-                        continue
-                    tmp2 = exp(- tmp)
-                    v += float(coef[t]) * tmp2 * i * i
-                y.append(v)
-
-        self.ax.plot(x, y, color)
-
-    def __prepare(self):
-        plt.figure()
-        plt.subplot(111)
-
-        # clear
-        plt.clf()
-
-        # range
-        range = plt.axis()
-        if self.__xmin:
-            range[0] = self.__xmin
-        if self.__xmax:
-            range[1] = self.__xmax
-        if self.__ymin:
-            range[2] = self.__ymin
-        if self.__ymax:
-            range[3] = self.__ymax
-
-        # locator
-        if (self.param.get('xlocator', True) == False):
-            nullLocator = NullLocator()
-            self.ax.xaxis.set_major_locator(nullLocator)
-            self.ax.xaxis.set_minor_locator(nullLocator)
-        if (self.param.get('ylocator', True) == False):
-            nullLocator = NullLocator()
-            self.ax.yaxis.set_major_locator(nullLocator)
-            self.ax.yaxis.set_minor_locator(nullLocator)
-
-        # axis label
-        if (self.param.has_key('xlabel') == True):
-            self.ax.set_xlabel(self.param['xlabel'])
-        if (self.param.has_key('ylabel') == True):
-            self.ax.set_ylabel(self.param['ylabel'])
-
-        # grid
-        if (self.param.setdefault('draw_grid', False) == True):
-            self.ax.grid(True)
-
-        # legend
-        if (self.param.setdefault('draw_legend', False) == True):
-            self.ax.legend(loc='best')
-
-
-class GraphEnergyLevelHistory(Graph):
-    def __init__(self, size=None):
-        Graph.__init__(self, size)
-
-    def plot_energy_levels(self, iteration, levels, homo_level=-1):
-        """
-        levels is the list of energy level.
-        """
-        if (levels == None):
-            return
-
-        min_y = self.param['min_y']
-        max_y = self.param['max_y']
-
-        # this value is for negligence
-        last_value = min_y
-        negligence_range = (max_y - min_y) * 0.001  # 0.1%
-
-        for level, value in enumerate(levels):
-            # draw HOMO
-            if (level == homo_level):
-                self.ax.broken_barh([(iteration - 0.50, 1.0)], (value, 0),
-                                    edgecolors='red', facecolors='red')
-                continue
-
-            # negligence
-            if ((value < min_y) or (max_y < value)):
-                continue
-            if (abs(last_value - value) < negligence_range):
-                continue
-            else:
-                last_value = value
-
-            # register data
-            self.ax.broken_barh([(iteration - 0.45, 0.9)], (value, 0),
-                                edgecolors='black', facecolors='black')
-
-
-class GraphEnergyLevelSingle(Graph):
-    def __init__(self, size=None):
-        Graph.__init__(self, size)
-
-    def plot_energy_levels(self, levels, homo_level=-1):
-        """
-        levels is the list of energy level.
-        """
-        self.param['ylocator'] = False
-
-        min_y = self.param['min_y']
-        max_y = self.param['max_y']
-
-        # this value is for negligence
-        last_value = min_y
-        negligence_range = (max_y - min_y) * 0.001  # 0.1%
-
-        # plot
-        for level, value in enumerate(levels):
-            # draw HOMO
-            if (level == homo_level):
-                self.ax.broken_barh([(value, 0)], (1.0 - 0.50, 1.0),
-                                    edgecolors='red', facecolors='red'
-                                    )
-
-            # negligence
-            if ((value < min_y) or (max_y < value)):
-                continue
-            if (abs(last_value - value) < negligence_range):
-                continue
-            else:
-                last_value = value
-
-            # register data
-            self.ax.broken_barh([(value, 0)], (1.0 - 0.50, 1.0),
-                                edgecolors='black', facecolors='black'
-                                )
-
-
-class GraphTotalEnergyHistory(Graph):
-    def __init__(self, size=None):
-        Graph.__init__(self, size)
-
-    def plot(self, values, label="", marker='+', linestyle='-'):
-        """
-        plot total energy history data
-        """
-        x = []
-        y = []
-        for i in range(len(values)):
-            if (values[i] != None):
-                x.append(i)
-                y.append(values[i])
-        self.ax.plot(x, y, label=label, marker=marker, linestyle=linestyle)
-
-
-class GraphConvergenceCheck(Graph):
-    def __init__(self, size=None):
-        Graph.__init__(self, size)
-
-    def plot(self, values, label="", marker='+', linestyle='-'):
-        """
-        plot convergence history data
-        """
-        x = []
-        y = []
-        for i in range(len(values)):
-            if (values[i] != None):
-                x.append(i)
-                y.append(values[i])
-        self.ax.plot(x, y, label=label, marker=marker, linestyle=linestyle)
-
-    def plotLog(self, values, label="", marker='+', linestyle='-'):
-        """
-        plot convergence history data (log)
-        """
-        x = []
-        y = []
-        for i in range(len(values)):
-            if (values[i] != None):
-                x.append(i)
-                y.append(values[i])
-        self.ax.semilogy(x, y, label=label, marker=marker, linestyle=linestyle)
-
-
-class BarGraph(DfGraph):
-    def __init__(self):
-        DfGraph.__init__(self)
-        # self.ax = pylab.subplot(121)
-        # params = {
-        #    'legend.fontsize' : 9
-        #    }
-        # pylab.rcParams.update(params)
-
-    def _draw_data(self):
-        pass
-
-    def plot(self, data, labels=None):
-        # prepare
-        rows = len(data)
-        cols = len(data[0]) if rows else 0
-        for i in range(rows):
-            assert cols == len(data[i])
-
-        colors = get_colours(cols)
-        colors.reverse()
-
-        for row in range(rows):
-            left = row
-            y_offset = 0.0
-            for index, value in enumerate(data[row]):
-                self.ax.bar(left, value,
-                            bottom=y_offset,
-                            color=colors[index])
-                y_offset += value
-
-        if labels:
-            # self.ax.legend(labels, bbox_to_anchor=(1.05, 1), loc=2)
-            self.ax.legend(labels, loc='best')
+# class LineChart(object):
+#     def set_data(self, x, y):
+#         self.__x = x
+#         self.__y = y
+
+#     def savefig(self, fname):
+#         plt.figure()
+#         plt.subplot(111)
+
+#         # clear
+#         plt.clf()
+
+#         # line
+#         line = plt.plot(self.__x,
+#                         self.__y)
+#         # range
+#         is_tight = True
+#         range = plt.axis()
+#         if '__xmin' in self.__dict__:
+#             range[0] = self.__xmin
+#             is_tight = False
+#         if '__xmax' in self.__dict__:
+#             range[1] = self.__xmax
+#             is_tight = False
+#         if '__ymin' in self.__dict__:
+#             range[2] = self.__ymin
+#             is_tight = False
+#         if '__ymax' in self.__dict__:
+#             range[3] = self.__ymax
+#             is_tight = False
+#         if is_tight:
+#             plt.axis('tight')
+#         else:
+#             plt.axis(range)
+
+#         plt.savefig(fname)
+
+
+# class EnergyLevelChart(object):
+#     __values = {}
+
+#     def set_data(self, itr, values):
+#         self.__data[itr] = values
+
+#     def savefig(self, fname):
+#         plt.figure()
+#         plt.subplot(111)
+
+#         # clear
+#         plt.clf()
+
+#         # line
+#         for itr in self.__data.keys():
+#             for value in self.__data[itr]:
+#                 bottom = value
+#                 width = 0.8
+#                 height = 0
+#                 left = itr - 0.45
+#                 line = plt.barh(bottom, width, height, left)
+
+#         # range
+#         is_tight = True
+#         range = plt.axis()
+#         if '__xmin' in self.__dict__:
+#             range[0] = self.__xmin
+#             is_tight = False
+#         if '__xmax' in self.__dict__:
+#             range[1] = self.__xmax
+#             is_tight = False
+#         if '__ymin' in self.__dict__:
+#             range[2] = self.__ymin
+#             is_tight = False
+#         if '__ymax' in self.__dict__:
+#             range[3] = self.__ymax
+#             is_tight = False
+#         if is_tight:
+#             plt.axis('tight')
+#         else:
+#             plt.axis(range)
+
+#         plt.savefig(fname)
+
+
+
+# class Graph(object):
+#     colors = ['blue', 'green', 'red', 'cyan', 'magenta',
+#               'yellow']
+
+#     def __init__(self, size = None):
+#         """
+#         sizeはinchで指定する(width x height)
+#         """
+#         # clear the figure
+#         #self.fig.clf()
+
+#     def file_out(self, file_path):
+#         self.__prepare()
+#         self.fig.savefig(file_path)
+
+
+#     def set_xrange(self, min_value, max_value):
+#         self.param['min_x'] = min_value
+#         self.param['max_x'] = max_value
+
+
+#     def set_yrange(self, min_value, max_value):
+#         self.param['min_y'] = min_value
+#         self.param['max_y'] = max_value
+
+
+#     def set_xscale(self, value):
+#         assert(value in ['linear', 'log', 'symlog'])
+#         self.param['xscale'] = value
+
+
+#     def set_yscale(self, value):
+#         assert(value in ['linear', 'log', 'symlog'])
+#         self.param['yscale'] = value
+
+
+#     def set_xlabel(self, label):
+#         self.param['xlabel'] = label
+
+
+#     def set_ylabel(self, label):
+#         self.param['ylabel'] = label
+
+
+#     def draw_grid(self, yn):
+#         assert((yn == True) or (yn == False))
+#         self.param['draw_grid'] = yn
+
+
+#     def draw_legend(self, yn):
+#         assert((yn == True) or (yn == False))
+#         self.param['draw_legend'] = yn
+
+
+#     def plot_basis(self, type = 's', coef = [], exponent = [], color = 'blue'):
+#         """
+#         print Gaussian
+#         """
+#         assert(len(coef) == len(exponent))
+
+#         max_value = 5
+#         x = []
+#         for i in range(max_value * 100):
+#             v = 0.01 * float(i)
+#             x.append(v)
+
+#         y = []
+#         if (type == 's'):
+#             for i in x:
+#                 i = float(i)
+#                 numOfItems = len(coef)
+#                 v = 0.0
+#                 for t in range(numOfItems):
+#                     tmp = float(exponent[t]) * (i * i)
+#                     if (fabs(tmp) > log(10000.0)):
+#                         continue
+#                     tmp2 = exp(- tmp)
+#                     v += float(coef[t]) * tmp2
+#                 y.append(v)
+#         elif (type == 'p'):
+#             for i in x:
+#                 i = float(i)
+#                 numOfItems = len(coef)
+#                 v = 0.0
+#                 for t in range(numOfItems):
+#                     tmp = float(exponent[t]) * (i * i)
+#                     if (fabs(tmp) > log(10000.0)):
+#                         continue
+#                     tmp2 = exp(- tmp)
+#                     v += float(coef[t]) * tmp2 * i
+#                 y.append(v)
+#         elif (type == 'd'):
+#             for i in x:
+#                 i = float(i)
+#                 numOfItems = len(coef)
+#                 v = 0.0
+#                 for t in range(numOfItems):
+#                     tmp = float(exponent[t]) * (i * i)
+#                     if (fabs(tmp) > log(10000.0)):
+#                         continue
+#                     tmp2 = exp(- tmp)
+#                     v += float(coef[t]) * tmp2 * i * i
+#                 y.append(v)
+
+#         self.ax.plot(x, y, color)
+
+
+#     def __prepare(self):
+#         plt.figure()
+#         plt.subplot(111)
+
+#         # clear
+#         plt.clf()
+
+#         # range
+#         range = plt.axis()
+#         if self.__xmin:
+#             range[0] = self.__xmin
+#         if self.__xmax:
+#             range[1] = self.__xmax
+#         if self.__ymin:
+#             range[2] = self.__ymin
+#         if self.__ymax:
+#             range[3] = self.__ymax
+
+#         # locator
+#         if (self.param.get('xlocator', True) == False):
+#             nullLocator = NullLocator()
+#             self.ax.xaxis.set_major_locator(nullLocator)
+#             self.ax.xaxis.set_minor_locator(nullLocator)
+#         if (self.param.get('ylocator', True) == False):
+#             nullLocator = NullLocator()
+#             self.ax.yaxis.set_major_locator(nullLocator)
+#             self.ax.yaxis.set_minor_locator(nullLocator)
+
+#         # axis label
+#         if (self.param.has_key('xlabel') == True):
+#             self.ax.set_xlabel(self.param['xlabel'])
+#         if (self.param.has_key('ylabel') == True):
+#             self.ax.set_ylabel(self.param['ylabel'])
+
+#         # grid
+#         if (self.param.setdefault('draw_grid', False) == True):
+#             self.ax.grid(True)
+
+#         # legend
+#         if (self.param.setdefault('draw_legend', False) == True):
+#             self.ax.legend(loc='best')
+
+
+# class GraphEnergyLevelHistory(Graph):
+#     def __init__(self, size = None):
+#         Graph.__init__(self, size)
+
+#     def plot_energy_levels(self, iteration, levels, homo_level = -1):
+#         """
+#         levels is the list of energy level.
+#         """
+#         if (levels == None):
+#             return
+
+#         min_y = self.param['min_y']
+#         max_y = self.param['max_y']
+
+#         # this value is for negligence
+#         last_value = min_y
+#         negligence_range = (max_y - min_y) * 0.001 # 0.1%
+
+#         for level, value in enumerate(levels):
+#             # draw HOMO
+#             if (level == homo_level):
+#                 self.ax.broken_barh([(iteration -0.50, 1.0)], (value, 0),
+#                                     edgecolors='red', facecolors='red')
+#                 continue
+
+#             # negligence
+#             if ((value < min_y) or (max_y < value)):
+#                 continue
+#             if (abs(last_value - value) < negligence_range):
+#                 continue
+#             else:
+#                 last_value = value
+
+#             # register data
+#             self.ax.broken_barh([(iteration -0.45, 0.9)], (value, 0),
+#                                 edgecolors='black', facecolors='black')
+
+
+# class GraphEnergyLevelSingle(Graph):
+#     def __init__(self, size = None):
+#         Graph.__init__(self, size)
+
+#     def plot_energy_levels(self, levels, homo_level = -1):
+#         """
+#         levels is the list of energy level.
+#         """
+#         self.param['ylocator'] = False
+
+#         min_y = self.param['min_y']
+#         max_y = self.param['max_y']
+
+#         # this value is for negligence
+#         last_value = min_y
+#         negligence_range = (max_y - min_y) * 0.001 # 0.1%
+
+#         # plot
+#         for level, value in enumerate(levels):
+#             # draw HOMO
+#             if (level == homo_level):
+#                 self.ax.broken_barh([(value, 0)], (1.0 -0.50, 1.0),
+#                                     edgecolors='red', facecolors='red'
+#                                     )
+
+#             # negligence
+#             if ((value < min_y) or (max_y < value)):
+#                 continue
+#             if (abs(last_value - value) < negligence_range):
+#                 continue
+#             else:
+#                 last_value = value
+
+#             # register data
+#             self.ax.broken_barh([(value, 0)], (1.0 -0.50, 1.0),
+#                                 edgecolors='black', facecolors='black'
+#                                 )
+
+
+# class GraphTotalEnergyHistory(Graph):
+#     def __init__(self, size = None):
+#         Graph.__init__(self, size)
+
+#     def plot(self, values, label = "", marker = '+', linestyle = '-'):
+#         """
+#         plot total energy history data
+#         """
+#         x = []
+#         y = []
+#         for i in range(len(values)):
+#             if (values[i] != None):
+#                 x.append(i)
+#                 y.append(values[i])
+#         self.ax.plot(x, y, label = label, marker = marker, linestyle = linestyle)
+
+
+# class GraphConvergenceCheck(Graph):
+#     def __init__(self, size = None):
+#         Graph.__init__(self, size)
+
+#     def plot(self, values, label = "", marker = '+', linestyle = '-'):
+#         """
+#         plot convergence history data
+#         """
+#         x = []
+#         y = []
+#         for i in range(len(values)):
+#             if (values[i] != None):
+#                 x.append(i)
+#                 y.append(values[i])
+#         self.ax.plot(x, y, label = label, marker = marker, linestyle = linestyle)
+
+#     def plotLog(self, values, label = "", marker = '+', linestyle = '-'):
+#         """
+#         plot convergence history data (log)
+#         """
+#         x = []
+#         y = []
+#         for i in range(len(values)):
+#             if (values[i] != None):
+#                 x.append(i)
+#                 y.append(values[i])
+#         self.ax.semilogy(x, y, label = label, marker = marker, linestyle = linestyle)
+
+# class BarGraph(DfGraph):
+#     def __init__(self):
+#         DfGraph.__init__(self)
+#         #self.ax = pylab.subplot(121)
+#         #params = {
+#         #    'legend.fontsize' : 9
+#         #    }
+#         #pylab.rcParams.update(params)
+
+#     def _draw_data(self):
+#         pass
+
+#     def plot(self, data, labels = None):
+#         # prepare
+#         rows = len(data)
+#         cols = len(data[0]) if rows else 0
+#         for i in range(rows):
+#             assert cols == len(data[i])
+
+#         colors = get_colours(cols)
+#         colors.reverse()
+
+#         for row in range(rows):
+#             left = row
+#             y_offset = 0.0
+#             for index, value in enumerate(data[row]):
+#                 self.ax.bar(left, value,
+#                             bottom=y_offset,
+#                             color=colors[index])
+#                 y_offset += value
+
+#         if labels:
+#             #self.ax.legend(labels, bbox_to_anchor=(1.05, 1), loc=2)
+#             self.ax.legend(labels, loc='best')
