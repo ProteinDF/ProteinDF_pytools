@@ -39,7 +39,7 @@ class PdfSim(object):
         setup to run ProteinDF
         """
         # make fl_Userinput
-        if pdfparam == None:
+        if pdfparam is None:
             pdfparam = get_default_pdfparam()
         assert(isinstance(pdfparam, PdfParam))
 
@@ -101,7 +101,8 @@ class PdfSim(object):
 
             entry = PdfArchive(db_path)
             itr = entry.iterations
-            total_energy = entry.get_total_energy(itr)
+            if itr is not None:
+                total_energy = entry.get_total_energy(itr)
 
         os.chdir(current_dir)
 
