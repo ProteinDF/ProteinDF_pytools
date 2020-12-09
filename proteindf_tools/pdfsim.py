@@ -34,6 +34,9 @@ from .pdfarchive import PdfArchive
 class PdfSim(object):
     """
     """
+    def __init__(self, *args, **kwargs):
+        self._db_path = kwargs.get('db_path', 'pdfresults.db')
+
     def setup(self, pdfparam =None, workdir ="."):
         """
         setup to run ProteinDF
@@ -79,7 +82,7 @@ class PdfSim(object):
 
         """
         workdir = kwargs.get('workdir', '')
-        db_path = kwargs.get('db_path', 'pdfresults.db')
+        db_path = kwargs.get('db_path', self._db_path)
         dry_run = kwargs.get('dry_run', False)
 
         current_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or ".")
@@ -249,6 +252,7 @@ class PdfSim(object):
 
         return (grad_mat, rms)
 
+
     def total_energy(self, pdfparam, workdir="."):
         (itr, total_energy) = self.calc_pdf(pdfparam, workdir)
 
@@ -289,7 +293,7 @@ class PdfSim(object):
         run_pdf(['-o', 'pdf.log', 'serial'])
         run_pdf('archive')
 
-        entry = pdf.PdfArchive('pdfresults.db')
+        entry = pdf.PdfArchive(self._db_path)
         itr = entry.iterations
         total_energy = entry.get_total_energy(itr)
 

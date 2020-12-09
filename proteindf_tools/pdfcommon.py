@@ -162,10 +162,11 @@ def mpac2py(path):
     """
     assert(isinstance(path, str) == True)
 
-    f = open(path, "rb")
-    contents = f.read()
-    data = bridge.Utils.to_unicode_dict(msgpack.unpackb(contents))
-    f.close()
+    data = None
+    with open(path, "rb") as f:
+        contents = f.read()
+        unpacked_data = msgpack.unpackb(contents)
+        data = bridge.Utils.to_unicode_dict(unpacked_data)
 
     return data
 
