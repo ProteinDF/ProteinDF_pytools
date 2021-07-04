@@ -71,7 +71,6 @@ setup(name='proteindf_tools',
       ],
 
       install_requires=[
-          'msgpack-python',
           'h5py',
           'BeautifulSoup4',
           'numpy',

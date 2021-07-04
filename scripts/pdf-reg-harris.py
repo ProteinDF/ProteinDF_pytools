@@ -26,10 +26,11 @@ make msgpack files from the results of ProteinDF calculation for Harris function
 import os
 import sys
 import argparse
-import msgpack
 import array
 
+import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
 
 def main():
     # initialize
@@ -63,9 +64,9 @@ def main():
     if len(atomlabel_parts) > 1:
         label = atomlabel_parts[1]
     if len(label) > 0:
-        print('target atom %s with label %s'% (atom, label))
+        print('target atom %s with label %s' % (atom, label))
     else:
-        print('target atom %s'% (atom))
+        print('target atom %s' % (atom))
 
     # read pdfparam
     pdfparam = pdf.load_pdfparam(args.param)
@@ -75,10 +76,7 @@ def main():
     harris_db = {}
     if (os.path.exists(harris_db_path)):
         print("load database: %s" % (harris_db_path))
-        db_file = open(harris_db_path, "rb")
-        db_contents = db_file.read()
-        harris_db = msgpack.unpackb(db_contents)
-        db_file.close()
+        harris_db = bridge.load_msgpack(harris_db_path)
 
     # set basis_set
     basisset = pdfparam.get_basisset(atomlabel)
@@ -87,7 +85,7 @@ def main():
 
     # coord
     #mol = pdfparam.molecule
-    #for obj in mol:
+    # for obj in mol:
     #    obj_atomlabel = '%s' % (obj.symbol)
     #    if len(obj.name) > 0:
     #        obj_atomlabel += '@%s' % (obj.name)
@@ -118,7 +116,7 @@ def main():
     num_of_target_orbs = len(target_orbs)
     atom_dens_mat = pdf.SymmetricMatrix(num_of_target_orbs)
     for i in range(num_of_target_orbs):
-        for j in range(i +1):
+        for j in range(i + 1):
             atom_dens_mat.set(i, j, mat.get(target_orbs[i],
                                             target_orbs[j]))
 
@@ -127,10 +125,7 @@ def main():
     harris_db['density_matrix'][atom] = atom_dens_mat.get_raw_data()
 
     # output
-    fout = open(harris_db_path, "wb")
-    harris_mpac = msgpack.packb(harris_db)
-    fout.write(harris_mpac)
-    fout.close()
+    bridge.save_msgpack(harris_db, harris_db_path)
 
 
 if __name__ == '__main__':

@@ -31,23 +31,13 @@ import re
 import math
 import subprocess
 import argparse
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
 
+import proteindf_bridge as bridge
 import proteindf_tools as pdf
 
 # parameters
 PDF_INDEX_FILE = 'pdfindex.mpac'
 
-def mpac2py(path):
-    f = open(path, "rb")
-    contents = f.read()
-    data = msgpack.unpackb(contents)
-    f.close()
-
-    return data
 
 def make_orbinfo_table(pdfparam_path):
     """
@@ -60,11 +50,11 @@ def make_orbinfo_table(pdfparam_path):
             '-p', pdfparam_path,
             '-w', orb_info_path
             ]
-    subproc_args = { 'stdin': subprocess.PIPE,
-                     'stdout': subprocess.PIPE,
-                     'stderr': subprocess.STDOUT,
-                     'close_fds': True,
-                     }
+    subproc_args = {'stdin': subprocess.PIPE,
+                    'stdout': subprocess.PIPE,
+                    'stderr': subprocess.STDOUT,
+                    'close_fds': True,
+                    }
     try:
         proc = subprocess.Popen(args, **subproc_args)
     except OSError:
@@ -79,7 +69,7 @@ def make_orbinfo_table(pdfparam_path):
     ret = proc.wait()
     #sys.stdout.write('%s retrun code: %d\n' % (args[0], ret))
 
-    orbinfo = mpac2py(orb_info_path);
+    orbinfo = load_mpac(orb_info_path)
     return orbinfo
 
 
@@ -122,11 +112,11 @@ def get_pdf_eri_list(pdfparam_path, pdf_eri_indeces_path):
     args = [cmd,
             '-p', pdfparam_path,
             str(pdf_eri_indeces_path)]
-    subproc_args = { 'stdin': subprocess.PIPE,
-                     'stdout': subprocess.PIPE,
-                     'stderr': subprocess.STDOUT,
-                     'close_fds': True,
-                     }
+    subproc_args = {'stdin': subprocess.PIPE,
+                    'stdout': subprocess.PIPE,
+                    'stderr': subprocess.STDOUT,
+                    'close_fds': True,
+                    }
     try:
         proc = subprocess.Popen(args, **subproc_args)
     except OSError:
@@ -148,7 +138,7 @@ def get_pdf_eri_list(pdfparam_path, pdf_eri_indeces_path):
 
 
 def check_eri(value1, value2, threshold, p, q, r, s,
-              verbose = False):
+              verbose=False):
     answer = True
     err = math.fabs(value1 - value2)
     if err > threshold:
@@ -190,14 +180,14 @@ def main():
     # ERI check
     error_count = 0
     total_count = 0
-    eri_data = mpac2py(eri_mpac_file)
+    eri_data = load_mpac(eri_mpac_file)
 
     num_of_tests = len(eri_data)
 
     # make index list
     orbinfo = make_orbinfo_table(pdfparam_file)
-    pdf_eri_indeces = [ [0, 0, 0, 0] for x in range(num_of_tests) ]
-    ref_eri_values = [0.0 for x in range(num_of_tests) ]
+    pdf_eri_indeces = [[0, 0, 0, 0] for x in range(num_of_tests)]
+    ref_eri_values = [0.0 for x in range(num_of_tests)]
     for i in range(num_of_tests):
         # 入力インデックスはGaussianのインデックス
         index4 = translate_5d_index(orbinfo,
@@ -209,10 +199,7 @@ def main():
         ref_eri_values[i] = eri_data[i][4]
 
     # file out
-    mpac = msgpack.packb(pdf_eri_indeces)
-    indeces_file = open(PDF_INDEX_FILE, 'wb')
-    indeces_file.write(mpac)
-    indeces_file.close()
+    bridge.save_msgpack(pdf_eri_indeces, PDF_INDEX_FILE)
 
     # calc eri
     pdf_eri_values = get_pdf_eri_list(pdfparam_file, PDF_INDEX_FILE)

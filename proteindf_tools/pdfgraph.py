@@ -300,20 +300,17 @@ class DfEnergyLevelHistoryGraphH(DfGraph):
     def _draw_data(self):
         draw_iterations = []
         if len(self._select_iterations) == 0:
-            for itr in range(self._max_itr + 1):
-                draw_iterations.append(itr + 1)
-        else:
-            for order, itr in enumerate(self._select_iterations):
+            for itr in range(1, self._max_itr + 1):
                 draw_iterations.append(itr)
+        else:
+            draw_iterations = self._select_iterations
 
         for d in self._data:
             itr = d[0]
             level = d[1]
             value = d[2]
 
-            if itr in draw_iterations:
-                order = draw_iterations.index(itr)
-            else:
+            if itr not in draw_iterations:
                 continue
 
             strike = False
@@ -324,22 +321,20 @@ class DfEnergyLevelHistoryGraphH(DfGraph):
             elif level == self._LUMO_level:
                 strike = True
                 color = 'b'
-            self._draw_data_line(order, value,
+            self._draw_data_line(itr, value,
                                  strike=strike,
                                  color=color)
 
-    def _draw_data_line(self, order, value, strike=False, color='k'):
+    def _draw_data_line(self, x, value, strike=False, color='k'):
         if (self.ymin < value) and (value < self.ymax):
             width = 0.8
-            height = 0.01
             if strike:
                 width = 1.0
-                height = 0.01
 
-            left = order - width / 2.0
-            bottom = value - height / 2.0
+            height = 0.01
+            bottom = value - 0.5 * height
 
-            self._ax.bar(left, height, width, bottom,
+            self._ax.bar(x, height, width, bottom, align='center',
                          edgecolor=color, color=color)
 
 

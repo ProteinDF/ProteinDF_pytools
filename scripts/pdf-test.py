@@ -26,13 +26,11 @@ compare ProteinDF results
 import sys
 import os.path
 import argparse
-import logging
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
 
+import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
+import logging
 
 
 def get_OK_NG(yn):
@@ -111,7 +109,6 @@ def main():
     data1 = pdf.PdfArchive(path1)
     data2 = pdf.PdfArchive(path2)
 
-
     # check ------------------------------------------------------------
     answer = True
     if compare_info:
@@ -141,6 +138,7 @@ def main():
     else:
         logger.error('ProteinDF results are not consistent.')
         sys.exit(1)
+
 
 if __name__ == '__main__':
     if os.path.exists("config.ini"):

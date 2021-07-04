@@ -3,10 +3,11 @@
 
 import os
 import argparse
-import logging
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
+import logging
 
 
 def make_pop_data(pop_vtr, output_path):
@@ -14,7 +15,7 @@ def make_pop_data(pop_vtr, output_path):
     with open(output_path, "w") as f:
         for index in range(num_of_items):
             charge = pop_vtr[index]
-            f.write("{}, {}\n".format(index +1, charge))
+            f.write("{}, {}\n".format(index + 1, charge))
 
 
 def make_pop_data_diff(pop_vtr1, pop_vtr2, output_path):
@@ -24,14 +25,14 @@ def make_pop_data_diff(pop_vtr1, pop_vtr2, output_path):
     with open(output_path, "w") as f:
         for index in range(num_of_items):
             charge = pop_vtr1[index] - pop_vtr2[index]
-            f.write("{}, {}\n".format(index +1, charge))
+            f.write("{}, {}\n".format(index + 1, charge))
 
 
 def main():
     # parse args
     parser = argparse.ArgumentParser(description='plot population')
     group = parser.add_mutually_exclusive_group(required=True)
-    #group.add_argument('-e', '--elevel_vector',
+    # group.add_argument('-e', '--elevel_vector',
     #                   nargs=1,
     #                   help='ProteinDF energy level vector file')
     group.add_argument('--h5',
@@ -48,7 +49,6 @@ def main():
                         action='store_true',
                         default=False)
     args = parser.parse_args()
-
 
     # setting
     verbose = args.verbose
@@ -76,7 +76,6 @@ def main():
     if os.path.exists(pop_vtr_path2):
         pop_vtr2 = pdf.Vector()
         pop_vtr2.load(pop_vtr_path2)
-
 
     data_path = "pop.mulliken.txt"
     # make_pop_data(pop_vtr, data_path)

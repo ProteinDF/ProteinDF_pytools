@@ -19,6 +19,11 @@
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
+from .pdfparam_hdf5 import PdfParam_H5
+from .pdfparam import PdfParam
+from .pdfcommon import get_default_pdfparam, run_pdf
+from .pdfarchive import PdfArchive
+import proteindf_bridge as bridge
 import os
 import sys
 import copy
@@ -26,10 +31,6 @@ import math
 import logging
 logger = logging.getLogger(__name__)
 
-import proteindf_bridge as bridge
-from .pdfparam import PdfParam
-from .pdfcommon import get_default_pdfparam, run_pdf
-from .pdfarchive import PdfArchive
 
 class PdfSim(object):
     """
@@ -58,7 +59,7 @@ class PdfSim(object):
 
         self._make_workdir(workdir)
 
-    def _make_workdir(self, workdir ='.'):
+    def _make_workdir(self, workdir='.'):
         # make sub-directories
         dirs = ['fl_Work']
         for d in dirs:
@@ -82,8 +83,14 @@ class PdfSim(object):
 
         """
         workdir = kwargs.get('workdir', '')
+<<<<<<< HEAD
         db_path = kwargs.get('db_path', self._db_path)
+=======
+>>>>>>> 4580337b09f2819f44a51b3775274109b0b4d461
         dry_run = kwargs.get('dry_run', False)
+        db_path = kwargs.get('db_path', 'pdfresults.db')
+        cmd_pdf = kwargs.get('cmd_pdf', 'serial')
+        cmd_archive = kwargs.get('cmd_archive', 'archive')
 
         current_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or ".")
 
@@ -99,10 +106,21 @@ class PdfSim(object):
         itr = None
         total_energy = None
         if not dry_run:
-            run_pdf(['serial', '-o', 'pdf.log'])
-            run_pdf('archive')
+            # exec pdf-serial(default)
+            # run_pdf(['serial', '-o', 'pdf.log'])
+            run_pdf([cmd_pdf, '-o', 'pdf.log'])
 
-            entry = PdfArchive(db_path)
+            # exec pdf-archive
+            run_pdf(cmd_archive)
+
+            entry = None
+            if cmd_archive == 'archive':
+                logger.info('read archived file(DB)')
+                entry = PdfArchive(db_path)
+            elif cmd_archive == 'archive-h5':
+                logger.info('read archived file(HDF5)')
+                entry = PdfParam_H5()
+                entry.open('pdfresults.h5')
             itr = entry.iterations
             if itr is not None:
                 total_energy = entry.get_total_energy(itr)
@@ -112,7 +130,7 @@ class PdfSim(object):
         return (itr, total_energy)
 
     # ------------------------------------------------------------------
-    def pop(self, iteration = -1, *args, **kwargs):
+    def pop(self, iteration=-1, *args, **kwargs):
         """
         calc population
         """
@@ -137,14 +155,7 @@ class PdfSim(object):
 
         os.chdir(current_dir)
 
-
     # ------------------------------------------------------------------
-
-
-
-
-
-
 
     def opt(self, pdfparam, workdir=".", max_cycle=100):
         current_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or ".")
@@ -154,12 +165,14 @@ class PdfSim(object):
 
         opt_cycle = 1
         while True:
-            opt_workdir = os.path.join(current_dir, "opt_cycle_{}".format(opt_cycle))
+            opt_workdir = os.path.join(
+                current_dir, "opt_cycle_{}".format(opt_cycle))
             if not os.path.exists(opt_workdir):
                 os.mkdir(opt_workdir)
             else:
                 self._logger.info('already exist: {}'.format(opt_workdir))
-            (grad_mat, rms) = self.numerical_grad(pdfparam, opt_workdir, accuracy)
+            (grad_mat, rms) = self.numerical_grad(
+                pdfparam, opt_workdir, accuracy)
 
             max_force = 0.0
             for i in range(len(grad_mat)):
@@ -197,7 +210,8 @@ class PdfSim(object):
         index = 0
         for atom_id, atom in molecule.atoms():
             for direction in range(3):
-                logger.debug("start numerical grad for {}".format(direction_str[direction]))
+                logger.debug("start numerical grad for {}".format(
+                    direction_str[direction]))
                 h = delta
 
                 delta_TE = 0.0
@@ -207,18 +221,22 @@ class PdfSim(object):
 
                     pdfparam1 = pdfparam
                     pdfparam1.molecule[atom_id] = atom1
-                    workdir1 = os.path.join(workdir, "{}_d{}_h{}_1".format(atom_id, direction,h))
+                    workdir1 = os.path.join(
+                        workdir, "{}_d{}_h{}_1".format(atom_id, direction, h))
                     (itr, total_energy1) = self.calc_pdf(pdfparam1, workdir1)
 
                     pdfparam2 = pdfparam
                     pdfparam2.molecule[atom_id] = atom2
-                    workdir2 = os.path.join(workdir, "{}_d{}_h{}_2".format(atom_id, direction,h))
+                    workdir2 = os.path.join(
+                        workdir, "{}_d{}_h{}_2".format(atom_id, direction, h))
                     (itr, total_energy2) = self.calc_pdf(pdfparam2, workdir2)
 
                     delta_TE = total_energy2 - total_energy1
-                    print("h={: e}, delta_TE={: e}, v={: e}".format(h, delta_TE, delta_TE / (2.0 * h)))
+                    print("h={: e}, delta_TE={: e}, v={: e}".format(
+                        h, delta_TE, delta_TE / (2.0 * h)))
                     if (math.fabs(delta_TE) < accuracy) or (h < 1.0E-2):
-                        logger.debug("numerical grad condition satisfied. value={} < {}".format(delta_TE, accuracy))
+                        logger.debug("numerical grad condition satisfied. value={} < {}".format(
+                            delta_TE, accuracy))
                         break
 
                     h *= 0.5
@@ -231,7 +249,7 @@ class PdfSim(object):
                 logger.debug("gradient value [{}][{}] = {}".format(atom_id,
                                                                    direction_str[direction],
                                                                    value))
-                #self._show_grad_mat(grad_mat)
+                # self._show_grad_mat(grad_mat)
 
                 sys.stderr.flush()
                 sys.stdout.flush()
@@ -241,7 +259,8 @@ class PdfSim(object):
         rms = 0.0
         index = 0
         for atom_id, atom in molecule.atoms():
-            logger.info("[{:>8s}] {: 8.5f} {: 8.5f} {: 8.5f}".format(atom_id, grad_mat[index][0], grad_mat[index][1], grad_mat[index][2]))
+            logger.info("[{:>8s}] {: 8.5f} {: 8.5f} {: 8.5f}".format(
+                atom_id, grad_mat[index][0], grad_mat[index][1], grad_mat[index][2]))
             for i in range(3):
                 rms += grad_mat[index][i] * grad_mat[index][i]
             index += 1
@@ -260,7 +279,8 @@ class PdfSim(object):
 
     def _show_grad_mat(self, grad_mat):
         for i in range(len(grad_mat)):
-            print("[{}] ({}, {}, {})".format(i, grad_mat[i][0], grad_mat[i][1], grad_mat[i][2]))
+            print("[{}] ({}, {}, {})".format(
+                i, grad_mat[i][0], grad_mat[i][1], grad_mat[i][2]))
 
     def _move(self, atom, direction, delta):
         assert(0 <= direction < 3)

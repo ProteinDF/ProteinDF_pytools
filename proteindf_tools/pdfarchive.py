@@ -811,16 +811,16 @@ class PdfArchive(object):
         elif isinstance(val1, list) and isinstance(val2, list):
             if len(val1) == len(val2):
                 for i in range(len(val1)):
-                    answer = answer ^ self._check(val1[i], val2[i], '{0}[{1}]'.format(msg, i), threshold)
+                    answer = answer ^ self._check(val1[i], val2[i], '{0}[{1}]'.format(msg, i), allowable_error)
         else:
             answer = (val1 == val2)
 
         if answer:
             self._logger.debug('test: {msg}; {val1} == {val2} (threshold={threshold})'.format(
-                    msg=str(msg), val1=val1, sval2=val2, threshold=threshold))
+                msg=str(msg), val1=val1, val2=val2, threshold=allowable_error))
         else:
             self._logger.error('test: {msg}; {val1} != {val2} (threshold={threshold})'.format(
-                    msg=str(msg), val1=val1, val2=val2, threshold=threshold))
+                msg=str(msg), val1=val1, val2=val2, threshold=allowable_error))
 
         return answer
 

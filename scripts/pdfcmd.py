@@ -31,7 +31,9 @@ import argparse
 import copy
 import pprint
 
+import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
 
 def main():
     # parse args
@@ -58,25 +60,27 @@ def main():
     #pdfcmd_path = os.path.abspath(os.path.dirname(sys.argv[0]))
     #pdfcmd_dirname = os.path.dirname(pdfcmd_path)
     #pdf_home = pdfcmd_dirname
-    #if pdfcmd_dirname[-4:] == '/bin':
+    # if pdfcmd_dirname[-4:] == '/bin':
     #    pdf_home = pdfcmd_dirname[0:-5]
-    #if debug:
+    # if debug:
     #    sys.stderr.write('PDF_HOME environment variable is set to \'{}\'\n'.format(pdf_home))
     #os.environ['PDF_HOME'] = pdf_home
 
     (yn, pdfcmd, pdfargs, ext) = get_cmd(arg_array)
     if yn == False:
-        sys.stderr.write("cannot command: {}".format(' '.join(args.cmd + unknown)))
+        sys.stderr.write("cannot command: {}".format(
+            ' '.join(args.cmd + unknown)))
     subproc_cmd = " ".join([pdfcmd] + pdfargs)
 
     if debug:
         sys.stderr.write('cmd={}\n'.format(subproc_cmd))
 
-    p = pdf.Process(logfile_path = output)
+    p = pdf.Process(logfile_path=output)
     return_code = p.cmd(subproc_cmd).commit()
 
     if return_code != 0:
-        sys.stderr.write('Failed to execute pdf command: {}\n'.format(subproc_cmd))
+        sys.stderr.write(
+            'Failed to execute pdf command: {}\n'.format(subproc_cmd))
         sys.stderr.write('return code = {}\n'.format(return_code))
 
     return return_code
@@ -141,6 +145,7 @@ def get_cmd_in_dir(arg_array, path):
             break
 
     return (found, cmd, arg_array, ext)
+
 
 if __name__ == '__main__':
     return_code = main()

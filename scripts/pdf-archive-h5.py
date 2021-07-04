@@ -26,17 +26,15 @@ archive ProteinDF results.
 import os
 import sys
 import argparse
-import logging
-import logging.config
 import traceback
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
 #import pprint
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
+import logging
+import logging.config
+
 
 def main():
     parser = argparse.ArgumentParser(description='archive ProteinDF results')
@@ -73,7 +71,7 @@ def main():
     except:
         print('-'*60)
         traceback.print_exc(file=sys.stdout)
-        #print(traceback.format_exc())
+        # print(traceback.format_exc())
         print('-'*60)
 
 

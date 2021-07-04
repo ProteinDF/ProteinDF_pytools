@@ -4,15 +4,12 @@
 import sys
 import argparse
 import csv
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
 import math
 import copy
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
 
 def load_charges(csv_path):
     print(csv_path)
@@ -26,18 +23,15 @@ def load_charges(csv_path):
 
     return charges
 
+
 def load_ESPs(mpac_path):
     # print('load: {}'.format(mpac_path))
-    data = None
-    with open(mpac_path, 'rb') as f:
-        mpac_data = f.read()
-        data = msgpack.unpackb(mpac_data)
-        data = bridge.Utils.to_unicode_dict(data)
-
+    data = bridge.load_msgpack(mpac_path)
+    if data != None:
         grids = []
         for p in data['grids']:
             pos = bridge.Position(p[0], p[1], p[2])
-            pos *= (1.0 / 0.5291772108) # Angstroam to a.u.
+            pos *= (1.0 / 0.5291772108)  # Angstroam to a.u.
             grids.append(pos)
 
         ESPs = []
@@ -74,7 +68,7 @@ def calc_esp(pos, atoms):
     num_of_atoms = len(atoms)
     for i in range(num_of_atoms):
         d = pos.distance_from(atoms[i].xyz)
-        esp += atoms[i].charge / d;
+        esp += atoms[i].charge / d
 
     return esp
 
@@ -116,7 +110,6 @@ def main():
         sys.stderr.write("input: {}\n".format(input_path))
         sys.stderr.write("output: {}\n".format(output_path))
         sys.stderr.write("charges(CSV): {}\n".format(charge_csv_path))
-
 
     # charges
     charges = load_charges(charge_csv_path)

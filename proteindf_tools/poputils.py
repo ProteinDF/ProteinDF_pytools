@@ -2,17 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import math
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
+
+from .pdfarchive import PdfArchive
+from .pdfcommon import load_pdfparam
+import proteindf_bridge as bridge
 
 import logging
 logger = logging.getLogger(__name__)
 
-import proteindf_bridge as bridge
-from .pdfcommon import load_pdfparam
-from .pdfarchive import PdfArchive
 
 class PopUtils(object):
     '''Population Utilities
@@ -24,7 +21,6 @@ class PopUtils(object):
 
         return PopUtils._get_atomlist(molecule)
 
-
     @staticmethod
     def get_atomlist_by_param(param_path):
         pdfparam = load_pdfparam(param_path)
@@ -32,11 +28,10 @@ class PopUtils(object):
 
         return PopUtils._get_atomlist(molecule)
 
-
     @staticmethod
     def _get_atomlist(molecule):
         nuc_chargeX = molecule.nuclei_charge
-        nuc_charge  = molecule.real_nuclei_charge
+        nuc_charge = molecule.real_nuclei_charge
         charge = nuc_charge - nuc_chargeX
 
         atoms = molecule.get_atom_list()
@@ -47,7 +42,6 @@ class PopUtils(object):
 
         return (atomlist, charge)
 
-
     @staticmethod
     def set_atomlist(atom_charges, atomlist):
         '''substitute atom_charges for atomlist
@@ -57,17 +51,17 @@ class PopUtils(object):
 
         q_total = 0.0
         for i in range(len(atom_charges)):
-            q = atom_charges[i];
-            atomlist[i].charge = q;
+            q = atom_charges[i]
+            atomlist[i].charge = q
             q_total += q
             print(atomlist[i])
         print('total charges: {: .3f}'.format(q_total))
 
 
-
 class PopEspUtils(PopUtils):
     '''Population Utilities for ESP
     '''
+
     def get_RRMS(self, mpac_path, atoms):
         grids, ESPs = self._load_ESPs(mpac_path)
         rrms = self._calcRRMS(grids, ESPs, atoms)
@@ -76,16 +70,12 @@ class PopEspUtils(PopUtils):
 
     def _load_ESPs(self, mpac_path):
         logger.debug('load: {}'.format(mpac_path))
-        data = None
-        with open(mpac_path, 'rb') as f:
-            mpac_data = f.read()
-            data = msgpack.unpackb(mpac_data)
-            data = bridge.Utils.to_unicode_dict(data)
-
+        data = bridge.load_msgpack(mpac_path)
+        if data != None:
             grids = []
             for p in data['grids']:
                 pos = bridge.Position(p[0], p[1], p[2])
-                pos *= (1.0 / 0.5291772108) # Angstroam to a.u.
+                pos *= (1.0 / 0.5291772108)  # Angstroam to a.u.
                 grids.append(pos)
 
             ESPs = []
@@ -110,7 +100,8 @@ class PopEspUtils(PopUtils):
             sum_v2 += exact_esp * exact_esp
         rrms2 = sum_delta2 / sum_v2
         rrms = math.sqrt(rrms2)
-        logger.debug('delta2={: .3f} sum_v2={: .3f} RRMS2={: .3f} RRMS={: .3f}'.format(sum_delta2, sum_v2, rrms2, rrms))
+        logger.debug('delta2={: .3f} sum_v2={: .3f} RRMS2={: .3f} RRMS={: .3f}'.format(
+            sum_delta2, sum_v2, rrms2, rrms))
 
         return rrms
 
@@ -119,6 +110,6 @@ class PopEspUtils(PopUtils):
         num_of_atoms = len(atoms)
         for i in range(num_of_atoms):
             d = pos.distance_from(atoms[i].xyz)
-            esp += atoms[i].charge / d;
+            esp += atoms[i].charge / d
 
         return esp

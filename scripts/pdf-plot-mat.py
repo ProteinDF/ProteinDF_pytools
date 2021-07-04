@@ -5,17 +5,11 @@ import os
 import sys
 from types import *
 import argparse
-import logging
-try:
-    import msgpack
-except:
-    try:
-        import umsgpack as msgpack
-    except:
-        import msgpack_pure as msgpack
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
+import logging
 
 
 def main():
