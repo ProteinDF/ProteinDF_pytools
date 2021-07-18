@@ -339,7 +339,8 @@ class PdfArchive(object):
         TEs = pdfparam.TEs
         if TEs is not None:
             for iteration, energy in TEs.items():
-                where_str = 'iteration = %d' % (iteration)
+                iteration = int(iteration)
+                where_str = 'iteration = {}'.format(iteration)
                 check_record = self._db.select(table_name, where=where_str)
                 if check_record:
                     self._db.update(table_name,

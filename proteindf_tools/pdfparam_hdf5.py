@@ -247,6 +247,7 @@ class PdfParam_H5(PdfParamObject):
     def _write_sp_TEs(self, h5grp):
         vtr_TEs = Vector(self.iterations)
         for itr, TE in self.TEs.items():
+            itr = int(itr)
             vtr_TEs[itr - 1] = TE
 
         h5path = self._get_h5path_TEs()
