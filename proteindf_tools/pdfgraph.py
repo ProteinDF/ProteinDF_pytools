@@ -441,6 +441,7 @@ class DfMatrixGraph(DfGraph):
         assert(isinstance(matrix, bridge.Matrix))
         DfGraph.__init__(self, **figure_kwd)
         self._matrix = matrix
+        self._is_diverging = is_diverging
 
         self._vmax = None
         self._vmin = None
@@ -450,7 +451,10 @@ class DfMatrixGraph(DfGraph):
         self.ylabel = ''
         self.is_draw_grid = False
 
-        self._cmap = 'bwr'
+        if self._is_diverging:
+            self._cmap = cm.coolwarm
+        else:
+            self._cmap = cm.bone_r
         self._should_write_values = False
 
     def _get_cmap(self):
@@ -485,8 +489,8 @@ class DfMatrixGraph(DfGraph):
 
     def _draw_data(self):
         data = self._matrix.data
-        # if not self._is_diverging:
-        #    data = numpy.absolute(data)
+        if not self._is_diverging:
+           data = numpy.absolute(data)
 
         kwd = {}
         kwd["cmap"] = self._cmap
@@ -612,42 +616,6 @@ class DfDistanceVsElementGraph(DfGraph):
         range_x = x_max - x_min
         width_x = range_x / 2
         self._ax_hist_y.set_xticks(numpy.arange(x_min, x_max, width_x))
-
-
-class DfLineChart(DfGraph):
-    def __init__(self):
-        DfGraph.__init__(self)
-        self._matrix = matrix
-        self._is_diverging = is_diverging
-
-        self.title = 'Matrix Value'
-        self.xlabel = ''
-        self.ylabel = ''
-        self.is_draw_grid = True
-
-        if self._is_diverging:
-            self._cmap = cm.coolwarm
-        else:
-            self._cmap = cm.bone_r
-
-    def _draw_data(self):
-        data = self._matrix.data
-        if not self._is_diverging:
-            data = numpy.absolute(data)
-
-        cax = self._ax.imshow(data,
-                              cmap=self._cmap,
-                              interpolation='none',
-                              norm=None,
-                              # vmax=1.0,
-                              # vmin=0.0,
-                              origin='upper')
-
-        # self._ax.tick_params(axis='x', labeltop=True, labelbottom=False)
-        self._ax.tick_params(axis='x', labeltop=False, labelbottom=True)
-
-        # self._fig.colorbar(cax, ticks=[ 0, 1], shrink=0.92)
-        self._fig.colorbar(cax, shrink=0.92)
 
 
 # ******************************************************************************
