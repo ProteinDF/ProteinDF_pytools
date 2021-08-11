@@ -83,12 +83,8 @@ class PdfSim(object):
 
         """
         workdir = kwargs.get('workdir', '')
-<<<<<<< HEAD
         db_path = kwargs.get('db_path', self._db_path)
-=======
->>>>>>> 4580337b09f2819f44a51b3775274109b0b4d461
         dry_run = kwargs.get('dry_run', False)
-        db_path = kwargs.get('db_path', 'pdfresults.db')
         cmd_pdf = kwargs.get('cmd_pdf', 'serial')
         cmd_archive = kwargs.get('cmd_archive', 'archive')
 
