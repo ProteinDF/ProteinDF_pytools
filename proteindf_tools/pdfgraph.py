@@ -533,6 +533,28 @@ class DfMatrixGraph(DfGraph):
                                   verticalalignment='center')
 
 
+class DfGraph2D(DfGraph):
+    def __init__(self):
+        super().__init__()
+        self._x = []
+        self._y = []
+
+    def load_data(self, path):
+        with open(path, "r") as f:
+            lines = f.readlines()
+
+        self._x = []
+        self._y = []
+        for line in lines:
+            items = line.strip().split(',')
+            self._x.append(float(items[0]))
+            self._y.append(float(items[1]))
+
+    def _draw_data(self):
+        self._ax.plot(self._x, self._y)
+
+
+
 class DfDistanceVsElementGraph(DfGraph):
     def __init__(self, log=False):
         DfGraph.__init__(self)
