@@ -64,6 +64,7 @@ class Process(object):
             'stderr': subprocess.PIPE,
         }
         p_args['shell'] = self._is_shell_script(cmd)
+        # p_args['env'] = dict(os.environ)
 
         return self._exec(cmd, p_args)
 
@@ -73,6 +74,7 @@ class Process(object):
             'stderr': subprocess.PIPE,
         }
         p_args['shell'] = self._is_shell_script(cmd)
+        # p_args['env'] = dict(os.environ)
 
         if len(self._procs) == 0:
             p_args['stdin'] = None
@@ -92,10 +94,12 @@ class Process(object):
             new_proc = subprocess.Popen(cmd, **p_args)
         except OSError as e:
             sys.stderr.write('Failed to execute command: {}\n'.format(cmd))
-            raise
-            # raise e
-        except:
-            raise
+            sys.stderr.write('PATH={}\n'.format(os.environ['PATH']))
+            raise e
+        except Exception as e:
+            sys.stderr.write('error: {}\n'.format(str(e)))
+            sys.stderr.write('PATH={}\n'.format(os.environ['PATH']))
+            raise e
 
         self._procs.append(new_proc)
         return self
