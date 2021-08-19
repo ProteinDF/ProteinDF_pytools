@@ -63,9 +63,14 @@ def main():
                         default=False,
                         help='use Gaussian')
 
+    parser.add_argument('--occ',
+                        action="store_true",
+                        default=False,
+                        help='occ only')
+
     parser.add_argument('-o', '--output',
                         nargs=1,
-                        default=['elevel.png'],
+                        default=['dos.png'],
                         help='output graph path')
     parser.add_argument("-v", "--verbose",
                         action="store_true",
@@ -80,14 +85,24 @@ def main():
     verbose = args.verbose
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
-    output_path = args.output[0]
+
     pdfresults_db = args.db[0]
 
     use_func = "gaussian"
     if args.lorentzian:
         use_func = "lorentzian"
 
+    resolution = float(args.resolution[0])
+    occ_only = args.occ
+    output_path = args.output[0]
+
     AU2EV = 27.2116
+
+    # 
+    if verbose:
+        print("resolution: {}".format(resolution))
+        print("func: {}".format(use_func))
+
 
     # load DB
     pdfparam = pdf.PdfParam_H5()
@@ -102,22 +117,25 @@ def main():
     eigvals = pdfparam.get_energy_level(method, itr)
 
     # make data
-    occLevels = [None] * HOMO_level
-    for i in range(HOMO_level):
-        occLevels[i] = eigvals[i] * AU2EV
+    e_levels = []
+    if occ_only:
+        e_levels = [None] * HOMO_level
+        for i in range(HOMO_level):
+            e_levels[i] = eigvals[i] * AU2EV
+    else:
+        e_levels = [ i * AU2EV for i in eigvals]
 
     minLevel = -20.0
     maxLevel = 5.0
-    omega = 0.005
-    steps = int((maxLevel - minLevel) / omega)
+    steps = int((maxLevel - minLevel) / resolution)
     data_path = os.path.join(".", "dos.dat")
     with open(data_path, 'w') as dat:
         for step in range(steps +1):
-            e = minLevel + omega * step
+            e = minLevel + resolution * step
             if use_func == "lorentzian":
-                intensity = dosLorentzian(e, omega, occLevels)
+                intensity = dosLorentzian(e, resolution, e_levels)
             else:
-                intensity = dosGaussian(e, omega, occLevels)
+                intensity = dosGaussian(e, resolution, e_levels)
             dat.write('% 16.10f, % 16.10f\n' % (e, intensity))
 
     # plot data
@@ -128,7 +146,7 @@ def main():
     graph.xmin = minLevel
     graph.xlabel = "energy level / eV"
     graph.ylabel = "Intensity"
-    graph.save("dos.png")
+    graph.save(output_path)
 
 
 if __name__ == '__main__':
