@@ -53,7 +53,7 @@ class Process(object):
     ...
     '''
 
-    def __init__(self, logfile_path = ''):
+    def __init__(self, logfile_path=''):
         self._procs = []
         self._logfile_path = str(logfile_path)
 
@@ -126,7 +126,7 @@ class Process(object):
             ready = select.select(to_check, [], [])
             if stdout_fd in ready[0]:
                 stdout_chunk = stdout.read()
-                stdout_chunk = bridge.Utils.to_unicode(stdout_chunk)
+                stdout_chunk = bridge.StrUtils.to_unicode(stdout_chunk)
                 if stdout_chunk == '':
                     stdout_eof = True
                 else:
@@ -134,10 +134,10 @@ class Process(object):
                     sys.stdout.flush()
                     if logfile != None:
                         logfile.write(stdout_chunk)
-                    #stdout_data.append(stdout_chunk)
+                    # stdout_data.append(stdout_chunk)
             if stderr_fd in ready[0]:
                 stderr_chunk = stderr.read()
-                stderr_chunk = bridge.Utils.to_unicode(stderr_chunk)
+                stderr_chunk = bridge.StrUtils.to_unicode(stderr_chunk)
                 if stderr_chunk == '':
                     stderr_eof = True
                 else:
@@ -145,7 +145,7 @@ class Process(object):
                     sys.stderr.flush()
                     if logfile != None:
                         logfile.write(stdout_chunk)
-                    #stderr_data.append(stderr_chunk)
+                    # stderr_data.append(stderr_chunk)
             if stdout_eof and stderr_eof:
                 break
             select.select([], [], [], .1)
@@ -161,7 +161,6 @@ class Process(object):
             logfile.close()
 
         return status
-
 
     def _make_non_blocking(self, fd):
         fl = fcntl.fcntl(fd, fcntl.F_GETFL)

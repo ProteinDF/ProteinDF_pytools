@@ -40,7 +40,7 @@ class PdfParamObject(object):
         import hashlib
         md5obj = hashlib.md5()
         raw_data = self.get_raw_data()
-        bridge.Utils.check_pickled(raw_data)
+        bridge.StrUtils.check_pickled(raw_data)
         md5obj.update(pickle.dumps(raw_data))
         return md5obj.hexdigest()
 
@@ -474,7 +474,7 @@ class PdfParamObject(object):
 
     # level_shift
     def _get_level_shift(self):
-        return bridge.Utils.str_to_bool(self._data.get('level_shift', False))
+        return bridge.StrUtils.str_to_bool(self._data.get('level_shift', False))
 
     def _set_level_shift(self, value):
         value = value.to_upper()
@@ -550,46 +550,46 @@ class PdfParamObject(object):
 
     # basis set name
     def get_basisset_name(self, atomlabel):
-        atomlabel = bridge.Utils.to_unicode(atomlabel)
+        atomlabel = bridge.StrUtils.to_unicode(atomlabel)
         self._data.setdefault('basisset_name', {})
         return self._data['basisset_name'].get(atomlabel, '')
 
     def set_basisset_name(self, atomlabel, value):
-        atomlabel = bridge.Utils.to_unicode(atomlabel)
+        atomlabel = bridge.StrUtils.to_unicode(atomlabel)
         self._data.setdefault('basisset_name', {})
-        self._data['basisset_name'][atomlabel] = bridge.Utils.to_unicode(value)
+        self._data['basisset_name'][atomlabel] = bridge.StrUtils.to_unicode(value)
 
     def get_basisset_j_name(self, atomlabel):
-        atomlabel = bridge.Utils.to_unicode(atomlabel)
+        atomlabel = bridge.StrUtils.to_unicode(atomlabel)
         self._data.setdefault('basisset_j_name', {})
         return self._data['basisset_j_name'].get(atomlabel, '')
 
     def set_basisset_j_name(self, atomlabel, value):
-        atomlabel = bridge.Utils.to_unicode(atomlabel)
+        atomlabel = bridge.StrUtils.to_unicode(atomlabel)
         self._data.setdefault('basisset_j_name', {})
-        self._data['basisset_j_name'][atomlabel] = bridge.Utils.to_unicode(
+        self._data['basisset_j_name'][atomlabel] = bridge.StrUtils.to_unicode(
             value)
 
     def get_basisset_xc_name(self, atomlabel):
-        atomlabel = bridge.Utils.to_unicode(atomlabel)
+        atomlabel = bridge.StrUtils.to_unicode(atomlabel)
         self._data.setdefault('basisset_xc_name', {})
         return self._data['basisset_xc_name'].get(atomlabel, '')
 
     def set_basisset_xc_name(self, atomlabel, value):
-        atomlabel = bridge.Utils.to_unicode(atomlabel)
+        atomlabel = bridge.StrUtils.to_unicode(atomlabel)
         self._data.setdefault('basisset_xc_name', {})
-        self._data['basisset_xc_name'][atomlabel] = bridge.Utils.to_unicode(
+        self._data['basisset_xc_name'][atomlabel] = bridge.StrUtils.to_unicode(
             value)
 
     def get_basisset_gridfree_name(self, atomlabel):
-        atomlabel = bridge.Utils.to_unicode(atomlabel)
+        atomlabel = bridge.StrUtils.to_unicode(atomlabel)
         self._data.setdefault('basisset_gridfree_name', {})
         return self._data['basisset_gridfree_name'].get(atomlabel, '')
 
     def set_basisset_gridfree_name(self, atomlabel, value):
-        atomlabel = bridge.Utils.to_unicode(atomlabel)
+        atomlabel = bridge.StrUtils.to_unicode(atomlabel)
         self._data.setdefault('basisset_gridfree_name', {})
-        self._data['basisset_gridfree_name'][atomlabel] = bridge.Utils.to_unicode(
+        self._data['basisset_gridfree_name'][atomlabel] = bridge.StrUtils.to_unicode(
             value)
 
     def get_basisset(self, atom_label):
@@ -620,7 +620,7 @@ class PdfParamObject(object):
         """
         原子(ラベル)名のBasisSetがあれば、そのBasisSetオブジェクトを返す
         """
-        atom_label = bridge.Utils.to_unicode(atom_label)
+        atom_label = bridge.StrUtils.to_unicode(atom_label)
         answer = BasisSet()
         if key in self._data:
             answer = self._data[key].get(atom_label, BasisSet())
@@ -631,7 +631,7 @@ class PdfParamObject(object):
         """
         原子(ラベル)名にBasisSetオブジェクトを設定する
         """
-        atom_label = bridge.Utils.to_unicode(atom_label)
+        atom_label = bridge.StrUtils.to_unicode(atom_label)
         self._data.setdefault(key, {})
         if isinstance(basisset, str) == True:
             basis2 = Basis2()

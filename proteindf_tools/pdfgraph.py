@@ -22,7 +22,10 @@
 
 import types
 import math
+import csv
 import numpy
+import pprint
+
 import matplotlib
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
@@ -490,7 +493,7 @@ class DfMatrixGraph(DfGraph):
     def _draw_data(self):
         data = self._matrix.data
         if not self._is_diverging:
-           data = numpy.absolute(data)
+            data = numpy.absolute(data)
 
         kwd = {}
         kwd["cmap"] = self._cmap
@@ -534,25 +537,86 @@ class DfMatrixGraph(DfGraph):
 
 
 class DfGraph2D(DfGraph):
+    # color
+    # 'b'	blue
+    # 'g'	green
+    # 'r'	red
+    # 'c'	cyan
+    # 'm'	magenta
+    # 'y'	yellow
+    # 'k'	black
+    # 'w'	white
+    _color_str = {
+        0: 'b',
+        1: 'g',
+        2: 'r',
+        3: 'c',
+        4: 'm',
+    }
+
     def __init__(self):
         super().__init__()
         self._x = []
-        self._y = []
+        self._ys = []
+        self._num_of_series = 0
+        self._draw_series = dict()
+
+    def add_draw_series(self, index, label="", fmt=""):
+        index = int(index)
+        if len(label) == 0:
+            label = "y_{}".format(index)
+        if len(fmt) == 0:
+            fmt = "{}".format(self._color_str[index % len(self._color_str)])
+
+        self._draw_series[index] = {
+            "label": label,
+            "format": fmt
+        }
+
+    def _get_format(self, index):
+        series = self._draw_series.get(index, {})
+        fmt = series.get("format", "")
+        if len(fmt) == 0:
+            fmt = "{}".format(self._color_str[index % len(self._color_str)])
+        return fmt
+
+    def _get_label(self, index):
+        series = self._draw_series.get(index, {})
+        label = series.get("label", "")
+        if len(label) == 0:
+            label = "y_{}".format(index)
+        return label
+
+    def _get_num_of_series(self):
+        return self._num_of_series
+    num_of_series = property(_get_num_of_series)
 
     def load_data(self, path):
-        with open(path, "r") as f:
-            lines = f.readlines()
-
-        self._x = []
-        self._y = []
-        for line in lines:
-            items = line.strip().split(',')
-            self._x.append(float(items[0]))
-            self._y.append(float(items[1]))
+        num_of_series = 0
+        with open(path, "r", newline='') as f:
+            reader = csv.reader(f)
+            for items in reader:
+                self._x.append(items[0])
+                self._ys.append(items[1:])
+                num_of_series = max(num_of_series, len(items) - 1)
+        self._num_of_series = num_of_series
+        # pprint.pprint(self._ys)
 
     def _draw_data(self):
-        self._ax.plot(self._x, self._y)
+        if len(self._draw_series) == 0:
+            self._draw_items = [0]
+        # for index in self._draw_series:
+        #     self._ax.plot(self._x, self._ys[index],
+        #                   fmt=self._get_format(index), label=self._get_label(index))
+        print(">>>>")
+        pprint.pprint(self._x)
+        print(">>>>")
+        pprint.pprint(self._ys[0])
 
+        self._ax.plot(self._x, self._ys[0],
+                      fmt=self._get_format(0), label=self._get_label(0))
+        # self._ax.plot(self._x, self._ys[1],
+        #                 fmt=self._get_format(1), label=self._get_label(1))
 
 
 class DfDistanceVsElementGraph(DfGraph):

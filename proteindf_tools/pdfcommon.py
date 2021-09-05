@@ -159,7 +159,7 @@ def mpac2py(path):
     with open(path, "rb") as f:
         contents = f.read()
         unpacked_data = msgpack.unpackb(contents)
-        data = bridge.Utils.to_unicode_dict(unpacked_data)
+        data = bridge.StrUtils.to_unicode_dict(unpacked_data)
 
     return data
 
