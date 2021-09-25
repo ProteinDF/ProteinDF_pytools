@@ -597,7 +597,15 @@ class DfGraph2D(DfGraph):
             reader = csv.reader(f)
             for items in reader:
                 self._x.append(items[0])
-                self._ys.append(items[1:])
+
+                if len(self._ys) < len(items) - 1:
+                    resize_count = len(items) - 1 - len(self._ys)
+                    for i in range(resize_count):
+                        self._ys.append(list())
+
+                for i, y in enumerate(items[1:]):
+                    self._ys[i].append(y)
+
                 num_of_series = max(num_of_series, len(items) - 1)
         self._num_of_series = num_of_series
         # pprint.pprint(self._ys)
@@ -608,13 +616,10 @@ class DfGraph2D(DfGraph):
         # for index in self._draw_series:
         #     self._ax.plot(self._x, self._ys[index],
         #                   fmt=self._get_format(index), label=self._get_label(index))
-        print(">>>>")
-        pprint.pprint(self._x)
-        print(">>>>")
-        pprint.pprint(self._ys[0])
 
-        self._ax.plot(self._x, self._ys[0],
-                      fmt=self._get_format(0), label=self._get_label(0))
+        # print(len(self._x), len(self._ys[0]))
+
+        self._ax.plot(self._x, self._ys[0], label=self._get_label(0))
         # self._ax.plot(self._x, self._ys[1],
         #                 fmt=self._get_format(1), label=self._get_label(1))
 

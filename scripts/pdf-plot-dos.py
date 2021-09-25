@@ -119,6 +119,7 @@ def main():
                         help='occ only')
     parser.add_argument('--mogroup',
                         nargs=1,
+                        default=[""],
                         help='msgpack describing mo list for grouping')
 
     parser.add_argument('-o', '--output',
