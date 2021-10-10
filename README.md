@@ -19,7 +19,7 @@ git clone git://github.com/ProteinDF/ProteinDF_pytools.git
 
 ```bash
 $ cd ProteinDF_pytools
-$ pip install .
+$ pip install --use-feature=in-tree-build .
 ```
 
 
