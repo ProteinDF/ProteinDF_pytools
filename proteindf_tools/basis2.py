@@ -22,6 +22,7 @@
 import os
 import re
 import logging
+
 logger = logging.getLogger(__name__)
 
 import proteindf_bridge as bridge
@@ -99,32 +100,30 @@ class Basis2(object):
     <BLANKLINE>
     <BLANKLINE>
     """
+
     _shell_chars = list("spdfghijklmnopqr")
     _data = None
 
-
-    #def __new__(cls, *args, **kwargs):
+    # def __new__(cls, *args, **kwargs):
     #    '''for singleton'''
     #    if '_inst' not in vars(cls):
     #        cls._inst = super(Basis2, cls).__new__(cls, *args, **kwargs)
     #    return cls._inst
 
-
-    def __init__(self, basis2_path=''):
+    def __init__(self, basis2_path=""):
         self._initialize(basis2_path)
-
 
     def _load(self):
         self._data = {}
-        self._data['basis'] = {}
-        self._data['basis_j'] = {}
-        self._data['basis_xc'] = {}
+        self._data["basis"] = {}
+        self._data["basis_j"] = {}
+        self._data["basis_xc"] = {}
 
         self._line_count = 0
         basisset = None
         name = None
-        #SPD = None
-        #SPD_order = 0
+        # SPD = None
+        # SPD_order = 0
         cgto = None
         numOfCGTPs = 0
         numOfPGTOs = None
@@ -134,45 +133,45 @@ class Basis2(object):
             for line in f:
                 self._line_count += 1
                 line = line.strip()
-                if (len(line) == 0):
+                if len(line) == 0:
                     continue
-                if (line[0] == '#'):
+                if line[0] == "#":
                     continue
 
-                if (name == None):
-                    logger.debug('%6d: %s' % (self._line_count, line))
+                if name == None:
+                    # logger.debug('%6d: %s' % (self._line_count, line))
 
                     name = line
-                    if (name[0] == 'O'):
-                        #basisset = copy.deepcopy(self._load_basis(f))
+                    if name[0] == "O":
+                        # basisset = copy.deepcopy(self._load_basis(f))
                         basisset = BasisSet(self._load_basis(f))
 
-                        logger.debug(str(basisset))
-                        #print('>>>> {0}'.format(name))
-                        #print(basisset)
-                        #print('')
+                        # logger.debug(str(basisset))
+                        # print('>>>> {0}'.format(name))
+                        # print(basisset)
+                        # print('')
 
                         basisset = basisset.expand()
                         basisset.name = name
-                        if name in self._data['basis']:
-                            logger.warning('duplicate basisset name: {0}'.format(name))
-                        self._data['basis'][name] = basisset
+                        if name in self._data["basis"]:
+                            logger.warning("duplicate basisset name: {0}".format(name))
+                        self._data["basis"][name] = basisset
                         name = None
-                    elif (name[0] == 'A'):
-                        #basisset = copy.deepcopy(self._load_basis_aux(f))
+                    elif name[0] == "A":
+                        # basisset = copy.deepcopy(self._load_basis_aux(f))
                         basisset = BasisSet(self._load_basis_aux(f))
                         basisset = basisset.expand()
                         basisset.name = name
-                        self._data['basis_j'][name] = basisset
+                        self._data["basis_j"][name] = basisset
 
-                        #basisset = copy.deepcopy(self._load_basis_aux(f))
+                        # basisset = copy.deepcopy(self._load_basis_aux(f))
                         basisset = BasisSet(self._load_basis_aux(f))
                         basisset = basisset.expand()
                         basisset.name = name
-                        self._data['basis_xc'][name] = basisset
+                        self._data["basis_xc"][name] = basisset
                         name = None
                     else:
-                        logger.critical('basisset name is not found: {}'.format(name))
+                        logger.critical("basisset name is not found: {}".format(name))
                         raise
 
     def _load_basis(self, fh):
@@ -186,30 +185,32 @@ class Basis2(object):
         for line in fh:
             self._line_count += 1
             line = line.strip()
-            if (len(line) == 0):
+            if len(line) == 0:
                 continue
-            if (line[0] == '#'):
+            if line[0] == "#":
                 continue
 
-            #logger.debug('%6d: %s' % (self._line_count, line))
-            if (SPDFG == None):
+            # logger.debug('%6d: %s' % (self._line_count, line))
+            if SPDFG == None:
                 SPDFG = []
                 input_SPDFG = line.split()
                 if len(input_SPDFG) > len(self._shell_chars):
                     logger.warning(
-                        "not support shell: {} > {}".format(len(input_SPDFG),
-                                                            len(self._shell_chars)))
+                        "not support shell: {} > {}".format(
+                            len(input_SPDFG), len(self._shell_chars)
+                        )
+                    )
                 numOfCGTOs = 0
                 for i in range(len(input_SPDFG)):
                     value = int(input_SPDFG[i])
                     SPDFG.append(value)
                     numOfCGTOs += value
                 SPDFG.extend([0] * (len(self._shell_chars) - len(input_SPDFG)))
-                assert(len(SPDFG) == len(self._shell_chars))
+                assert len(SPDFG) == len(self._shell_chars)
                 basisset = BasisSet("", numOfCGTOs)
-            elif (numOfPGTOs == None):
+            elif numOfPGTOs == None:
                 numOfPGTOs = int(line)
-                shell_type = ''
+                shell_type = ""
 
                 order = 0
                 for i in range(len(SPDFG)):
@@ -220,30 +221,30 @@ class Basis2(object):
 
                 # logger.debug("create CGTO SPD=%d shell_type=%s size=%d" % (SPD_order, shell_type, numOfPGTOs))
                 cgto = ContractedGTO(shell_type, numOfPGTOs)
-                assert(cgto.shell_type == shell_type)
-                assert(len(cgto) == numOfPGTOs)
+                assert cgto.shell_type == shell_type
+                assert len(cgto) == numOfPGTOs
                 PGTO_index = 0
             else:
                 values = line.split()
-                assert(len(values) == 2)
+                assert len(values) == 2
                 exponent = float(values[0])
                 coefficient = float(values[1])
                 cgto[PGTO_index] = PrimitiveGTO(exponent, coefficient)
                 PGTO_index += 1
-                if (PGTO_index == numOfPGTOs):
+                if PGTO_index == numOfPGTOs:
                     # end of PGTO list
-                    assert(len(cgto) == numOfPGTOs)
+                    assert len(cgto) == numOfPGTOs
                     basisset[SPDFG_order] = cgto
                     SPDFG_order += 1
                     numOfPGTOs = None
-                if (SPDFG_order == numOfCGTOs):
+                if SPDFG_order == numOfCGTOs:
                     # end of basis set
-                    assert(basisset.get_num_of_CGTOs('s') == SPDFG[0])
-                    assert(basisset.get_num_of_CGTOs('p') == SPDFG[1])
-                    assert(basisset.get_num_of_CGTOs('d') == SPDFG[2])
-                    assert(basisset.get_num_of_CGTOs('f') == SPDFG[3])
-                    assert(basisset.get_num_of_CGTOs('g') == SPDFG[4])
-                    assert(len(basisset) == numOfCGTOs)
+                    assert basisset.get_num_of_CGTOs("s") == SPDFG[0]
+                    assert basisset.get_num_of_CGTOs("p") == SPDFG[1]
+                    assert basisset.get_num_of_CGTOs("d") == SPDFG[2]
+                    assert basisset.get_num_of_CGTOs("f") == SPDFG[3]
+                    assert basisset.get_num_of_CGTOs("g") == SPDFG[4]
+                    assert len(basisset) == numOfCGTOs
                     break
 
         return basisset
@@ -259,28 +260,30 @@ class Basis2(object):
         for line in fh:
             self._line_count += 1
             line = line.strip()
-            if (len(line) == 0):
+            if len(line) == 0:
                 continue
-            if (line[0] == '#'):
+            if line[0] == "#":
                 continue
 
-            #logger.debug('%6d: %s' % (self._line_count, line))
-            if (SPDFG == None):
+            # logger.debug('%6d: %s' % (self._line_count, line))
+            if SPDFG == None:
                 SPDFG = []
                 input_SPDFG = line.split()
                 if len(input_SPDFG) > len(self._shell_chars):
                     logger.warning(
-                        "not support shell: {} > {}".format(len(input_SPDFG),
-                                                            len(self._shell_chars)))
+                        "not support shell: {} > {}".format(
+                            len(input_SPDFG), len(self._shell_chars)
+                        )
+                    )
                 numOfCGTOs = 0
                 for i in range(len(input_SPDFG)):
                     value = int(input_SPDFG[i])
                     SPDFG.append(value)
                     numOfCGTOs += value
                 basisset = BasisSet("", numOfCGTOs)
-            elif (numOfPGTOs == None):
+            elif numOfPGTOs == None:
                 numOfPGTOs = int(line)
-                shell_type = ''
+                shell_type = ""
 
                 order = 0
                 for i in range(len(SPDFG)):
@@ -289,77 +292,76 @@ class Basis2(object):
                         break
                     order += SPDFG[i]
 
-                #print("create CGTO SPD=%d shell_type=%s size=%d" % (SPD_order, shell_type, numOfPGTOs))
+                # print("create CGTO SPD=%d shell_type=%s size=%d" % (SPD_order, shell_type, numOfPGTOs))
                 cgto = ContractedGTO(shell_type, numOfPGTOs)
-                assert(cgto.shell_type == shell_type)
-                assert(len(cgto) == numOfPGTOs)
+                assert cgto.shell_type == shell_type
+                assert len(cgto) == numOfPGTOs
                 PGTO_index = 0
             else:
                 values = line.split()
-                assert(len(values) > 0)
+                assert len(values) > 0
                 exponent = float(values[0])
                 coefficient = 1.0
-                #print("PGTO_index=%d" % (PGTO_index))
+                # print("PGTO_index=%d" % (PGTO_index))
                 cgto[PGTO_index] = PrimitiveGTO(exponent, coefficient)
                 PGTO_index += 1
-                if (PGTO_index >= numOfPGTOs):
+                if PGTO_index >= numOfPGTOs:
                     # print('>>>> end of pGTO: spd=%d' % (SPD_order))
                     # end of PGTO list
                     # basisset[SPDFG_order] = copy.deepcopy(cgto)
                     basisset[SPDFG_order] = ContractedGTO(cgto)
                     SPDFG_order += 1
                     numOfPGTOs = None
-                if (SPDFG_order >= numOfCGTOs):
+                if SPDFG_order >= numOfCGTOs:
                     # end of basis set
                     break
 
         return basisset
 
     def get_basisset(self, name):
-        return self._data['basis'].get(name, BasisSet())
+        return self._data["basis"].get(name, BasisSet())
 
     def get_basisset_j(self, name):
-        return self._data['basis_j'].get(name, BasisSet())
+        return self._data["basis_j"].get(name, BasisSet())
 
     def get_basisset_xc(self, name):
-        return self._data['basis_xc'].get(name, BasisSet())
+        return self._data["basis_xc"].get(name, BasisSet())
 
-    #@property
-    #def basis(self):
+    # @property
+    # def basis(self):
     #    return self._basis
 
-    #@property
-    #def basis_j(self):
+    # @property
+    # def basis_j(self):
     #    return self._basis_j
 
-    #@property
-    #def basis_xc(self):
+    # @property
+    # def basis_xc(self):
     #    return self._basis_xc
 
-
     def get_basis2(self):
-        output = ''
+        output = ""
         # basis
-        for name, basis in self._data['basis'].items():
-            #output += '# {}\n'.format(name)
+        for name, basis in self._data["basis"].items():
+            # output += '# {}\n'.format(name)
             output += str(basis)
-            output += '\n'
+            output += "\n"
 
         # basis for J, XC
-        for name, basis_j in self._data['basis_j'].items():
-            if name in self._data['basis_xc']:
-                basis_xc = self._data['basis_xc'][name]
+        for name, basis_j in self._data["basis_j"].items():
+            if name in self._data["basis_xc"]:
+                basis_xc = self._data["basis_xc"][name]
                 output += str(basis_j)
                 output += str(basis_xc)
-                output += '\n'
+                output += "\n"
 
         return output
-
 
     def _initialize(self, basis2_path):
         if len(basis2_path) == 0:
             from .pdfcommon import pdf_home
-            self._basis2_path = '%s/data/basis2' % (pdf_home())
+
+            self._basis2_path = "%s/data/basis2" % (pdf_home())
         else:
             self._basis2_path = basis2_path
 
@@ -369,4 +371,5 @@ class Basis2(object):
 
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod()
