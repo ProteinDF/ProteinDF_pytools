@@ -380,11 +380,13 @@ class PdfParamObject(object):
         if value is None:
             if "extra_keywords" in self._data:
                 del self._data["extra_keywords"]
+        elif isinstance(value, dict):
+            self._data.setdefault("extra_keywords", {})
+            self._data["extra_keywords"].update(value)
         else:
-            if isinstance("extra_keywords", dict):
-                self._data["extra_keywords"].update(value)
-            else:
-                logger.warning("extra keywords accepts dict type only.")
+            logger.warning(
+                "extra keywords accepts dict type only: {}".format(repr(value))
+            )
 
     extra_keywords = property(_get_extra_keywords, _set_extra_keywords)
 
