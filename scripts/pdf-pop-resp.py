@@ -4,12 +4,12 @@
 import argparse
 import math
 
+import proteindf_bridge as bridge
+import proteindf_tools as pdf
+
 import logging
 import logging.config
 logger = logging.getLogger(__name__)
-
-import proteindf_bridge as bridge
-import proteindf_tools as pdf
 
 
 class Resp(object):
@@ -47,7 +47,8 @@ class Resp(object):
             diff_x = x - prev_x
             max_diff = max(abs(diff_x.max), abs(diff_x.min))
             rms_diff = diff_x * diff_x / dim
-            logger.info("#{} MAX delta: {} MAX RMS: {}".format(iter, max_diff, rms_diff))
+            logger.info("#{} MAX delta: {} MAX RMS: {}".format(
+                iter, max_diff, rms_diff))
 
             if (max_diff < self._max_threshold) and (rms_diff < self._rms_threshold):
                 answer = True
@@ -66,13 +67,13 @@ class Resp(object):
         if self._refs == None:
             self._refs = bridge.Vector(dim)
 
-        for self._iter in range(1, self._max_iter +1):
+        for self._iter in range(1, self._max_iter + 1):
             A = bridge.Matrix(model_mat)
             y = bridge.Vector(predicted)
-            for i in range(dim -1):
+            for i in range(dim - 1):
                 v = A.get(i, i)
                 rest = -2.0 * self._alpha * (self._refs[i] - coef[i])
-                A.set(i, i, v +rest)
+                A.set(i, i, v + rest)
                 y[i] += self._refs[i] * rest
 
             invA = A.inverse()
@@ -85,9 +86,9 @@ class Resp(object):
 
         self._coef = coef
 
-
     def fit_h(self, model_mat, predicted):
-        logger.info('>>> fit RESP charges (hyperbolic) a={} b={}'.format(self._alpha, self._beta))
+        logger.info('>>> fit RESP charges (hyperbolic) a={} b={}'.format(
+            self._alpha, self._beta))
         dim = model_mat.rows
         assert(dim == model_mat.cols)
         assert(predicted.size() == dim)
@@ -100,15 +101,15 @@ class Resp(object):
 
         b = self._beta
         b2 = b * b
-        for self._iter in range(1, self._max_iter +1):
+        for self._iter in range(1, self._max_iter + 1):
             A = bridge.Matrix(model_mat)
             y = bridge.Vector(predicted)
-            for i in range(dim -1):
+            for i in range(dim - 1):
                 v = A.get(i, i)
                 q = coef[i]
                 q2 = q * q
                 rest = self._alpha * q * (1.0 / math.sqrt(q2 + b2))
-                A.set(i, i, v +rest)
+                A.set(i, i, v + rest)
                 y[i] += self._refs[i] * rest
 
             invA = A.inverse()
@@ -120,7 +121,6 @@ class Resp(object):
             prev_coef = bridge.Vector(coef)
 
         self._coef = coef
-
 
 
 def main():
@@ -208,7 +208,7 @@ def main():
     output_csv_path = args.csv[0]
     verbose = args.verbose
     max_iter = args.max_iterations[0]
-    #tol = args.tolerance[0] # 0.0001
+    # tol = args.tolerance[0] # 0.0001
     alpha = float(args.alpha[0])
     beta = float(args.beta[0])
     use_quadratic = args.use_quadratic

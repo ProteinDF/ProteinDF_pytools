@@ -26,12 +26,10 @@ output info of orb
 import os
 import sys
 import argparse
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
 
+import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
 
 def main():
     # parse args
@@ -78,9 +76,9 @@ def main():
         if i < num_of_orbitals:
             atom = orb_info.get_atom(i)
             print('%dth: %s, shell(%s;%s)' % (i,
-                                      str(atom),
-                                      orb_info.get_shell_type(i),
-                                      orb_info.get_basis_type(i)))
+                                              str(atom),
+                                              orb_info.get_shell_type(i),
+                                              orb_info.get_basis_type(i)))
 
 
 if __name__ == '__main__':

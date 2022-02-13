@@ -19,12 +19,11 @@
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
+import proteindf_bridge as bridge
 import os
 import struct
 import logging
 logger = logging.getLogger(__name__)
-
-import proteindf_bridge as bridge
 
 
 class Matrix(bridge.Matrix):
@@ -64,7 +63,7 @@ class Matrix(bridge.Matrix):
             matrix_type = header[0]
             row = header[1]
             col = header[2]
-            size_of_data = struct.calcsize("d") * row * col;
+            size_of_data = struct.calcsize("d") * row * col
             size_of_file = size_of_header + size_of_data
             return (matrix_type, row, col, size_of_file)
 
@@ -80,7 +79,8 @@ class Matrix(bridge.Matrix):
             header_struct_list = ["iii", "bii", "ill", "bll"]
             for endian in endian_list:
                 for header_struct in header_struct_list:
-                    (matrix_type, row, col, chk_filesize) = get_header(file_path, endian + header_struct)
+                    (matrix_type, row, col, chk_filesize) = get_header(
+                        file_path, endian + header_struct)
                     answer = (filesize == chk_filesize)
                     if answer:
                         break
@@ -92,54 +92,61 @@ class Matrix(bridge.Matrix):
     @classmethod
     def is_loadable(cls, file_path):
         answer = False
-        (endian, header_struct, matrix_type, row, col) = cls.find_header_struct(file_path)
+        (endian, header_struct, matrix_type, row,
+         col) = cls.find_header_struct(file_path)
         if endian != None:
             answer = True
 
         return answer
 
-
     @classmethod
     def get_size(cls, file_path):
-        (endian, header_struct, matrix_type, row, col) = cls.find_header_struct(file_path)
+        (endian, header_struct, matrix_type, row,
+         col) = cls.find_header_struct(file_path)
         return (row, col)
 
-
     def load(self, file_path):
+        """Load the matrix. True is returned if the reading is successful.
+        """
         if os.path.isfile(file_path):
-            (endian, header_struct, matrix_type, row, col) = self.find_header_struct(file_path)
+            (endian, header_struct, matrix_type, row,
+             col) = self.find_header_struct(file_path)
 
-            fin = open(file_path, "rb")
-            # read header
-            endian_header_struct = endian + header_struct
-            size_of_header = struct.calcsize(endian_header_struct);
-            header_bin = fin.read(size_of_header)
+            with open(file_path, "rb") as fin:
+                # read header
+                endian_header_struct = endian + header_struct
+                size_of_header = struct.calcsize(endian_header_struct)
+                header_bin = fin.read(size_of_header)
 
-            # read contents
-            body_struct = endian + "d"
-            self.resize(row, col)
-            size_of_double = struct.calcsize(body_struct);
-            if matrix_type == 0:
-                # RSFD type
-                for r in range(row):
-                    for c in range(col):
-                        value = struct.unpack(body_struct, fin.read(size_of_double))
-                        self.set(r, c, value[0])
-            elif matrix_type == 1:
-                # CSFD type
-                for c in range(col):
+                # read contents
+                body_struct = endian + "d"
+                self.resize(row, col)
+                size_of_double = struct.calcsize(body_struct)
+                if matrix_type == 0:
+                    # RSFD type
                     for r in range(row):
-                        value = struct.unpack(body_struct, fin.read(size_of_double))
-                        self.set(r, c, value[0])
-            else:
-                logger.critical("file type mismatch: type={}".format(matrix_type))
-                raise
+                        for c in range(col):
+                            value = struct.unpack(
+                                body_struct, fin.read(size_of_double))
+                            self.set(r, c, value[0])
+                elif matrix_type == 1:
+                    # CSFD type
+                    for c in range(col):
+                        for r in range(row):
+                            value = struct.unpack(
+                                body_struct, fin.read(size_of_double))
+                            self.set(r, c, value[0])
+                else:
+                    logger.critical(
+                        "file type mismatch: type={}".format(matrix_type))
+                    raise
 
-            fin.close()
+            return True
         else:
             logger.error("file not found: %s" % (file_path))
+            return False
 
-    def save(self, file_path, matrix_type =1):
+    def save(self, file_path, matrix_type=1):
         row = self.rows
         col = self.cols
 
@@ -208,7 +215,7 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
             matrix_type = header[0]
             row = header[1]
             col = header[2]
-            size_of_data = struct.calcsize("d") * row * (row +1) / 2;
+            size_of_data = struct.calcsize("d") * row * (row + 1) / 2
             size_of_file = size_of_header + size_of_data
             return (matrix_type, row, col, size_of_file)
 
@@ -224,7 +231,8 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
             header_struct_list = ["iii", "bii", "ill", "bll"]
             for endian in endian_list:
                 for header_struct in header_struct_list:
-                    (matrix_type, row, col, chk_filesize) = get_header(file_path, endian + header_struct)
+                    (matrix_type, row, col, chk_filesize) = get_header(
+                        file_path, endian + header_struct)
                     answer = (filesize == chk_filesize)
                     if answer:
                         break
@@ -236,27 +244,28 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
     @classmethod
     def is_loadable(cls, file_path):
         answer = False
-        (endian, header_struct, matrix_type, row, col) = cls.find_header_struct(file_path)
+        (endian, header_struct, matrix_type, row,
+         col) = cls.find_header_struct(file_path)
         if endian != None:
             answer = True
 
         return answer
 
-
     @classmethod
     def get_size(cls, file_path):
-        (endian, header_struct, matrix_type, row, col) = cls.find_header_struct(file_path)
+        (endian, header_struct, matrix_type, row,
+         col) = cls.find_header_struct(file_path)
         return (row, col)
-
 
     def load(self, file_path):
         if os.path.isfile(file_path):
-            (endian, header_struct, matrix_type, row, col) = self.find_header_struct(file_path)
+            (endian, header_struct, matrix_type, row,
+             col) = self.find_header_struct(file_path)
 
             fin = open(file_path, "rb")
             # read header
             endian_header_struct = endian + header_struct
-            size_of_header = struct.calcsize(endian_header_struct);
+            size_of_header = struct.calcsize(endian_header_struct)
             header_bin = fin.read(size_of_header)
             dim = row
             assert(row == col)
@@ -264,16 +273,17 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
 
             # body
             body_struct = endian + "d"
-            size_of_double = struct.calcsize(body_struct);
+            size_of_double = struct.calcsize(body_struct)
             for r in range(dim):
-                for c in range(r +1):
-                    value = struct.unpack(body_struct, fin.read(size_of_double))
+                for c in range(r + 1):
+                    value = struct.unpack(
+                        body_struct, fin.read(size_of_double))
                     self.set(r, c, value[0])
             fin.close()
         else:
             logger.error("file not found: %s" % (file_path))
 
-    def save(self, file_path, is_little_endian = True):
+    def save(self, file_path, is_little_endian=True):
         dim = self.rows
         assert(dim == self.cols)
         matrix_type = 2
@@ -288,7 +298,7 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
         # write elements
         body_struct = "=d"
         for r in range(dim):
-            for c in range(r +1):
+            for c in range(r + 1):
                 value = self.get(r, c)
                 value_str = struct.pack(body_struct, value)
                 fout.write(value_str)

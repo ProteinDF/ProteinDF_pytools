@@ -22,16 +22,14 @@
 import os
 import sys
 import argparse
+
+import proteindf_bridge as bridge
+import proteindf_tools as pdf
+
 import logging
 import logging.config
 logger = logging.getLogger(__name__)
 
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
-
-import proteindf_tools as pdf
 
 def main():
     # parse args
@@ -64,19 +62,19 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
     do_profile = args.profile
 
-    output_dir=args.output_dir
+    output_dir = args.output_dir
     pdfparam = pdf.PdfParam_H5()
     pdfparam.open(args.pdfresults_db)
 
     # run
     report = pdf.PdfReport(pdfparam=pdfparam, workdir=output_dir)
     if do_profile != None:
-       import cProfile
-       cProfile.runctx("report()",
-                       globals(), locals(),
-                       report.report())
+        import cProfile
+        cProfile.runctx("report()",
+                        globals(), locals(),
+                        report.report())
     else:
-       report.report()
+        report.report()
 
 
 if __name__ == '__main__':

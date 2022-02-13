@@ -53,7 +53,7 @@ class Process(object):
     ...
     '''
 
-    def __init__(self, logfile_path = ''):
+    def __init__(self, logfile_path=''):
         self._procs = []
         self._logfile_path = str(logfile_path)
 
@@ -64,6 +64,7 @@ class Process(object):
             'stderr': subprocess.PIPE,
         }
         p_args['shell'] = self._is_shell_script(cmd)
+        # p_args['env'] = dict(os.environ)
 
         return self._exec(cmd, p_args)
 
@@ -73,6 +74,7 @@ class Process(object):
             'stderr': subprocess.PIPE,
         }
         p_args['shell'] = self._is_shell_script(cmd)
+        # p_args['env'] = dict(os.environ)
 
         if len(self._procs) == 0:
             p_args['stdin'] = None
@@ -92,10 +94,12 @@ class Process(object):
             new_proc = subprocess.Popen(cmd, **p_args)
         except OSError as e:
             sys.stderr.write('Failed to execute command: {}\n'.format(cmd))
-            raise
-            # raise e
-        except:
-            raise
+            sys.stderr.write('PATH={}\n'.format(os.environ['PATH']))
+            raise e
+        except Exception as e:
+            sys.stderr.write('error: {}\n'.format(str(e)))
+            sys.stderr.write('PATH={}\n'.format(os.environ['PATH']))
+            raise e
 
         self._procs.append(new_proc)
         return self
@@ -122,7 +126,7 @@ class Process(object):
             ready = select.select(to_check, [], [])
             if stdout_fd in ready[0]:
                 stdout_chunk = stdout.read()
-                stdout_chunk = bridge.Utils.to_unicode(stdout_chunk)
+                stdout_chunk = bridge.StrUtils.to_unicode(stdout_chunk)
                 if stdout_chunk == '':
                     stdout_eof = True
                 else:
@@ -130,10 +134,10 @@ class Process(object):
                     sys.stdout.flush()
                     if logfile != None:
                         logfile.write(stdout_chunk)
-                    #stdout_data.append(stdout_chunk)
+                    # stdout_data.append(stdout_chunk)
             if stderr_fd in ready[0]:
                 stderr_chunk = stderr.read()
-                stderr_chunk = bridge.Utils.to_unicode(stderr_chunk)
+                stderr_chunk = bridge.StrUtils.to_unicode(stderr_chunk)
                 if stderr_chunk == '':
                     stderr_eof = True
                 else:
@@ -141,7 +145,7 @@ class Process(object):
                     sys.stderr.flush()
                     if logfile != None:
                         logfile.write(stdout_chunk)
-                    #stderr_data.append(stderr_chunk)
+                    # stderr_data.append(stderr_chunk)
             if stdout_eof and stderr_eof:
                 break
             select.select([], [], [], .1)
@@ -157,7 +161,6 @@ class Process(object):
             logfile.close()
 
         return status
-
 
     def _make_non_blocking(self, fd):
         fl = fcntl.fcntl(fd, fcntl.F_GETFL)

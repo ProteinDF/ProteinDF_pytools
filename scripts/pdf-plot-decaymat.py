@@ -5,17 +5,12 @@ import os
 import sys
 from types import *
 import argparse
-import logging
-try:
-    import msgpack
-except:
-    try:
-        import umsgpack as msgpack
-    except:
-        import msgpack_pure as msgpack
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
+import logging
+
 
 def main():
     # parse args
@@ -85,7 +80,7 @@ def main():
     distgraph.save(output_path)
 
 
-def get_matrix(path, verbose = False):
+def get_matrix(path, verbose=False):
     if verbose:
         sys.stderr.write("load matrix: {}\n".format(path))
     mat = None
@@ -98,11 +93,10 @@ def get_matrix(path, verbose = False):
         mat = pdf.Matrix()
         mat.load(path)
 
-
     return mat
 
 
-def distance_matrix(atomgroup, verbose = False):
+def distance_matrix(atomgroup, verbose=False):
     '''
     create distance matrix
 
@@ -122,7 +116,7 @@ def distance_matrix(atomgroup, verbose = False):
     return mat
 
 
-def dist_vs_matvalue(orb_info, distance_mat, mat, path, verbose = False):
+def dist_vs_matvalue(orb_info, distance_mat, mat, path, verbose=False):
     if verbose:
         sys.stderr.write("matrix size: {} x {}\n".format(mat.rows, mat.cols))
 

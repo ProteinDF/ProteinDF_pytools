@@ -22,12 +22,10 @@
 import os
 import sys
 import argparse
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
 
+import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
 
 def main():
     A = get_matrix_A()
@@ -35,6 +33,7 @@ def main():
 
     A.save("A.mat")
     B.save("B.mat")
+
 
 def get_matrix_A():
     num_of_rows = 3
@@ -47,6 +46,7 @@ def get_matrix_A():
             count += 1.0
     return A
 
+
 def get_matrix_B():
     num_of_rows = 3
     num_of_cols = 3
@@ -57,6 +57,7 @@ def get_matrix_B():
             B.set(r, c, count)
             count += 1.0
     return B
+
 
 if __name__ == '__main__':
     main()

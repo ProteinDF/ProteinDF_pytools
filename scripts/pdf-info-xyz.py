@@ -26,14 +26,12 @@ output xyz
 import os
 import sys
 import argparse
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
 
+import proteindf_bridge as bridge
 import proteindf_tools as pdf
 
 ANG2AU = 0.52917721067
+
 
 def main():
     # parse args
@@ -74,6 +72,7 @@ def main():
     # a.u, to angstroam
     atomgroup *= ANG2AU
     print(atomgroup.get_xyz())
+
 
 if __name__ == '__main__':
     main()

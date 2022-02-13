@@ -4,14 +4,11 @@
 import argparse
 import numpy as np
 import pandas as pd
-try:
-    import msgpack
-except:
-    import msgpack_pure as msgpack
 import math
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
+
 
 class ESP_charge(object):
     def get_RRMS(self, mpac_path, atoms):
@@ -22,16 +19,12 @@ class ESP_charge(object):
 
     def _load_ESPs(self, mpac_path):
         print('load: {}'.format(mpac_path))
-        data = None
-        with open(mpac_path, 'rb') as f:
-            mpac_data = f.read()
-            data = msgpack.unpackb(mpac_data)
-            data = bridge.Utils.to_unicode_dict(data)
-
+        data = bridge.load_msgpack(mpac_path)
+        if data != None:
             grids = []
             for p in data['grids']:
                 pos = bridge.Position(p[0], p[1], p[2])
-                pos *= (1.0 / 0.5291772108) # Angstroam to a.u.
+                pos *= (1.0 / 0.5291772108)  # Angstroam to a.u.
                 grids.append(pos)
 
             ESPs = []
@@ -57,7 +50,8 @@ class ESP_charge(object):
             #print("grid={} est={: 8.3e} exact={: 8.3e} >> delta2={: 8.3e}".format(grids[i], estimate_esp, exact_esp, delta2))
         rrms2 = sum_delta2 / sum_v2
         rrms = math.sqrt(rrms2)
-        print('delta2={} sum_v2={} RRMS2={} RRMS={}'.format(sum_delta2, sum_v2, rrms2, rrms))
+        print('delta2={} sum_v2={} RRMS2={} RRMS={}'.format(
+            sum_delta2, sum_v2, rrms2, rrms))
 
         return rrms
 
@@ -66,10 +60,9 @@ class ESP_charge(object):
         num_of_atoms = len(atoms)
         for i in range(num_of_atoms):
             d = pos.distance_from(atoms[i].xyz)
-            esp += atoms[i].charge / d;
+            esp += atoms[i].charge / d
 
         return esp
-
 
 
 class Lasso(object):
@@ -115,7 +108,7 @@ class Lasso(object):
 
         beta = pdf.Vector(b)
         prev_beta = pdf.Vector(b)
-        for self._iter in range(1, self._max_iter +1):
+        for self._iter in range(1, self._max_iter + 1):
             for j in range(b):
                 beta_j = pdf.Vector(beta)
                 beta_j[j] = 0.0
@@ -132,8 +125,8 @@ class Lasso(object):
                 self._is_converged = True
                 break
 
-            #print(self._iter)
-            #print(beta)
+            # print(self._iter)
+            # print(beta)
             prev_beta = pdf.Vector(beta)
 
         self._coef = beta
@@ -149,11 +142,11 @@ class Lasso(object):
             return x + lambda_
         else:
             return 0
-        #if abs(x) <= lambda_:
+        # if abs(x) <= lambda_:
         #    return 0
-        #elif x > lambda_:
+        # elif x > lambda_:
         #    return x - lambda_
-        #else:
+        # else:
         #    return x + lambda_
 
     def _is_convergence(self, iter, x, prev_x):
@@ -164,7 +157,8 @@ class Lasso(object):
             diff_x = x - prev_x
             max_diff = max(abs(diff_x.max), abs(diff_x.min))
             rms_diff = diff_x * diff_x / dim
-            print("#{} MAX delta: {} MAX RMS: {}".format(iter, max_diff, rms_diff))
+            print("#{} MAX delta: {} MAX RMS: {}".format(
+                iter, max_diff, rms_diff))
 
             if (max_diff < self._conv_threshold * 0.1):
                 self._num_of_converged += 1
@@ -183,9 +177,9 @@ class Lasso(object):
 
         beta = pdf.Vector(b)
         prev_beta = pdf.Vector(b)
-        for self._iter in range(1, self._max_iter +1):
+        for self._iter in range(1, self._max_iter + 1):
             delta = pdf.Matrix(n, b)
-            for i in range(n -1):
+            for i in range(n - 1):
                 delta.set(i, i, abs(beta[i]))
             delta *= self._alpha
 
@@ -211,9 +205,9 @@ class Lasso(object):
         coef = bridge.Vector(n)
         prev_coef = bridge.Vector(coef)
 
-        for self._iter in range(1, self._max_iter +1):
+        for self._iter in range(1, self._max_iter + 1):
             rI = bridge.SymmetricMatrix(n)
-            for i in range(n -1):
+            for i in range(n - 1):
                 rI.set(i, i, abs(coef[i]))
             rI *= self._alpha
 
@@ -228,9 +222,10 @@ class Lasso(object):
 
         self._coef = coef
 
+
 def get_charge(x):
     charge = 0.0
-    for i in range(len(x) -1):
+    for i in range(len(x) - 1):
         charge += x[i]
     return charge
 
@@ -238,8 +233,8 @@ def get_charge(x):
 def set_atomlist(atom_charges, atomlist):
     q_total = 0.0
     for i in range(len(atom_charges)):
-        q = atom_charges[i];
-        atomlist[i].charge = q;
+        q = atom_charges[i]
+        atomlist[i].charge = q
         q_total += q
         print(atomlist[i])
     print('charge={:.3f}'.format(q_total))
@@ -312,7 +307,7 @@ def main():
     use_scikit_learn = args.use_scikit_learn
     verbose = args.verbose
     max_iter = args.max_iterations[0]
-    tol = args.tolerance[0] # 0.0001
+    tol = args.tolerance[0]  # 0.0001
     alpha = float(args.alpha[0])
     if verbose:
         print("alpha={}".format(alpha))
@@ -347,9 +342,10 @@ def main():
         print('use scikit-learn module')
         print('alpha={}'.format(alpha))
         import sklearn.linear_model as lm
-        lasso = lm.Lasso(alpha=alpha, fit_intercept=False, max_iter=max_iter, tol=tol)
-        X.resize(X.rows -1, X.cols -1)
-        y.resize(len(y) -1)
+        lasso = lm.Lasso(alpha=alpha, fit_intercept=False,
+                         max_iter=max_iter, tol=tol)
+        X.resize(X.rows - 1, X.cols - 1)
+        y.resize(len(y) - 1)
         lasso.fit(X.get_ndarray(), y.get_ndarray())
         # print(lasso.intercept_)
         # atom_charges = lasso.coef_[:-1]
@@ -366,12 +362,11 @@ def main():
         # debug
         #X.resize(X.rows -1, X.cols -1)
         #y.resize(len(y) -1)
-        #lasso.fit(X=X, y=y) # same as scikit-learn
-        #print(lasso.iterations)
-        #print(lasso.is_converged)
+        # lasso.fit(X=X, y=y) # same as scikit-learn
+        # print(lasso.iterations)
+        # print(lasso.is_converged)
         #atom_charges = lasso.coef[:]
         #set_atomlist(atom_charges, atomlist)
-
 
     # RRMS
     esp_charge = ESP_charge()
@@ -385,6 +380,7 @@ def main():
                 line = "{:2}, {: 8.3f}\n".format(atomlist[i].symbol,
                                                  atomlist[i].charge)
                 f.write(line)
+
 
 if __name__ == '__main__':
     main()

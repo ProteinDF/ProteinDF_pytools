@@ -5,32 +5,16 @@ import os
 import sys
 from types import *
 import argparse
-import logging
-try:
-    import msgpack
-except:
-    try:
-        import umsgpack as msgpack
-    except:
-        import msgpack_pure as msgpack
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
 
+import logging
+
+
 def main():
     # parse args
     parser = argparse.ArgumentParser(description='plot matrix')
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('-d', '--db',
-                       nargs='?',
-                       action='store',
-                       const='pdfresults.db',
-                       help='ProteinDF results file')
-    group.add_argument('-p', '--param',
-                       nargs='?',
-                       action='store',
-                       const='pdfparam.mpac',
-                       help='ProteinDF parameter file')
     parser.add_argument('matrix',
                         nargs=1,
                         help='matrix path')
@@ -38,7 +22,27 @@ def main():
                         nargs=1,
                         default=['mat.png'],
                         help='output graph path')
-    parser.add_argument("-2", "--diverging",
+    parser.add_argument("--vmax",
+                        type=float)
+    parser.add_argument("--vmin",
+                        type=float)
+    parser.add_argument('--title',
+                        nargs=1,
+                        default=['matrix value'],
+                        help='graph title')
+    parser.add_argument('--no-x-tick-labels',
+                        action='store_true',
+                        default=False,
+                        help='draw x-tick labels')
+    parser.add_argument('--no-y-tick-labels',
+                        action='store_true',
+                        default=False,
+                        help='draw y-tick labels')
+    parser.add_argument('--cmap',
+                        nargs=1,
+                        default=['bwr'],
+                        help='color map name')
+    parser.add_argument("--write-values",
                         action="store_true",
                         default=False)
     parser.add_argument("-v", "--verbose",
@@ -53,45 +57,76 @@ def main():
     verbose = args.verbose
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
+
     mat_path = args.matrix[0]
+    if verbose:
+        print("matrix path: {}".format(mat_path))
+
     output_path = args.output[0]
-    is_diverging = args.diverging
+    if verbose:
+        print("output path: {}".format(output_path))
 
-    # setup orbinfo
-    #if verbose:
-    #    sys.stderr.write("prepare orbital information\n")
-    #orb_info = None
-    #molecule = None
-    #if args.db:
-    #    entry = pdf.PdfArchive(args.db)
-    #    orb_info = pdf.OrbInfo(entry)
-    #    molecule = entry.get_molecule()
-    #elif args.param:
-    #    pdfparam = pdf.load_pdfparam(args.param)
-    #    orb_info = pdf.OrbInfo(pdfparam)
-    #    molecule = pdfparam.molecule
+    vmax = None
+    if args.vmax != None:
+        vmax = args.vmax
+        if verbose:
+            print("vmax: {}".format(vmax))
+    vmin = None
+    if args.vmin != None:
+        vmin = args.vmin
+        if verbose:
+            print("vmin: {}".format(vmin))
 
-    # molecule
-    #if verbose:
-    #    sys.stderr.write("prepare molecule information\n")
-    #distance_mat = distance_matrix(molecule)
+    title = args.title[0]
+    x_tick_labels = not args.no_x_tick_labels
+    y_tick_labels = not args.no_y_tick_labels
+    if verbose:
+        print("draw x tick labels: {}".format(x_tick_labels))
+        print("draw y tick labels: {}".format(y_tick_labels))
+
+    cmap = args.cmap[0]
+    if verbose:
+        print("cmap: {}".format(cmap))
+
+    write_values = args.write_values
+    if verbose:
+        print("write values: {}".format(write_values))
 
     # setup matrix
     mat = get_matrix(mat_path, verbose)
+    rows = mat.rows
+    cols = mat.cols
 
     # matrix elements
-    mat_plot = pdf.DfMatrixGraph(mat, is_diverging)
+    mat_plot = pdf.DfMatrixGraph(mat, figsize=(20, 20))
+    if vmax:
+        mat_plot.vmax = vmax
+    if vmin:
+        mat_plot.vmin = vmin
+
+    mat_plot.xticks = []
+    mat_plot.xticklabels = []
+    if x_tick_labels:
+        xticks = [x for x in range(0, rows)]
+        xticklabels = ["{}".format(x) for x in range(1, rows + 1)]
+        mat_plot.xticks = xticks
+        mat_plot.xticklabels = xticklabels
+
+    mat_plot.yticks = []
+    mat_plot.yticklabels = []
+    if y_tick_labels:
+        yticks = [y for y in range(0, cols)]
+        yticklabels = ["{}".format(y) for y in range(1, cols + 1)]
+        mat_plot.yticks = yticks
+        mat_plot.yticklabels = yticklabels
+    mat_plot.title = title
+    mat_plot.cmap = cmap
+    mat_plot.should_write_values = write_values
+
     mat_plot.save(output_path)
 
 
-    # distance v.s. matrix elements
-    #dist_vs_matvalue(orb_info, distance_mat, mat, 'mat.dat')
-    #distgraph = pdf.DfDistanceVsElementGraph2()
-    #distgraph.load('mat.dat')
-    #distgraph.save("dist.png")
-
-
-def get_matrix(path, verbose = False):
+def get_matrix(path, verbose=False):
     if verbose:
         sys.stderr.write("load matrix: {}\n".format(path))
     mat = None
@@ -110,7 +145,7 @@ def get_matrix(path, verbose = False):
     return mat
 
 
-def distance_matrix(atomgroup, verbose = False):
+def distance_matrix(atomgroup, verbose=False):
     '''
     create distance matrix
 
@@ -130,7 +165,7 @@ def distance_matrix(atomgroup, verbose = False):
     return mat
 
 
-def dist_vs_matvalue(orb_info, distance_mat, mat, path, verbose = False):
+def dist_vs_matvalue(orb_info, distance_mat, mat, path, verbose=False):
     if verbose:
         sys.stderr.write("matrix size: {} x {}\n".format(mat.rows, mat.cols))
 
