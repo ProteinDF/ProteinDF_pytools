@@ -32,9 +32,10 @@ import matplotlib.pyplot as plt
 import proteindf_bridge as bridge
 
 import logging
+
 logger = logging.getLogger(__name__)
 
-matplotlib.use('Agg')
+matplotlib.use("Agg")
 
 
 class DfGraph(object):
@@ -56,128 +57,142 @@ class DfGraph(object):
         self._title = str(title)
 
     def _get_title(self):
-        if not '_title' in self.__dict__:
-            self._title = ''
+        if not "_title" in self.__dict__:
+            self._title = ""
         return self._title
+
     title = property(_get_title, _set_title)
 
     def _set_xlabel(self, xlabel):
         self._xlabel = str(xlabel)
 
     def _get_xlabel(self):
-        if not '_xlabel' in self.__dict__:
-            self._xlabel = ''
+        if not "_xlabel" in self.__dict__:
+            self._xlabel = ""
         return self._xlabel
+
     xlabel = property(_get_xlabel, _set_xlabel)
 
     def _set_ylabel(self, ylabel):
         self._ylabel = str(ylabel)
 
     def _get_ylabel(self):
-        if not '_ylabel' in self.__dict__:
-            self._ylabel = ''
+        if not "_ylabel" in self.__dict__:
+            self._ylabel = ""
         return self._ylabel
+
     ylabel = property(_get_ylabel, _set_ylabel)
 
     def _set_is_draw_grid(self, TF):
         self._is_draw_grid = bool(TF)
 
     def _get_is_draw_grid(self):
-        if not '_is_draw_grid' in self.__dict__:
+        if not "_is_draw_grid" in self.__dict__:
             self._is_draw_grid = False
         return self._is_draw_grid
+
     is_draw_grid = property(_get_is_draw_grid, _set_is_draw_grid)
 
     def _set_xmin(self, xmin):
         self._xmin = xmin
 
     def _get_xmin(self):
-        if not '_xmin' in self.__dict__:
+        if not "_xmin" in self.__dict__:
             self._xmin = None
         return self._xmin
+
     xmin = property(_get_xmin, _set_xmin)
 
     def _set_xmax(self, xmax):
         self._xmax = xmax
 
     def _get_xmax(self):
-        if not '_xmax' in self.__dict__:
+        if not "_xmax" in self.__dict__:
             self._xmax = None
         return self._xmax
+
     xmax = property(_get_xmax, _set_xmax)
 
     def _set_ymin(self, ymin):
         self._ymin = ymin
 
     def _get_ymin(self):
-        if not '_ymin' in self.__dict__:
+        if not "_ymin" in self.__dict__:
             self._ymin = None
         return self._ymin
+
     ymin = property(_get_ymin, _set_ymin)
 
     def _set_ymax(self, ymax):
         self._ymax = ymax
 
     def _get_ymax(self):
-        if not '_ymax' in self.__dict__:
+        if not "_ymax" in self.__dict__:
             self._ymax = None
         return self._ymax
+
     ymax = property(_get_ymax, _set_ymax)
 
     def _set_aspect(self, value):
         self._aspect = value
 
     def _get_aspect(self):
-        if not '_aspect' in self.__dict__:
+        if not "_aspect" in self.__dict__:
             self._aspect = None
         return self._aspect
+
     aspect = property(_get_aspect, _set_aspect)
 
     def _set_xticks(self, ticks):
-        assert(isinstance(ticks, list))
+        assert isinstance(ticks, list)
         self._xticks = ticks
 
     def _get_xticks(self):
-        if not '_xticks' in self.__dict__:
+        if not "_xticks" in self.__dict__:
             self._xticks = None
         return self._xticks
+
     xticks = property(_get_xticks, _set_xticks)
 
     def _set_yticks(self, ticks):
-        assert(isinstance(ticks, list))
+        assert isinstance(ticks, list)
         self._yticks = ticks
 
     def _get_yticks(self):
-        if not '_yticks' in self.__dict__:
+        if not "_yticks" in self.__dict__:
             self._yticks = None
         return self._yticks
+
     yticks = property(_get_yticks, _set_yticks)
 
     def _set_xticklabels(self, labels):
         self._xticklabels = labels
 
     def _get_xticklabels(self):
-        if not '_xticklabels' in self.__dict__:
+        if not "_xticklabels" in self.__dict__:
             self._xticklabels = None
         return self._xticklabels
+
     xticklabels = property(_get_xticklabels, _set_xticklabels)
 
     def _set_yticklabels(self, labels):
         self._yticklabels = labels
 
     def _get_yticklabels(self):
-        if not '_yticklabels' in self.__dict__:
+        if not "_yticklabels" in self.__dict__:
             self._yticklabels = None
         return self._yticklabels
+
     yticklabels = property(_get_yticklabels, _set_yticklabels)
 
     def _set_legend(self, yn):
         self._legend = bool(yn)
 
     def _get_legend(self):
-        if not '_legend' in self.__dict__:
+        if not "_legend" in self.__dict__:
             self._legend = False
         return self._legend
+
     legend = property(_get_legend, _set_legend)
 
     # ==========================================================================
@@ -192,10 +207,8 @@ class DfGraph(object):
         self._ax.set_ylabel(self.ylabel)
         self._ax.grid(self.is_draw_grid)
 
-        self._ax.set_xlim(left=self.xmin,
-                          right=self.xmax)
-        self._ax.set_ylim(bottom=self.ymin,
-                          top=self.ymax)
+        self._ax.set_xlim(left=self.xmin, right=self.xmax)
+        self._ax.set_ylim(bottom=self.ymin, top=self.ymax)
         # self._ax.relim(visible_only=True)
         self._ax.autoscale_view(tight=True)
 
@@ -212,10 +225,10 @@ class DfGraph(object):
             self._ax.set_aspect(self.aspect)
 
         # 枠
-        self._ax.spines['top'].set_linewidth(1.0)
-        self._ax.spines['bottom'].set_linewidth(1.0)
-        self._ax.spines['left'].set_linewidth(1.0)
-        self._ax.spines['right'].set_linewidth(1.0)
+        self._ax.spines["top"].set_linewidth(1.0)
+        self._ax.spines["bottom"].set_linewidth(1.0)
+        self._ax.spines["left"].set_linewidth(1.0)
+        self._ax.spines["right"].set_linewidth(1.0)
 
         if self.legend == True:
             self._ax.legend()
@@ -231,9 +244,9 @@ class DfGraph(object):
 class DfTotalEnergyHistGraph(DfGraph):
     def __init__(self):
         DfGraph.__init__(self)
-        self.title = 'total energy history'
-        self.xlabel = 'iteration'
-        self.ylabel = 'energy / a.u.'
+        self.title = "total energy history"
+        self.xlabel = "iteration"
+        self.ylabel = "energy / a.u."
         self.is_draw_grid = True
 
     def load_data(self, path):
@@ -244,13 +257,13 @@ class DfTotalEnergyHistGraph(DfGraph):
         self._x = []
         self._y = []
         for line in lines:
-            items = line.strip().split(',')
+            items = line.strip().split(",")
             self._x.append(float(items[0]))
             self._y.append(float(items[1]))
 
     def _draw_data(self):
         # see. http://matplotlib.sourceforge.net/api/pyplot_api.html#matplotlib.pyplot.plot
-        self._ax.plot(self._x, self._y, 'bo-')
+        self._ax.plot(self._x, self._y, "bo-")
 
         # self._ax.legend(('total energy'), loc='best')
 
@@ -262,9 +275,9 @@ class DfEnergyLevelHistoryGraphH(DfGraph):
 
     def __init__(self):
         DfGraph.__init__(self)
-        self.title = 'Energy Level'
-        self.xlabel = 'iteration'
-        self.ylabel = 'energy / eV'
+        self.title = "Energy Level"
+        self.xlabel = "iteration"
+        self.ylabel = "energy / eV"
         self.is_draw_grid = True
         self.xmin = None
         self.xmax = None
@@ -292,7 +305,7 @@ class DfEnergyLevelHistoryGraphH(DfGraph):
             line = line.strip()
             if len(line) == 0:
                 continue
-            (itr, level, value) = line.strip().split(',')
+            (itr, level, value) = line.strip().split(",")
             itr = int(itr)
             self._max_itr = max(self._max_itr, itr)
             self._data.append([itr, float(level), float(value)])
@@ -317,18 +330,16 @@ class DfEnergyLevelHistoryGraphH(DfGraph):
                 continue
 
             strike = False
-            color = 'k'
+            color = "k"
             if level == self._HOMO_level:
                 strike = True
-                color = 'r'
+                color = "r"
             elif level == self._LUMO_level:
                 strike = True
-                color = 'b'
-            self._draw_data_line(itr, value,
-                                 strike=strike,
-                                 color=color)
+                color = "b"
+            self._draw_data_line(itr, value, strike=strike, color=color)
 
-    def _draw_data_line(self, x, value, strike=False, color='k'):
+    def _draw_data_line(self, x, value, strike=False, color="k"):
         if (self.ymin < value) and (value < self.ymax):
             width = 0.8
             if strike:
@@ -337,8 +348,7 @@ class DfEnergyLevelHistoryGraphH(DfGraph):
             height = 0.01
             bottom = value - 0.5 * height
 
-            self._ax.bar(x, height, width, bottom, align='center',
-                         edgecolor=color, color=color)
+            self._ax.bar(x, height, width, bottom, align="center", edgecolor=color, color=color)
 
 
 class DfEnergyLevelHistoryGraphV(DfEnergyLevelHistoryGraphH):
@@ -348,9 +358,9 @@ class DfEnergyLevelHistoryGraphV(DfEnergyLevelHistoryGraphH):
 
     def __init__(self):
         DfEnergyLevelHistoryGraphH.__init__(self)
-        self.title = 'Energy Level'
-        self.xlabel = 'energy / eV'
-        self.ylabel = 'iteration'
+        self.title = "Energy Level"
+        self.xlabel = "energy / eV"
+        self.ylabel = "iteration"
         self.is_draw_grid = True
         self.xmin = -20.0
         self.xmax = 5.0
@@ -360,7 +370,7 @@ class DfEnergyLevelHistoryGraphV(DfEnergyLevelHistoryGraphH):
         self._HOMO_level = -1
         self._LUMO_level = -1
 
-    def _draw_data_line(self, order, value, strike=False, color='k'):
+    def _draw_data_line(self, order, value, strike=False, color="k"):
         if (self.xmin < value) and (value < self.xmax):
             width = 0.01
             height = 0.8
@@ -371,8 +381,7 @@ class DfEnergyLevelHistoryGraphV(DfEnergyLevelHistoryGraphH):
             bottom = order - height / 2.0
             left = value - width / 2.0
 
-            self._ax.bar(left, height, width, bottom,
-                         edgecolor=color, color=color)
+            self._ax.bar(left, height, width, bottom, edgecolor=color, color=color)
 
     def _draw(self):
         self._ax.tick_params(labelleft=False)
@@ -388,7 +397,7 @@ class DfPopulationGraph(DfGraph):
         self._y = []
         with open(path) as f:
             for line in f:
-                items = line.strip().split(',')
+                items = line.strip().split(",")
                 self._x.append(float(items[0]))
                 self._y.append(float(items[1]))
 
@@ -409,8 +418,7 @@ class DfLineChart(DfGraph):
         # print('data size=', len(self._data))
         # print(self._data)
         for i, (X, Y) in enumerate(self._data):
-            self._ax.plot(X, Y, linewidth=1.0, linestyle="-",
-                          label='{}'.format(i))
+            self._ax.plot(X, Y, linewidth=1.0, linestyle="-", label="{}".format(i))
 
 
 # Example of making your own norm.  Also see matplotlib.colors.
@@ -441,17 +449,17 @@ class MidpointLogNorm(matplotlib.colors.LogNorm):
 
 class DfMatrixGraph(DfGraph):
     def __init__(self, matrix, **figure_kwd):
-        assert(isinstance(matrix, bridge.Matrix))
+        assert isinstance(matrix, bridge.Matrix)
         DfGraph.__init__(self, **figure_kwd)
         self._matrix = matrix
-        self._is_diverging = is_diverging
+        self.is_diverging = True
 
         self._vmax = None
         self._vmin = None
 
-        self.title = 'Matrix Value'
-        self.xlabel = ''
-        self.ylabel = ''
+        self.title = "Matrix Value"
+        self.xlabel = ""
+        self.ylabel = ""
         self.is_draw_grid = False
 
         if self._is_diverging:
@@ -465,6 +473,7 @@ class DfMatrixGraph(DfGraph):
 
     def _set_cmap(self, cmap):
         self._cmap = cmap
+
     cmap = property(_get_cmap, _set_cmap)
 
     def _get_vmax(self):
@@ -472,6 +481,7 @@ class DfMatrixGraph(DfGraph):
 
     def _set_vmax(self, value):
         self._vmax = float(value)
+
     vmax = property(_get_vmax, _set_vmax)
 
     def _get_vmin(self):
@@ -479,7 +489,16 @@ class DfMatrixGraph(DfGraph):
 
     def _set_vmin(self, value):
         self._vmin = float(value)
+
     vmin = property(_get_vmin, _set_vmin)
+
+    def _get_is_diverging(self):
+        return self._is_diverging
+
+    def _set_is_diverging(self, yn):
+        self._is_diverging = bool(yn)
+
+    is_diverging = property(_get_is_diverging, _set_is_diverging)
 
     def _get_should_write_values(self):
         return self._should_write_values
@@ -487,41 +506,34 @@ class DfMatrixGraph(DfGraph):
     def _set_should_write_values(self, yn):
         self._should_write_values = bool(yn)
 
-    should_write_values = property(
-        _get_should_write_values, _set_should_write_values)
+    should_write_values = property(_get_should_write_values, _set_should_write_values)
 
     def _draw_data(self):
         data = self._matrix.data
-        if not self._is_diverging:
+        if not self.is_diverging:
             data = numpy.absolute(data)
 
         kwd = {}
         kwd["cmap"] = self._cmap
-        kwd["interpolation"] = 'nearest'
+        kwd["interpolation"] = "nearest"
 
         # kwd["norm"] = None
-        kwd["norm"] = MidpointNormalize(
-            vmin=self.vmin, vmax=self.vmax, midpoint=0.0)
+        kwd["norm"] = MidpointNormalize(vmin=self.vmin, vmax=self.vmax, midpoint=0.0)
         # kwd["norm"] = MidpointLogNorm(
         #    vmin=self.vmin, vmax=self.vmax, midpoint=0.0)
         # kwd["norm"] = matplotlib.colors.LogNorm(vmin=self.vmin, vmax=self.vmax)
 
-        kwd["origin"] = 'upper'
-        if self.vmax:
-            kwd["vmax"] = self.vmax
-        if self.vmin:
-            kwd["vmin"] = self.vmin
+        kwd["origin"] = "upper"
         cax = self._ax.imshow(data, **kwd)
 
         # self._ax.tick_params(axis='x', labeltop=True, labelbottom=False)
-        self._ax.tick_params(axis='x', labeltop=False, labelbottom=True)
+        self._ax.tick_params(axis="x", labeltop=False, labelbottom=True)
 
         # self._fig.colorbar(cax, ticks=[ 0, 1], shrink=0.92)
         color_bar = self._fig.colorbar(cax, shrink=0.92)
         color_bar.minorticks_off()
         color_bar.set_ticks([self.vmin, 0.0, self.vmax])
-        color_bar.set_ticklabels(
-            ['< {}'.format(self.vmin), '0.0', '> {}'.format(self.vmax)])
+        color_bar.set_ticklabels(["< {}".format(self.vmin), "0.0", "> {}".format(self.vmax)])
 
         # data label
         rows = self._matrix.rows
@@ -530,10 +542,14 @@ class DfMatrixGraph(DfGraph):
         if self.should_write_values:
             for row in range(rows):
                 for col in range(cols):
-                    self._ax.text(row, col, '{0:.2e}'.format(self._matrix.get(row, col)),
-                                  fontsize='xx-small',
-                                  horizontalalignment='center',
-                                  verticalalignment='center')
+                    self._ax.text(
+                        row,
+                        col,
+                        "{0:.2e}".format(self._matrix.get(row, col)),
+                        fontsize="xx-small",
+                        horizontalalignment="center",
+                        verticalalignment="center",
+                    )
 
 
 class DfGraph2D(DfGraph):
@@ -547,11 +563,11 @@ class DfGraph2D(DfGraph):
     # 'k'	black
     # 'w'	white
     _color_str = {
-        0: 'b',
-        1: 'g',
-        2: 'r',
-        3: 'c',
-        4: 'm',
+        0: "b",
+        1: "g",
+        2: "r",
+        3: "c",
+        4: "m",
     }
 
     def __init__(self):
@@ -568,10 +584,7 @@ class DfGraph2D(DfGraph):
         if len(fmt) == 0:
             fmt = "{}".format(self._color_str[index % len(self._color_str)])
 
-        self._draw_series[index] = {
-            "label": label,
-            "format": fmt
-        }
+        self._draw_series[index] = {"label": label, "format": fmt}
 
     def _get_format(self, index):
         series = self._draw_series.get(index, {})
@@ -589,11 +602,12 @@ class DfGraph2D(DfGraph):
 
     def _get_num_of_series(self):
         return self._num_of_series
+
     num_of_series = property(_get_num_of_series)
 
     def load_data(self, path):
         num_of_series = 0
-        with open(path, "r", newline='') as f:
+        with open(path, "r", newline="") as f:
             reader = csv.reader(f)
             for items in reader:
                 self._x.append(items[0])
@@ -629,13 +643,13 @@ class DfDistanceVsElementGraph(DfGraph):
         DfGraph.__init__(self)
         self._log = log
 
-        self.xlabel = 'distance'
-        self.ylabel = 'magnitude'
+        self.xlabel = "distance"
+        self.ylabel = "magnitude"
 
     def _make_default_subplots(self):
         left, width = 0.1, 0.65
         bottom, height = 0.1, 0.65
-        bottom_h = left_h = left+width+0.02
+        bottom_h = left_h = left + width + 0.02
 
         rect_scatter = [left, bottom, width, height]
         rect_hist_x = [left, bottom_h, width, 0.2]
@@ -660,7 +674,7 @@ class DfDistanceVsElementGraph(DfGraph):
         with open(path) as f:
             for line in f:
                 line = line.strip()
-                d = line.split(',')
+                d = line.split(",")
 
                 x = float(d[0])
                 y = float(d[1])
@@ -669,8 +683,8 @@ class DfDistanceVsElementGraph(DfGraph):
                 data_x.append(x)
                 data_y.append(y)
 
-        self._data_x = numpy.array(data_x, 'd')
-        self._data_y = numpy.array(data_y, 'd')
+        self._data_x = numpy.array(data_x, "d")
+        self._data_y = numpy.array(data_y, "d")
 
     def _draw(self):
         self._draw_data()
@@ -681,8 +695,8 @@ class DfDistanceVsElementGraph(DfGraph):
     def _draw_data(self):
         self._ax_scatter.scatter(self._data_x, self._data_y)
         if self._log:
-            self._ax_scatter.set_ylim(1.0E-8, 100.0)
-            self._ax_scatter.set_yscale('log')
+            self._ax_scatter.set_ylim(1.0e-8, 100.0)
+            self._ax_scatter.set_yscale("log")
 
         self._draw_histx()
         self._draw_histy()
@@ -697,11 +711,10 @@ class DfDistanceVsElementGraph(DfGraph):
         self._ax_hist_x.set_yticks(numpy.arange(y_min, y_max, width_y))
 
     def _draw_histy(self):
-        self._ax_hist_y.hist(
-            self._data_y, orientation='horizontal', log=self._log)
+        self._ax_hist_y.hist(self._data_y, orientation="horizontal", log=self._log)
         self._ax_hist_y.set_ylim(self._ax_scatter.get_ylim())
         if self._log:
-            self._ax_hist_y.set_yscale('log')
+            self._ax_hist_y.set_yscale("log")
 
         (x_min, x_max) = self._ax_hist_y.get_xlim()
         range_x = x_max - x_min
@@ -710,6 +723,7 @@ class DfDistanceVsElementGraph(DfGraph):
 
 
 # ******************************************************************************
+
 
 class LineChart(object):
     def set_data(self, x, y):
@@ -724,25 +738,24 @@ class LineChart(object):
         plt.clf()
 
         # line
-        line = plt.plot(self.__x,
-                        self.__y)
+        line = plt.plot(self.__x, self.__y)
         # range
         is_tight = True
         range = plt.axis()
-        if '__xmin' in self.__dict__:
+        if "__xmin" in self.__dict__:
             range[0] = self.__xmin
             is_tight = False
-        if '__xmax' in self.__dict__:
+        if "__xmax" in self.__dict__:
             range[1] = self.__xmax
             is_tight = False
-        if '__ymin' in self.__dict__:
+        if "__ymin" in self.__dict__:
             range[2] = self.__ymin
             is_tight = False
-        if '__ymax' in self.__dict__:
+        if "__ymax" in self.__dict__:
             range[3] = self.__ymax
             is_tight = False
         if is_tight:
-            plt.axis('tight')
+            plt.axis("tight")
         else:
             plt.axis(range)
 
@@ -774,20 +787,20 @@ class EnergyLevelChart(object):
         # range
         is_tight = True
         range = plt.axis()
-        if '__xmin' in self.__dict__:
+        if "__xmin" in self.__dict__:
             range[0] = self.__xmin
             is_tight = False
-        if '__xmax' in self.__dict__:
+        if "__xmax" in self.__dict__:
             range[1] = self.__xmax
             is_tight = False
-        if '__ymin' in self.__dict__:
+        if "__ymin" in self.__dict__:
             range[2] = self.__ymin
             is_tight = False
-        if '__ymax' in self.__dict__:
+        if "__ymax" in self.__dict__:
             range[3] = self.__ymax
             is_tight = False
         if is_tight:
-            plt.axis('tight')
+            plt.axis("tight")
         else:
             plt.axis(range)
 
@@ -795,8 +808,7 @@ class EnergyLevelChart(object):
 
 
 class Graph(object):
-    colors = ['blue', 'green', 'red', 'cyan', 'magenta',
-              'yellow']
+    colors = ["blue", "green", "red", "cyan", "magenta", "yellow"]
 
     def __init__(self, size=None):
         """
@@ -810,40 +822,40 @@ class Graph(object):
         self.fig.savefig(file_path)
 
     def set_xrange(self, min_value, max_value):
-        self.param['min_x'] = min_value
-        self.param['max_x'] = max_value
+        self.param["min_x"] = min_value
+        self.param["max_x"] = max_value
 
     def set_yrange(self, min_value, max_value):
-        self.param['min_y'] = min_value
-        self.param['max_y'] = max_value
+        self.param["min_y"] = min_value
+        self.param["max_y"] = max_value
 
     def set_xscale(self, value):
-        assert(value in ['linear', 'log', 'symlog'])
-        self.param['xscale'] = value
+        assert value in ["linear", "log", "symlog"]
+        self.param["xscale"] = value
 
     def set_yscale(self, value):
-        assert(value in ['linear', 'log', 'symlog'])
-        self.param['yscale'] = value
+        assert value in ["linear", "log", "symlog"]
+        self.param["yscale"] = value
 
     def set_xlabel(self, label):
-        self.param['xlabel'] = label
+        self.param["xlabel"] = label
 
     def set_ylabel(self, label):
-        self.param['ylabel'] = label
+        self.param["ylabel"] = label
 
     def draw_grid(self, yn):
-        assert((yn == True) or (yn == False))
-        self.param['draw_grid'] = yn
+        assert (yn == True) or (yn == False)
+        self.param["draw_grid"] = yn
 
     def draw_legend(self, yn):
-        assert((yn == True) or (yn == False))
-        self.param['draw_legend'] = yn
+        assert (yn == True) or (yn == False)
+        self.param["draw_legend"] = yn
 
-    def plot_basis(self, type='s', coef=[], exponent=[], color='blue'):
+    def plot_basis(self, type="s", coef=[], exponent=[], color="blue"):
         """
         print Gaussian
         """
-        assert(len(coef) == len(exponent))
+        assert len(coef) == len(exponent)
 
         max_value = 5
         x = []
@@ -852,40 +864,40 @@ class Graph(object):
             x.append(v)
 
         y = []
-        if (type == 's'):
+        if type == "s":
             for i in x:
                 i = float(i)
                 numOfItems = len(coef)
                 v = 0.0
                 for t in range(numOfItems):
                     tmp = float(exponent[t]) * (i * i)
-                    if (fabs(tmp) > log(10000.0)):
+                    if fabs(tmp) > log(10000.0):
                         continue
-                    tmp2 = exp(- tmp)
+                    tmp2 = exp(-tmp)
                     v += float(coef[t]) * tmp2
                 y.append(v)
-        elif (type == 'p'):
+        elif type == "p":
             for i in x:
                 i = float(i)
                 numOfItems = len(coef)
                 v = 0.0
                 for t in range(numOfItems):
                     tmp = float(exponent[t]) * (i * i)
-                    if (fabs(tmp) > log(10000.0)):
+                    if fabs(tmp) > log(10000.0):
                         continue
-                    tmp2 = exp(- tmp)
+                    tmp2 = exp(-tmp)
                     v += float(coef[t]) * tmp2 * i
                 y.append(v)
-        elif (type == 'd'):
+        elif type == "d":
             for i in x:
                 i = float(i)
                 numOfItems = len(coef)
                 v = 0.0
                 for t in range(numOfItems):
                     tmp = float(exponent[t]) * (i * i)
-                    if (fabs(tmp) > log(10000.0)):
+                    if fabs(tmp) > log(10000.0):
                         continue
-                    tmp2 = exp(- tmp)
+                    tmp2 = exp(-tmp)
                     v += float(coef[t]) * tmp2 * i * i
                 y.append(v)
 
@@ -910,28 +922,28 @@ class Graph(object):
             range[3] = self.__ymax
 
         # locator
-        if (self.param.get('xlocator', True) == False):
+        if self.param.get("xlocator", True) == False:
             nullLocator = NullLocator()
             self.ax.xaxis.set_major_locator(nullLocator)
             self.ax.xaxis.set_minor_locator(nullLocator)
-        if (self.param.get('ylocator', True) == False):
+        if self.param.get("ylocator", True) == False:
             nullLocator = NullLocator()
             self.ax.yaxis.set_major_locator(nullLocator)
             self.ax.yaxis.set_minor_locator(nullLocator)
 
         # axis label
-        if (self.param.has_key('xlabel') == True):
-            self.ax.set_xlabel(self.param['xlabel'])
-        if (self.param.has_key('ylabel') == True):
-            self.ax.set_ylabel(self.param['ylabel'])
+        if self.param.has_key("xlabel") == True:
+            self.ax.set_xlabel(self.param["xlabel"])
+        if self.param.has_key("ylabel") == True:
+            self.ax.set_ylabel(self.param["ylabel"])
 
         # grid
-        if (self.param.setdefault('draw_grid', False) == True):
+        if self.param.setdefault("draw_grid", False) == True:
             self.ax.grid(True)
 
         # legend
-        if (self.param.setdefault('draw_legend', False) == True):
-            self.ax.legend(loc='best')
+        if self.param.setdefault("draw_legend", False) == True:
+            self.ax.legend(loc="best")
 
 
 class GraphEnergyLevelHistory(Graph):
@@ -942,11 +954,11 @@ class GraphEnergyLevelHistory(Graph):
         """
         levels is the list of energy level.
         """
-        if (levels == None):
+        if levels == None:
             return
 
-        min_y = self.param['min_y']
-        max_y = self.param['max_y']
+        min_y = self.param["min_y"]
+        max_y = self.param["max_y"]
 
         # this value is for negligence
         last_value = min_y
@@ -954,22 +966,20 @@ class GraphEnergyLevelHistory(Graph):
 
         for level, value in enumerate(levels):
             # draw HOMO
-            if (level == homo_level):
-                self.ax.broken_barh([(iteration - 0.50, 1.0)], (value, 0),
-                                    edgecolors='red', facecolors='red')
+            if level == homo_level:
+                self.ax.broken_barh([(iteration - 0.50, 1.0)], (value, 0), edgecolors="red", facecolors="red")
                 continue
 
             # negligence
-            if ((value < min_y) or (max_y < value)):
+            if (value < min_y) or (max_y < value):
                 continue
-            if (abs(last_value - value) < negligence_range):
+            if abs(last_value - value) < negligence_range:
                 continue
             else:
                 last_value = value
 
             # register data
-            self.ax.broken_barh([(iteration - 0.45, 0.9)], (value, 0),
-                                edgecolors='black', facecolors='black')
+            self.ax.broken_barh([(iteration - 0.45, 0.9)], (value, 0), edgecolors="black", facecolors="black")
 
 
 class GraphEnergyLevelSingle(Graph):
@@ -980,10 +990,10 @@ class GraphEnergyLevelSingle(Graph):
         """
         levels is the list of energy level.
         """
-        self.param['ylocator'] = False
+        self.param["ylocator"] = False
 
-        min_y = self.param['min_y']
-        max_y = self.param['max_y']
+        min_y = self.param["min_y"]
+        max_y = self.param["max_y"]
 
         # this value is for negligence
         last_value = min_y
@@ -992,37 +1002,33 @@ class GraphEnergyLevelSingle(Graph):
         # plot
         for level, value in enumerate(levels):
             # draw HOMO
-            if (level == homo_level):
-                self.ax.broken_barh([(value, 0)], (1.0 - 0.50, 1.0),
-                                    edgecolors='red', facecolors='red'
-                                    )
+            if level == homo_level:
+                self.ax.broken_barh([(value, 0)], (1.0 - 0.50, 1.0), edgecolors="red", facecolors="red")
 
             # negligence
-            if ((value < min_y) or (max_y < value)):
+            if (value < min_y) or (max_y < value):
                 continue
-            if (abs(last_value - value) < negligence_range):
+            if abs(last_value - value) < negligence_range:
                 continue
             else:
                 last_value = value
 
             # register data
-            self.ax.broken_barh([(value, 0)], (1.0 - 0.50, 1.0),
-                                edgecolors='black', facecolors='black'
-                                )
+            self.ax.broken_barh([(value, 0)], (1.0 - 0.50, 1.0), edgecolors="black", facecolors="black")
 
 
 class GraphTotalEnergyHistory(Graph):
     def __init__(self, size=None):
         Graph.__init__(self, size)
 
-    def plot(self, values, label="", marker='+', linestyle='-'):
+    def plot(self, values, label="", marker="+", linestyle="-"):
         """
         plot total energy history data
         """
         x = []
         y = []
         for i in range(len(values)):
-            if (values[i] != None):
+            if values[i] != None:
                 x.append(i)
                 y.append(values[i])
         self.ax.plot(x, y, label=label, marker=marker, linestyle=linestyle)
@@ -1032,26 +1038,26 @@ class GraphConvergenceCheck(Graph):
     def __init__(self, size=None):
         Graph.__init__(self, size)
 
-    def plot(self, values, label="", marker='+', linestyle='-'):
+    def plot(self, values, label="", marker="+", linestyle="-"):
         """
         plot convergence history data
         """
         x = []
         y = []
         for i in range(len(values)):
-            if (values[i] != None):
+            if values[i] != None:
                 x.append(i)
                 y.append(values[i])
         self.ax.plot(x, y, label=label, marker=marker, linestyle=linestyle)
 
-    def plotLog(self, values, label="", marker='+', linestyle='-'):
+    def plotLog(self, values, label="", marker="+", linestyle="-"):
         """
         plot convergence history data (log)
         """
         x = []
         y = []
         for i in range(len(values)):
-            if (values[i] != None):
+            if values[i] != None:
                 x.append(i)
                 y.append(values[i])
         self.ax.semilogy(x, y, label=label, marker=marker, linestyle=linestyle)
@@ -1083,11 +1089,9 @@ class BarGraph(DfGraph):
             left = row
             y_offset = 0.0
             for index, value in enumerate(data[row]):
-                self.ax.bar(left, value,
-                            bottom=y_offset,
-                            color=colors[index])
+                self.ax.bar(left, value, bottom=y_offset, color=colors[index])
                 y_offset += value
 
         if labels:
             # self.ax.legend(labels, bbox_to_anchor=(1.05, 1), loc=2)
-            self.ax.legend(labels, loc='best')
+            self.ax.legend(labels, loc="best")
