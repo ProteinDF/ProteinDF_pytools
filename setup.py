@@ -82,5 +82,5 @@ setup(
         "scikit-learn",
         # 'proteindf_bridge'
     ],
-    data_files=[("data", ["data/basis2.cache"])],
+    package_data={"proteindf_tools": ["data/basis2.cache"]},
 )
