@@ -20,6 +20,7 @@
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from re import S
 import types
 import math
 import csv
@@ -720,6 +721,75 @@ class DfDistanceVsElementGraph(DfGraph):
         range_x = x_max - x_min
         width_x = range_x / 2
         self._ax_hist_y.set_xticks(numpy.arange(x_min, x_max, width_x))
+
+
+class DfEnergyLevelTraceGraph(DfGraph):
+    def __init__(self):
+        super().__init__()
+
+        self.xlabel = ""
+        self.ylabel = "energy / eV"
+
+        self.xmin = 0 - 5
+        self.xmax = 30 + 5
+        self.ymin = -50
+        self.ymax = 10
+
+        self._data = [None] * 2
+        self._width_hline = 10
+        self._width_connection = 10
+
+    def set_data(self, elevel0, elevel1, connections):
+        """set data
+
+        Args:
+            elevel0 (list): energy level for data0
+            elevel1 (list): energy level for data1
+            connections (list of list): connection; [index1, index2, ratio]
+        """
+        assert isinstance(elevel0, list)
+        assert isinstance(elevel1, list)
+        assert isinstance(connections, list)
+
+        self._elevel = [None] * 2
+        self._elevel[0] = elevel0
+        self._elevel[1] = elevel1
+        self._ratio = [None] * 2
+        self._ratio[0] = [1.0] * len(elevel0)
+        self._connections = connections
+
+        numOfMO1 = len(elevel1)
+        ratio_list = [0.0] * numOfMO1
+        for mo0, mo1, ratio in connections:
+            assert (0 <= mo1) and (mo1 < numOfMO1)
+            ratio_list[mo1] += ratio
+        self._ratio[1] = ratio_list
+
+    def _draw_data(self):
+        for i in range(2):
+            self._draw_data_hlines(i)
+
+        self._draw_data_connection()
+
+    def _draw_data_hlines(self, series):
+        x1 = series * (self._width_hline + self._width_connection)
+        numOfMO = len(self._elevel[series])
+        for i in range(numOfMO):
+            y = self._elevel[series][i]
+            ratio = self._ratio[series][i]
+            x2 = x1 + self._width_hline * ratio
+            x3 = x2 + self._width_hline * (1.0 - ratio)
+            self._ax.hlines(y, x1, x2, colors="black")
+            self._ax.hlines(y, x2, x3, colors="silver")
+
+    def _draw_data_connection(self):
+        seriese = 0
+        x1 = (self._width_hline + self._width_connection) * seriese + self._width_hline
+        x2 = x1 + self._width_connection
+
+        for index0, index1, value in self._connections:
+            # print(index0, index1, value)
+            self._ax.plot([x1, x2], [self._elevel[0][index0], self._elevel[1][index1]], color="red")
 
 
 # ******************************************************************************

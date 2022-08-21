@@ -52,6 +52,7 @@ setup(
         "scripts/pdf-mat-show.py",
         "scripts/pdf-plot-basisset.py",
         "scripts/pdf-plot-elevel.py",
+        "scripts/pdf-plot-elevel-tracer.py",
         "scripts/pdf-plot-mat.py",
         "scripts/pdf-plot-dos.py",
         "scripts/pdf-plot-pop.py",
