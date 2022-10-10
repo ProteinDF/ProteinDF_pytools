@@ -739,6 +739,34 @@ class DfEnergyLevelTraceGraph(DfGraph):
         self._width_hline = 10
         self._width_connection = 10
 
+        self._reference_line_color = "black"
+        self._target_line_color = "silver"
+        self._connection_color = "salmon"
+
+    def _get_reference_line_color(self):
+        return self._reference_line_color
+
+    def _set_reference_line_color(self, color):
+        self._reference_line_color = color
+
+    reference_line_color = property(_get_reference_line_color, _set_reference_line_color)
+
+    def _get_target_line_color(self):
+        return self._target_line_color
+
+    def _set_target_line_color(self, color):
+        self._target_line_color = color
+
+    target_line_color = property(_get_target_line_color, _set_target_line_color)
+
+    def _get_connection_color(self):
+        return self._connection_color
+
+    def _set_connection_color(self, color):
+        self._connection_color = color
+
+    connection_color = property(_get_connection_color, _set_connection_color)
+
     def set_data(self, elevel0, elevel1, connections):
         """set data
 
@@ -789,7 +817,12 @@ class DfEnergyLevelTraceGraph(DfGraph):
 
         for index0, index1, value in self._connections:
             # print(index0, index1, value)
-            self._ax.plot([x1, x2], [self._elevel[0][index0], self._elevel[1][index1]], color="red")
+            self._ax.plot(
+                [x1, x2],
+                [self._elevel[0][index0], self._elevel[1][index1]],
+                color=self.connection_color,
+                linestyle="dashed",
+            )
 
 
 # ******************************************************************************

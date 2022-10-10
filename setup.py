@@ -45,6 +45,7 @@ setup(
         "scripts/pdf-env.py",
         "scripts/pdf-estimate-ao.py",
         "scripts/pdf-info-geom.py",
+        "scripts/pdf-info-iteration.py",
         "scripts/pdf-info-orb.py",
         "scripts/pdf-info-xyz.py",
         "scripts/pdf-make-basis2.py",
