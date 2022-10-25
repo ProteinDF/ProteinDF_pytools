@@ -611,7 +611,7 @@ class DfGraph2D(DfGraph):
         with open(path, "r", newline="") as f:
             reader = csv.reader(f)
             for items in reader:
-                self._x.append(items[0])
+                self._x.append(float(items[0]))
 
                 if len(self._ys) < len(items) - 1:
                     resize_count = len(items) - 1 - len(self._ys)
@@ -619,7 +619,7 @@ class DfGraph2D(DfGraph):
                         self._ys.append(list())
 
                 for i, y in enumerate(items[1:]):
-                    self._ys[i].append(y)
+                    self._ys[i].append(float(y))
 
                 num_of_series = max(num_of_series, len(items) - 1)
         self._num_of_series = num_of_series

@@ -112,7 +112,7 @@ def main():
     parser.add_argument('-r', '--resolution',
                         nargs=1,
                         default=[0.1],
-                        help='resolution (default: 0.005 eV)')
+                        help='resolution (default: 0.1 eV)')
     parser.add_argument('--occ',
                         action="store_true",
                         default=False,
