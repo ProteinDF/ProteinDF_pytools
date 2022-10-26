@@ -19,19 +19,18 @@
 # You should have received a copy of the GNU General Public License
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
-
+import shutil
 from setuptools import setup
 
+shutil.copyfile("scripts/pdfcmd.py", "scripts/pdf")
 setup()
 
 # import sys
 # import os
-# import shutil
 # from setuptools import setup, find_packages
 
 # exec(open("proteindf_tools/_version.py").read())
 
-# shutil.copyfile("scripts/pdfcmd.py", "scripts/pdf")
 
 # setup(
 #     name="proteindf_tools",
