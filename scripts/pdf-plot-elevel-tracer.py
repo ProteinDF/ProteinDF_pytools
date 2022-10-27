@@ -62,7 +62,7 @@ def make_corresponding_orbital_matrix(path1, path2, pdfparam_path1, pdfparam_pat
         os.path.join(path1, cmat_path1),
         os.path.join(path2, cmat_path2),
     ]
-    print(args)
+    # print(args)
 
     pdf.run_pdf(args)
 
@@ -182,8 +182,9 @@ def main():
     # graph
     print("> make graph")
     graph = pdf.DfEnergyLevelTraceGraph()
-    graph.ymin = -30
+    graph.ymin = -20
     graph.ymax = 10
+    graph.xticks = []
     graph.set_data(elevel1.to_list(), elevel2.to_list(), pairs)
     graph.save(output_path)
 

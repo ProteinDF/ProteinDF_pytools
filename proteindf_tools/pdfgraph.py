@@ -821,8 +821,32 @@ class DfEnergyLevelTraceGraph(DfGraph):
                 [x1, x2],
                 [self._elevel[0][index0], self._elevel[1][index1]],
                 color=self.connection_color,
-                linestyle="dashed",
+                linestyle="dotted",
             )
+
+
+class DfGvalsGraph(DfGraph):
+    def __init__(self):
+        super().__init__()
+
+        self.title = "g-values"
+        self.xlabel = "the order of MOs"
+        self.ylabel = "g-values"
+
+        self._data_x_occ = []
+        self._data_y_occ = []
+        self._data_x_vir = []
+        self._data_y_vir = []
+
+    def set_data(self, x_occ, y_occ, x_vir, y_vir):
+        self._data_x_occ = x_occ
+        self._data_y_occ = y_occ
+        self._data_x_vir = x_vir
+        self._data_y_vir = y_vir
+
+    def _draw_data(self):
+        self._ax.plot(self._data_x_occ, self._data_y_occ)
+        self._ax.plot(self._data_x_vir, self._data_y_vir)
 
 
 # ******************************************************************************
