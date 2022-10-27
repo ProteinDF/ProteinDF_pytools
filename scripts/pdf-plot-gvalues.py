@@ -92,10 +92,9 @@ def main():
     args1 = [
         "component",
         "-v",
-        "-S",
-        CSC_mat_path,
-        "-g",
-        g_vtr_path
+        "-i", iteration,
+        "-S", CSC_mat_path,
+        "-g", g_vtr_path
     ]
     # print(args)
     pdf.run_pdf(args1)
