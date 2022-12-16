@@ -69,6 +69,7 @@ def make_corresponding_orbital_matrix(path1, path2, pdfparam_path1, pdfparam_pat
 
 def make_pair(CSC_mat, pickup_ratio=0.1):
     pickup_ratio = float(pickup_ratio)
+    print("pickup ratio: {}".format(pickup_ratio))
     pairs = []
 
     rows = CSC_mat.rows
