@@ -23,12 +23,13 @@ class PdfReport(object):
         if not os.path.isdir(self._workdir):
             os.mkdir(self._workdir)
 
-    def report(self):
-        iteration = self._pdfparam.iterations
+    def report(self, iteration=0):
+        if iteration == 0:
+            iteration = self._pdfparam.iterations
         logger.debug('report iteration=%d' % (iteration))
 
-        self._plot_convergence_check()
-        self._plot_convergence_energy_level()
+        self._plot_convergence_check(iteration)
+        self._plot_convergence_energy_level(iteration)
 
         # plot_energy_level(pdfdata,
         #                  workdir + '/level.png')
@@ -36,8 +37,8 @@ class PdfReport(object):
         # plot_elapsed_time(pdfdata,
         #                  workdir + '/elapsed_time.png')
 
-        if self._pdfparam.scf_converged:
-            self._plot_pop_mulliken()
+        # if self._pdfparam.scf_converged:
+        self._plot_pop_mulliken(iteration)
 
         contents = self._get_rst()
         print(contents)
@@ -69,12 +70,12 @@ class PdfReport(object):
 
         return answer
 
-    def _plot_convergence_check(self):
+    def _plot_convergence_check(self, iteration):
         """
         TEのヒストリ
         """
-        itr = self._pdfparam.iterations
-        iterations = range(1, itr + 1)
+        # itr = self._pdfparam.iterations
+        iterations = range(1, iteration + 1)
 
         # TE
         TEs = self._pdfparam.TEs
@@ -82,15 +83,15 @@ class PdfReport(object):
         data_path = os.path.join(self._workdir, "TE_hist.dat")
         self._make_work_dir()
         with open(data_path, 'w') as dat:
-            for itr, TE in TEs.items():
-                dat.write('%d, % 16.10f\n' % (itr, TE))
+            for i in iterations:
+                dat.write('%d, % 16.10f\n' % (i, TEs[i]))
 
         graph = DfTotalEnergyHistGraph()
         graph.load_data(data_path)
         graph_path = os.path.join(self._workdir, "TE_hist.png")
         graph.save(graph_path)
 
-    def _plot_convergence_energy_level(self):
+    def _plot_convergence_energy_level(self, iteration):
         """
         EnergyLevelのヒストリ
         """
@@ -101,7 +102,7 @@ class PdfReport(object):
         data_path = os.path.join(self._workdir, "eigvals_hist.dat")
         self._make_work_dir()
         with open(data_path, 'w') as dat:
-            for itr in range(1, self._pdfparam.iterations + 1):
+            for itr in range(1, iteration + 1):
                 eigvals = self._pdfparam.get_energy_level(method, itr)
                 if eigvals:
                     for level, e in enumerate(eigvals):
@@ -119,10 +120,7 @@ class PdfReport(object):
         graphV.set_HOMO_level(HOMO_level)  # option base 0
         graphV.set_LUMO_level(HOMO_level + 1)  # option base 0
         graphV.load_data(data_path)
-        if self._pdfparam.scf_converged:
-            graphV.select_iterations([itr])
-        else:
-            graphV.select_iterations([itr - 1])
+        graphV.select_iterations([iteration])
         graphV.ylabel = ''
         graphV.is_draw_grid = False
         graphV.y_ticks = [-1]
@@ -130,17 +128,16 @@ class PdfReport(object):
         graphV_path = os.path.join(self._workdir, "eigvals_last.png")
         graphV.save(graphV_path)
 
-    def _plot_pop_mulliken(self):
-        itr = self._pdfparam.iterations
+    def _plot_pop_mulliken(self, iteration):
         method = self._pdfparam.method
         run_type = "rks"
 
-        pop_last = self._pdfparam.get_pop_mulliken_atom(run_type, itr)
-        pop_last_data_path = os.path.join(self._workdir, "mulliken.dat")
-        self._make_plot_pop_mulliken_data(pop_last, pop_last_data_path)
+        pop = self._pdfparam.get_pop_mulliken_atom(run_type, iteration)
+        pop_data_path = os.path.join(self._workdir, "mulliken.dat")
+        self._make_plot_pop_mulliken_data(pop, pop_data_path)
 
         graph1 = DfPopulationGraph()
-        graph1.load_data(pop_last_data_path)
+        graph1.load_data(pop_data_path)
         graph1_path = os.path.join(self._workdir, "mulliken.png")
         graph1.save(graph1_path)
 

@@ -233,7 +233,7 @@ def main():
     graph.xmax = maxLevel
     graph.xmin = minLevel
     graph.xlabel = "energy level / eV"
-    graph.ylabel = "Intensity"
+    graph.ylabel = "DOS"
     graph.save(output_path)
 
 

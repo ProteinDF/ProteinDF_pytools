@@ -393,6 +393,10 @@ class DfPopulationGraph(DfGraph):
     def __init__(self):
         super().__init__()
 
+        self.title = "Population"
+        self.xlabel = "Order of atom list"
+        self.ylabel = "charge"
+
     def load_data(self, path):
         self._x = []
         self._y = []

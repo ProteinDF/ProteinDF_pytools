@@ -43,6 +43,11 @@ def main():
                         default='report',
                         help='output directory')
 
+    parser.add_argument("-i", "--iteration",
+                        nargs=1,
+                        default=[0],
+                        help='SCF iteration')
+
     parser.add_argument("-v", "--verbose",
                         action="store_true",
                         default=False)
@@ -57,6 +62,8 @@ def main():
     args = parser.parse_args()
 
     # setting
+    iteration = int(args.iteration[0])
+
     verbose = args.verbose
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
@@ -72,9 +79,9 @@ def main():
         import cProfile
         cProfile.runctx("report()",
                         globals(), locals(),
-                        report.report())
+                        report.report(iteration=iteration))
     else:
-        report.report()
+        report.report(iteration=iteration)
 
 
 if __name__ == '__main__':
