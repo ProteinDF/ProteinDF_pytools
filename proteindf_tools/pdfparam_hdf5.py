@@ -78,6 +78,12 @@ class PdfParam_H5(PdfParamObject):
                 self._write_sp_c_matrix(h5, run_type, self.iterations)
                 self._write_sp_density_matrix(h5, run_type, self.iterations)
                 self._write_sp_pop_mulliken_atom(h5, run_type, self.iterations)
+            else:
+                iteration = self.iterations -1
+                if iteration > 0:
+                    self._write_sp_c_matrix(h5, run_type, iteration)
+                    self._write_sp_density_matrix(h5, run_type, iteration)
+                    self._write_sp_pop_mulliken_atom(h5, run_type, iteration)
 
     def save_full(self, h5_path):
         with h5py.File(h5_path, 'w') as h5:

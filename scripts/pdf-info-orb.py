@@ -30,6 +30,7 @@ import argparse
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
 
+AU2BOHR=1.0/1.889762
 
 def main():
     # parse args
@@ -75,6 +76,7 @@ def main():
     for i in orb_index:
         if i < num_of_orbitals:
             atom = orb_info.get_atom(i)
+            atom *= AU2BOHR
             print('%dth: %s, shell(%s;%s)' % (i,
                                               str(atom),
                                               orb_info.get_shell_type(i),

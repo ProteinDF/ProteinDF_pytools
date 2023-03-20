@@ -48,7 +48,7 @@ class OrbInfo(object):
         for key, atom in mol.atoms():
             atom_label = self._get_atom_label(atom)
             basisset_name = db.get_basisset_name(atom_label)
-            if not self._basissets.has_key(basisset_name):
+            if basisset_name not in self._basissets.keys():
                 basisset = db.get_basisset(basisset_name)
                 self._basissets[basisset_name] = basisset
 
@@ -78,7 +78,7 @@ class OrbInfo(object):
             atom_label = self._get_atom_label(atom)
             basisset = param.get_basisset(atom_label)
             basisset_name = basisset.name
-            if not self._basissets.has_key(basisset_name):
+            if basisset_name not in self._basissets.keys():
                 self._basissets[basisset_name] = basisset
 
             num_of_CGTOs = len(basisset)
