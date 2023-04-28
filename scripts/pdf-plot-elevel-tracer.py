@@ -45,7 +45,7 @@ def get_entry(pdfparam_path, h5_path, verbose=False):
     return entry
 
 
-def make_corresponding_orbital_matrix(path1, path2, pdfparam_path1, pdfparam_path2, CSC_mat_path):
+def make_mo_overlap_matrix(path1, path2, pdfparam_path1, pdfparam_path2, CSC_mat_path):
     pdfparam1 = pdf.load_pdfparam(pdfparam_path1)
     cmat_path1 = pdfparam1.get_c_mat_path()
 
@@ -53,7 +53,7 @@ def make_corresponding_orbital_matrix(path1, path2, pdfparam_path1, pdfparam_pat
     cmat_path2 = pdfparam2.get_c_mat_path()
 
     args = [
-        "info-corresponding-orbital",
+        "info-mo-overlap",
         "-v",
         "-o",
         CSC_mat_path,
@@ -112,7 +112,7 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true", default=False)
     parser.add_argument("-D", "--debug", action="store_true", default=False)
 
-    parser.add_argument("-c", "--corresponding-orbital-matrix-path", default="CSC.mat")
+    parser.add_argument("-m", "--mo-overlap-matrix-path", default="CSC.mat")
 
     parser.add_argument("--pickup-ratio", default=0.1, type=float)
 
@@ -141,10 +141,10 @@ def main():
     # itr2 = entry2.iterations
     # print(itr1, itr2)
 
-    corresponding_orbital_matrix_path = args.corresponding_orbital_matrix_path
+    mo_overlap_matrix_path = args.mo_overlap_matrix_path
     # print(CSC_matrix_path)
 
-    make_corresponding_orbital_matrix(path1, path2, pdfparam_path1, pdfparam_path2, corresponding_orbital_matrix_path)
+    make_mo_overlap_matrix(path1, path2, pdfparam_path1, pdfparam_path2, mo_overlap_matrix_path)
 
     db_path1 = find_db(path1)
     db_path2 = find_db(path2)
@@ -171,9 +171,9 @@ def main():
     if verbose:
         print("size of eigvals2: {}".format(len(elevel2)))
 
-    # corresponding orbital
+    # MO overlap
     CSC_mat = pdf.Matrix()
-    CSC_mat.load(corresponding_orbital_matrix_path)
+    CSC_mat.load(mo_overlap_matrix_path)
     print("CSC matrix: {} x {}".format(CSC_mat.rows, CSC_mat.cols))
 
     # make pair
