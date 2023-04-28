@@ -20,6 +20,7 @@
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from re import S
 import types
 import math
 import csv
@@ -392,6 +393,10 @@ class DfPopulationGraph(DfGraph):
     def __init__(self):
         super().__init__()
 
+        self.title = "Population"
+        self.xlabel = "Order of atom list"
+        self.ylabel = "charge"
+
     def load_data(self, path):
         self._x = []
         self._y = []
@@ -610,7 +615,7 @@ class DfGraph2D(DfGraph):
         with open(path, "r", newline="") as f:
             reader = csv.reader(f)
             for items in reader:
-                self._x.append(items[0])
+                self._x.append(float(items[0]))
 
                 if len(self._ys) < len(items) - 1:
                     resize_count = len(items) - 1 - len(self._ys)
@@ -618,7 +623,7 @@ class DfGraph2D(DfGraph):
                         self._ys.append(list())
 
                 for i, y in enumerate(items[1:]):
-                    self._ys[i].append(y)
+                    self._ys[i].append(float(y))
 
                 num_of_series = max(num_of_series, len(items) - 1)
         self._num_of_series = num_of_series
@@ -720,6 +725,132 @@ class DfDistanceVsElementGraph(DfGraph):
         range_x = x_max - x_min
         width_x = range_x / 2
         self._ax_hist_y.set_xticks(numpy.arange(x_min, x_max, width_x))
+
+
+class DfEnergyLevelTraceGraph(DfGraph):
+    def __init__(self):
+        super().__init__()
+
+        self.xlabel = ""
+        self.ylabel = "energy / eV"
+
+        self.xmin = 0 - 5
+        self.xmax = 30 + 5
+        self.ymin = -50
+        self.ymax = 10
+
+        self._data = [None] * 2
+        self._width_hline = 10
+        self._width_connection = 10
+
+        self._reference_line_color = "black"
+        self._target_line_color = "silver"
+        self._connection_color = "salmon"
+
+    def _get_reference_line_color(self):
+        return self._reference_line_color
+
+    def _set_reference_line_color(self, color):
+        self._reference_line_color = color
+
+    reference_line_color = property(_get_reference_line_color, _set_reference_line_color)
+
+    def _get_target_line_color(self):
+        return self._target_line_color
+
+    def _set_target_line_color(self, color):
+        self._target_line_color = color
+
+    target_line_color = property(_get_target_line_color, _set_target_line_color)
+
+    def _get_connection_color(self):
+        return self._connection_color
+
+    def _set_connection_color(self, color):
+        self._connection_color = color
+
+    connection_color = property(_get_connection_color, _set_connection_color)
+
+    def set_data(self, elevel0, elevel1, connections):
+        """set data
+
+        Args:
+            elevel0 (list): energy level for data0
+            elevel1 (list): energy level for data1
+            connections (list of list): connection; [index1, index2, ratio]
+        """
+        assert isinstance(elevel0, list)
+        assert isinstance(elevel1, list)
+        assert isinstance(connections, list)
+
+        self._elevel = [None] * 2
+        self._elevel[0] = elevel0
+        self._elevel[1] = elevel1
+        self._ratio = [None] * 2
+        self._ratio[0] = [1.0] * len(elevel0)
+        self._connections = connections
+
+        numOfMO1 = len(elevel1)
+        ratio_list = [0.0] * numOfMO1
+        for mo0, mo1, ratio in connections:
+            assert (0 <= mo1) and (mo1 < numOfMO1)
+            ratio_list[mo1] += ratio
+        self._ratio[1] = ratio_list
+
+    def _draw_data(self):
+        for i in range(2):
+            self._draw_data_hlines(i)
+
+        self._draw_data_connection()
+
+    def _draw_data_hlines(self, series):
+        x1 = series * (self._width_hline + self._width_connection)
+        numOfMO = len(self._elevel[series])
+        for i in range(numOfMO):
+            y = self._elevel[series][i]
+            ratio = self._ratio[series][i]
+            x2 = x1 + self._width_hline * ratio
+            x3 = x2 + self._width_hline * (1.0 - ratio)
+            self._ax.hlines(y, x1, x2, colors="black")
+            self._ax.hlines(y, x2, x3, colors="silver")
+
+    def _draw_data_connection(self):
+        seriese = 0
+        x1 = (self._width_hline + self._width_connection) * seriese + self._width_hline
+        x2 = x1 + self._width_connection
+
+        for index0, index1, value in self._connections:
+            # print(index0, index1, value)
+            self._ax.plot(
+                [x1, x2],
+                [self._elevel[0][index0], self._elevel[1][index1]],
+                color=self.connection_color,
+                linestyle="dotted",
+            )
+
+
+class DfGvalsGraph(DfGraph):
+    def __init__(self):
+        super().__init__()
+
+        self.title = "g-values"
+        self.xlabel = "the order of MOs"
+        self.ylabel = "g-values"
+
+        self._data_x_occ = []
+        self._data_y_occ = []
+        self._data_x_vir = []
+        self._data_y_vir = []
+
+    def set_data(self, x_occ, y_occ, x_vir, y_vir):
+        self._data_x_occ = x_occ
+        self._data_y_occ = y_occ
+        self._data_x_vir = x_vir
+        self._data_y_vir = y_vir
+
+    def _draw_data(self):
+        self._ax.plot(self._data_x_occ, self._data_y_occ)
+        self._ax.plot(self._data_x_vir, self._data_y_vir)
 
 
 # ******************************************************************************

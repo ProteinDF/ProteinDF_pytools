@@ -112,7 +112,7 @@ def main():
     parser.add_argument('-r', '--resolution',
                         nargs=1,
                         default=[0.1],
-                        help='resolution (default: 0.005 eV)')
+                        help='resolution (default: 0.1 eV)')
     parser.add_argument('--occ',
                         action="store_true",
                         default=False,
@@ -121,6 +121,11 @@ def main():
                         nargs=1,
                         default=[""],
                         help='msgpack describing mo list for grouping')
+
+    parser.add_argument('-i', '--iteration',
+                        nargs=1,
+                        default=[0],
+                        help='SCF iteration')
 
     parser.add_argument('-o', '--output',
                         nargs=1,
@@ -147,6 +152,7 @@ def main():
 
     pdfresults_db = args.db[0]
 
+    iteration = args.iteration[0]
     mo_group_path = args.mogroup[0]
 
     use_func = "gaussian"
@@ -181,8 +187,10 @@ def main():
     run_type = "rks"
     HOMO_level = pdfparam.get_HOMO_level(run_type)
 
-    itr = pdfparam.iterations
-    eigvals = pdfparam.get_energy_level(method, itr)
+    if iteration == 0:
+        iteration = pdfparam.iterations
+    print("iteration: ".format(iteration))
+    eigvals = pdfparam.get_energy_level(method, iteration)
 
     # make data
     e_levels = []
@@ -225,7 +233,7 @@ def main():
     graph.xmax = maxLevel
     graph.xmin = minLevel
     graph.xlabel = "energy level / eV"
-    graph.ylabel = "Intensity"
+    graph.ylabel = "DOS"
     graph.save(output_path)
 
 

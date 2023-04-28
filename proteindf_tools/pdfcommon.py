@@ -32,21 +32,22 @@ import shlex
 import tempfile
 
 import logging
+
 logger = logging.getLogger(__name__)
 
-epsilon = 1.0E-10  # 計算機イプシロン
-error = 1.0E-4  # 許容誤差
+epsilon = 1.0e-10  # 計算機イプシロン
+error = 1.0e-4  # 許容誤差
 
 
 def pdf_home():
     """
     return PDF_HOME environment parameter value
     """
-    answer = os.environ.get('PDF_HOME', '')
+    answer = os.environ.get("PDF_HOME", "")
     return answer
 
 
-def get_default_pdfparam():
+def get_default_pdfparam(verbose=False):
     """
     defaultのpdfparamを返す
     """
@@ -55,14 +56,19 @@ def get_default_pdfparam():
     os.close(tempfile_fd)
 
     # 一時ファイルの初期化情報を読取る
-    run_pdf(['init-param', '-v', '-o', tempfile_path])
+    args = ["init-param"]
+    if verbose:
+        args.append("-v")
+    args.append("-o")
+    args.append(tempfile_path)
+    run_pdf(args)
     tempdata = bridge.load_msgpack(tempfile_path)
 
     # remove temp
     os.remove(tempfile_path)
 
     pdfparam = PdfParam(tempdata)
-    pdfparam.step_control = 'create integral guess scf'
+    pdfparam.step_control = "create integral guess scf"
 
     # pdfparam.guess = 'harris'
     # pdfparam.orbital_independence_threshold = 0.007
@@ -82,18 +88,20 @@ def get_default_pdfparam():
     return pdfparam
 
 
-def set_basisset(pdfparam,
-                 basisset_name_ao="DZVP2",
-                 basisset_name_rij="DZVP2",
-                 basisset_name_rixc="DZVP2",
-                 basisset_name_gridfree="cc-pVDZ-SP"):
+def set_basisset(
+    pdfparam,
+    basisset_name_ao="DZVP2",
+    basisset_name_rij="DZVP2",
+    basisset_name_rixc="DZVP2",
+    basisset_name_gridfree="cc-pVDZ-SP",
+):
     """
     pdfparamにbasissetを設定する
     """
-    assert(isinstance(pdfparam, PdfParam))
+    assert isinstance(pdfparam, PdfParam)
 
     basis2 = Basis2()
-    atoms = ['C', 'H', 'N', 'O', 'S']
+    atoms = ["C", "H", "N", "O", "S"]
     basisset = {}
 
     if basisset_name_ao == basisset_name_gridfree:
@@ -102,14 +110,10 @@ def set_basisset(pdfparam,
         pdfparam.gridfree_dedicated_basis = True
 
     for atom in atoms:
-        basisset_ao = basis2.get_basisset(
-            'O-{}.{}'.format(basisset_name_ao, atom))
-        basisset_j = basis2.get_basisset_j(
-            'A-{}.{}'.format(basisset_name_rij, atom))
-        basisset_xc = basis2.get_basisset_xc(
-            'A-{}.{}'.format(basisset_name_rixc, atom))
-        basisset_gf = basis2.get_basisset(
-            'O-{}.{}'.format(basisset_name_gridfree, atom))
+        basisset_ao = basis2.get_basisset("O-{}.{}".format(basisset_name_ao, atom))
+        basisset_j = basis2.get_basisset_j("A-{}.{}".format(basisset_name_rij, atom))
+        basisset_xc = basis2.get_basisset_xc("A-{}.{}".format(basisset_name_rixc, atom))
+        basisset_gf = basis2.get_basisset("O-{}.{}".format(basisset_name_gridfree, atom))
 
         pdfparam.set_basisset(atom, basisset_ao)
         pdfparam.set_basisset_j(atom, basisset_j)
@@ -140,12 +144,12 @@ def run_pdf(subcmd):
     p = Process()
     return_code = p.cmd(cmd).commit()
 
-    logger.debug('return code={}'.format(return_code))
+    logger.debug("return code={}".format(return_code))
     if return_code != 0:
-        sys.stderr.write('Failed to execute command: %s' % cmd)
-        sys.stderr.write('return code = {}'.format(return_code))
-        logger.critical('Failed to execute command: %s' % cmd)
-        logger.critical('return code = {}'.format(return_code))
+        sys.stderr.write("Failed to execute command: %s" % cmd)
+        sys.stderr.write("return code = {}".format(return_code))
+        logger.critical("Failed to execute command: %s" % cmd)
+        logger.critical("return code = {}".format(return_code))
         raise
 
 
@@ -153,7 +157,7 @@ def mpac2py(path):
     """
     load message pack binary file to python dictionary data
     """
-    assert(isinstance(path, str) == True)
+    assert isinstance(path, str) == True
 
     data = None
     with open(path, "rb") as f:
@@ -164,7 +168,7 @@ def mpac2py(path):
     return data
 
 
-def load_pdfparam(pdfparam_path='pdfparam.mpac'):
+def load_pdfparam(pdfparam_path="pdfparam.mpac"):
     data = bridge.load_msgpack(pdfparam_path)
     param = PdfParam(data)
 
@@ -172,6 +176,6 @@ def load_pdfparam(pdfparam_path='pdfparam.mpac'):
 
 
 def save_pdfparam(pdfparam_data, pdfparam_path):
-    assert(isinstance(pdfparam_path, str))
+    assert isinstance(pdfparam_path, str)
     raw_data = pdfparam_data.get_raw_data()
     bridge.save_msgpack(raw_data, pdfparam_path)
