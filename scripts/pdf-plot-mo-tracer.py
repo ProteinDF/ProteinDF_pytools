@@ -67,15 +67,16 @@ def make_mo_overlap_matrix(path1, path2, pdfparam_path1, pdfparam_path2, CSC_mat
     pdf.run_pdf(args)
 
 
-def make_pair(CSC_mat, pickup_ratio=0.1):
+def make_pair(CSC_mat, pickup_ratio=0.1, verbose=False):
     pickup_ratio = float(pickup_ratio)
     print("pickup ratio: {}".format(pickup_ratio))
     pairs = []
 
+    if verbose:
+        print("### (data1 MO, data2 MO): overlap ratio ###")
     rows = CSC_mat.rows
     cols = CSC_mat.cols
     for r in range(rows):
-        # print("make pair for [{}]".format(r))
         col_vec = CSC_mat.get_row_vector(r)
         norm_col_vec = pdf.Vector(cols)
         norm = 0.0
@@ -88,19 +89,33 @@ def make_pair(CSC_mat, pickup_ratio=0.1):
         assert len(col_index) == cols
 
         # pickup by ratio
-        rank = 0
-        ratio = 0.0
-        while ratio < 0.8:
+        for rank in range(cols):
             index = col_index[rank]
             value = norm_col_vec[index]
 
             if value > pickup_ratio:
                 pair = [r, index, value]
                 pairs.append(pair)
-                print("pickup[{}]: {} -> {:5.2f}%".format(rank, index, value * 100.0))
+                if verbose:
+                    print("{}, {}: {:8.5f}".format(r, index, value))
+            else:
+                break
 
-            rank += 1
-            ratio += value
+        # rank = 0
+        # ratio = 0.0
+        # while ratio < 0.8:
+        #     index = col_index[rank]
+        #     # value = abs(norm_col_vec[index])
+        #     value = norm_col_vec[index]
+        #     if value > pickup_ratio:
+        #         pair = [r, index, value]
+        #         pairs.append(pair)
+        #         if verbose:
+        #             print("{}, {}: {:8.5f}".format(r, index, value))
+        #             # print("#{}: {} th MO overlap {:5.2f}%".format(rank, index, value * 100.0))
+
+        #     rank += 1
+        #     ratio += value
 
     return pairs
 
@@ -112,14 +127,16 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true", default=False)
     parser.add_argument("-D", "--debug", action="store_true", default=False)
 
-    parser.add_argument("-m", "--mo-overlap-matrix-path", default="CSC.mat")
+    parser.add_argument("-m", "--csc-path", default="CSC.mat", type=str)
 
     parser.add_argument("--pickup-ratio", default=0.1, type=float)
+
+    parser.add_argument("-o", "--output", default="mo-tracer.png", type=str)
 
     parser.add_argument("pdf_path1", help="ProteinDF path1")
     parser.add_argument("pdf_path2", help="ProteinDF path2")
     args = parser.parse_args()
-    # print(args)
+    print(args)
 
     # setting
     verbose = args.verbose
@@ -130,7 +147,10 @@ def main():
 
     path1 = args.pdf_path1
     path2 = args.pdf_path2
-    # print(path1, path2)
+    if verbose:
+        print("ProteinDF path1: {}".format(path1))
+        print("ProteinDF path2: {}".format(path2))
+
     pdfparam_path1 = find_pdfparam_path(path1)
     pdfparam_path2 = find_pdfparam_path(path2)
 
@@ -141,52 +161,63 @@ def main():
     # itr2 = entry2.iterations
     # print(itr1, itr2)
 
-    mo_overlap_matrix_path = args.mo_overlap_matrix_path
-    # print(CSC_matrix_path)
-
-    make_mo_overlap_matrix(path1, path2, pdfparam_path1, pdfparam_path2, mo_overlap_matrix_path)
+    csc_path = args.csc_path
+    if verbose:
+        print(">>>> make CSC matrix")
+        print("CSC matrix path: {}".format(csc_path))
+    make_mo_overlap_matrix(path1, path2, pdfparam_path1, pdfparam_path2, csc_path)
 
     db_path1 = find_db(path1)
     db_path2 = find_db(path2)
-    output_path = "elevel-tracer.png"
 
     # load DBs
+    if verbose:
+        print(">>>> read ProteinDF results")
     db1 = pdf.PdfParam_H5(db_path1)
     db2 = pdf.PdfParam_H5(db_path2)
 
     runtype = "rks"
     itr1 = db1.iterations
     if verbose:
-        print("iteration1: {}".format(itr1))
+        print("ProteinDF data1 iteration: {}".format(itr1))
     elevel1 = db1.get_energy_level(runtype, itr1)
     elevel1 *= AU2EV
     if verbose:
-        print("size of eigvals1: {}".format(len(elevel1)))
+        print("ProteinDF data1 size of eigvals: {}".format(len(elevel1)))
 
     itr2 = db2.iterations
     if verbose:
-        print("iteration2: {}".format(itr2))
+        print("ProteinDF data2 iteration: {}".format(itr2))
     elevel2 = db2.get_energy_level(runtype, itr2)
     elevel2 *= AU2EV
     if verbose:
-        print("size of eigvals2: {}".format(len(elevel2)))
+        print("ProteinDF data2 size of eigvals: {}".format(len(elevel2)))
 
     # MO overlap
+    if verbose:
+        print(">>>> read CSC matrix")
     CSC_mat = pdf.Matrix()
-    CSC_mat.load(mo_overlap_matrix_path)
-    print("CSC matrix: {} x {}".format(CSC_mat.rows, CSC_mat.cols))
+    CSC_mat.load(csc_path)
+    if verbose:
+        print("CSC matrix size: {} x {}".format(CSC_mat.rows, CSC_mat.cols))
 
     # make pair
-    print("> make pair")
-    pairs = make_pair(CSC_mat, pickup_ratio)
+    if verbose:
+        print(">>>> check MO pairs")
+    pairs = make_pair(CSC_mat, pickup_ratio, verbose)
 
     # graph
-    print("> make graph")
+    if verbose:
+        print(">>>> make graph")
     graph = pdf.DfEnergyLevelTraceGraph()
     graph.ymin = -20
     graph.ymax = 10
     graph.xticks = []
     graph.set_data(elevel1.to_list(), elevel2.to_list(), pairs)
+
+    output_path = args.output
+    if verbose:
+        print("output: {}".format(output_path))
     graph.save(output_path)
 
 
