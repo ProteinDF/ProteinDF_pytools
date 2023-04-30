@@ -136,7 +136,7 @@ def main():
     parser.add_argument("pdf_path1", help="ProteinDF path1")
     parser.add_argument("pdf_path2", help="ProteinDF path2")
     args = parser.parse_args()
-    print(args)
+    # print(args)
 
     # setting
     verbose = args.verbose
