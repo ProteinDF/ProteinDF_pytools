@@ -15,7 +15,7 @@ import proteindf_bridge as bridge
 import proteindf_tools as pdf
 
 import logging
-
+logger = logging.getLogger(__name__)
 
 def dos(func, eps, omega=0.005, eLevels=[], mo_groups=[]):
     answer = 0.0
@@ -172,6 +172,8 @@ def main():
         print("func: {}".format(use_func))
 
     # load DB
+    if os.path.exists(pdfresults_db) != True:
+        sys.exit("file not found: {}".format(pdfresults_db))
     pdfparam = pdf.PdfParam_H5()
     pdfparam.open(pdfresults_db)
 
@@ -189,7 +191,8 @@ def main():
 
     if iteration == 0:
         iteration = pdfparam.iterations
-    print("iteration: ".format(iteration))
+    if verbose:
+        print("iteration: {}".format(iteration))
     eigvals = pdfparam.get_energy_level(method, iteration)
 
     # make data
@@ -234,6 +237,8 @@ def main():
     graph.xmin = minLevel
     graph.xlabel = "energy level / eV"
     graph.ylabel = "DOS"
+    if verbose:
+        print("output graph: {}".format(output_path))
     graph.save(output_path)
 
 
