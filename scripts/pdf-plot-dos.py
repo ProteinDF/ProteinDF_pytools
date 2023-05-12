@@ -18,18 +18,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 def dos(func, eps, omega=0.005, eLevels=[], mo_groups=[]):
-    answer = 0.0
-    coef1 = omega * math.sqrt(0.5 * math.pi)
-    coef2 = -2.0 / (omega * omega)
-
     answer = [0.0] * (len(mo_groups) + 1)
     for index, level in enumerate(eLevels):
         v = func(eps, omega, level)
 
         answer[0] += v
         for group_index in range(len(mo_groups)):
-            if index in mo_groups[group_index]:
-                answer[group_index + 1] += v
+            # print("group index: {}".format(group_index))
+            if mo_groups[group_index] is not None:
+                if index in mo_groups[group_index]:
+                    answer[group_index + 1] += v
     return answer
 
 
@@ -225,11 +223,12 @@ def main():
         writer.writerows(output_data)
 
     # plot data
-    graph = pdf.DfGraph2D()
+    graph = pdf.DfDosGraph()
     graph.load_data(csv_path)
 
-    num_of_groups = len(mo_groups)
-    for i in range(num_of_groups - 1):
+    num_of_groups = len(mo_groups) +1 # `+1`` means `all``
+    print("# groups: ", num_of_groups)
+    for i in range(num_of_groups):
         graph.add_draw_series(i)
 
     graph.title = "Density of State"
