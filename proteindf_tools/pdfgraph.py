@@ -557,7 +557,7 @@ class DfMatrixGraph(DfGraph):
                     )
 
 
-class DfGraph2D(DfGraph):
+class DfDosGraph(DfGraph):
     # color
     # 'b'	blue
     # 'g'	green
@@ -630,17 +630,8 @@ class DfGraph2D(DfGraph):
         # pprint.pprint(self._ys)
 
     def _draw_data(self):
-        if len(self._draw_series) == 0:
-            self._draw_items = [0]
-        # for index in self._draw_series:
-        #     self._ax.plot(self._x, self._ys[index],
-        #                   fmt=self._get_format(index), label=self._get_label(index))
-
-        # print(len(self._x), len(self._ys[0]))
-
-        self._ax.plot(self._x, self._ys[0], label=self._get_label(0))
-        # self._ax.plot(self._x, self._ys[1],
-        #                 fmt=self._get_format(1), label=self._get_label(1))
+        for index in self._draw_series:
+            self._ax.plot(self._x, self._ys[index], label=self._get_label(index))
 
 
 class DfDistanceVsElementGraph(DfGraph):
