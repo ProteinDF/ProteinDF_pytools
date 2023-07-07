@@ -1,20 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-import sys
-import math
-from types import *
 import argparse
 import csv
+import logging
+import math
+import os
+import sys
+from types import *
 
-from matplotlib import use
 import numpy
-
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
-
-import logging
+from matplotlib import use
 
 
 def output_csv(csv_data, path):
@@ -50,6 +48,10 @@ def main():
                         default=['dos.csv'],
                         help='output csv path')
 
+    parser.add_argument("--frontier",
+                        action="store_true",
+                        default=False)
+
     parser.add_argument("-v", "--verbose",
                         action="store_true",
                         default=False)
@@ -69,6 +71,7 @@ def main():
     iteration = int(args.iteration[0])
     output_path = args.output[0]
     csv_path = args.csv[0]
+    is_frontier = args.frontier
 
     AU2EV = 27.2116
 
@@ -85,6 +88,7 @@ def main():
         iteration = pdfparam.iterations
     print("iteration: {}".format(iteration))
     eigvals = pdfparam.get_energy_level(method, iteration)
+    eigvals *= AU2EV
 
     # make CSC and g-values
     CSC_mat_path = "CSC.mat"
@@ -105,13 +109,16 @@ def main():
     num_of_MOs = len(vtr)
     print("HOMO: {}".format(HOMO_level))
 
-    data_x_occ = [ i for i in range(HOMO_level)]
-    data_y_occ = [ vtr.get(i) for i in range(HOMO_level)]
-    data_x_vir = [ i for i in range(HOMO_level, len(vtr))]
-    data_y_vir = [ vtr.get(i) for i in range(HOMO_level, len(vtr))]
+    data_x_occ = [ eigvals[i] for i in range(HOMO_level +1)]
+    data_y_occ = [ vtr.get(i) for i in range(HOMO_level +1)]
+    data_x_vir = [ eigvals[i] for i in range(HOMO_level +1, len(vtr))]
+    data_y_vir = [ vtr.get(i) for i in range(HOMO_level +1, len(vtr))]
 
     # plot data
     graph = pdf.DfGvalsGraph()
+    if is_frontier:
+        graph.xmin = -20.0
+        graph.xmax = 5.0
 
     graph.set_data(data_x_occ, data_y_occ, data_x_vir, data_y_vir)
     print(output_path)

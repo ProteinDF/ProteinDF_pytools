@@ -20,19 +20,18 @@
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from re import S
-import types
-import math
 import csv
-import numpy
+import logging
+import math
 import pprint
+import types
+from re import S
 
 import matplotlib
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
+import numpy
 import proteindf_bridge as bridge
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -825,7 +824,8 @@ class DfGvalsGraph(DfGraph):
         super().__init__()
 
         self.title = "g-values"
-        self.xlabel = "the order of MOs"
+        # self.xlabel = "the order of MOs"
+        self.xlabel = "energy level / eV"
         self.ylabel = "g-values"
 
         self._data_x_occ = []
@@ -840,8 +840,10 @@ class DfGvalsGraph(DfGraph):
         self._data_y_vir = y_vir
 
     def _draw_data(self):
-        self._ax.plot(self._data_x_occ, self._data_y_occ)
-        self._ax.plot(self._data_x_vir, self._data_y_vir)
+        # self._ax.plot(self._data_x_occ, self._data_y_occ)
+        # self._ax.plot(self._data_x_vir, self._data_y_vir)
+        self._ax.scatter(self._data_x_occ, self._data_y_occ)
+        self._ax.scatter(self._data_x_vir, self._data_y_vir)
 
 
 # ******************************************************************************
