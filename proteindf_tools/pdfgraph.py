@@ -785,6 +785,9 @@ class DfEnergyLevelTraceGraph(DfGraph):
         for mo0, mo1, ratio in connections:
             assert (0 <= mo1) and (mo1 < numOfMO1)
             ratio_list[mo1] += ratio
+            if ratio_list[mo1] > 1.0:
+                # for round-off error
+                ratio_list[mo1] = 1.0
         self._ratio[1] = ratio_list
 
     def _draw_data(self):
@@ -794,13 +797,14 @@ class DfEnergyLevelTraceGraph(DfGraph):
         self._draw_data_connection()
 
     def _draw_data_hlines(self, series):
-        x1 = series * (self._width_hline + self._width_connection)
+        x0 = 0.0
+        x1 = x0 + series * (self._width_hline + self._width_connection)
+        x3 = x1 + self._width_hline
         numOfMO = len(self._elevel[series])
         for i in range(numOfMO):
             y = self._elevel[series][i]
             ratio = self._ratio[series][i]
             x2 = x1 + self._width_hline * ratio
-            x3 = x2 + self._width_hline * (1.0 - ratio)
             self._ax.hlines(y, x1, x2, colors="black")
             self._ax.hlines(y, x2, x3, colors="silver")
 
