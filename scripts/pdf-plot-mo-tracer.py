@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-import sys
 import argparse
 import logging
+import os
+import sys
 
 import proteindf_tools as pdf
 
@@ -97,7 +97,7 @@ def make_pair(CSC_mat, pickup_ratio=0.1, verbose=False):
                 pair = [r, index, value]
                 pairs.append(pair)
                 if verbose:
-                    print("{}, {}: {:8.5f}".format(r, index, value))
+                    print("{:6d}, {:6d}, {:8.5f}".format(r, index, value))
             else:
                 break
 
