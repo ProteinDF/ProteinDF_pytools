@@ -512,6 +512,12 @@ class DfMatrixGraph(DfGraph):
 
     should_write_values = property(_get_should_write_values, _set_should_write_values)
 
+    def _find_range(self):
+        if self.vmin == None:
+            self.vmin = self._matrix.min()
+        if self.vmax == None:
+            self.vmax = self._matrix.max()
+
     def _draw_data(self):
         data = self._matrix.data
         if not self.is_diverging:
@@ -536,6 +542,8 @@ class DfMatrixGraph(DfGraph):
         # self._fig.colorbar(cax, ticks=[ 0, 1], shrink=0.92)
         color_bar = self._fig.colorbar(cax, shrink=0.92)
         color_bar.minorticks_off()
+
+        self._find_range()
         color_bar.set_ticks([self.vmin, 0.0, self.vmax])
         color_bar.set_ticklabels(["< {}".format(self.vmin), "0.0", "> {}".format(self.vmax)])
 
