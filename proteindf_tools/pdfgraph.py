@@ -143,6 +143,32 @@ class DfGraph(object):
 
     aspect = property(_get_aspect, _set_aspect)
 
+    def _set_xscale(self, value):
+        if value == "log":
+            self._xscale = "log"
+        else:
+            self._xscale = "linear"
+    
+    def _get_xscale(self):
+        if not "_xscale" in self.__dict__:
+            self._xscale = "linear"
+        return self._xscale
+
+    xscale = property(_get_xscale, _set_xscale)
+
+    def _set_yscale(self, value):
+        if value == "log":
+            self._yscale = "log"
+        else:
+            self._yscale = "linear"
+    
+    def _get_yscale(self):
+        if not "_yscale" in self.__dict__:
+            self._yscale = "linear"
+        return self._yscale
+
+    yscale = property(_get_yscale, _set_yscale)
+
     def _set_xticks(self, ticks):
         assert isinstance(ticks, list)
         self._xticks = ticks
@@ -220,6 +246,9 @@ class DfGraph(object):
             self._ax.set_xticklabels(self.xticklabels)
         if self.yticklabels != None:
             self._ax.set_yticklabels(self.yticklabels)
+
+        self._ax.set_xscale(self.xscale)
+        self._ax.set_yscale(self.yscale)
 
         if self.aspect != None:
             self._ax.set_aspect(self.aspect)
@@ -562,6 +591,18 @@ class DfMatrixGraph(DfGraph):
                         horizontalalignment="center",
                         verticalalignment="center",
                     )
+
+
+class DfVectorGraph(DfGraph):
+    def __init__(self, vector, **figure_kwd):
+        assert isinstance(vector, bridge.Vector)
+        DfGraph.__init__(self, **figure_kwd)
+        self._vector = vector
+
+    def _draw_data(self):
+        x = [ i for i in range(self._vector.size())]
+        y = self._vector.data
+        self._ax.scatter(x, y)
 
 
 class DfDosGraph(DfGraph):
