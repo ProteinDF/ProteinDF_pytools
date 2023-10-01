@@ -133,6 +133,15 @@ class DfGraph(object):
 
     ymax = property(_get_ymax, _set_ymax)
 
+    def _set_size(self, width_height):
+        assert isinstance(width_height, tuple)
+        self._fig.set_size_inches(width_height)
+
+    def _get_size(self):
+        return self._fig.get_size_inches()
+
+    size = property(_get_size, _set_size)
+
     def _set_aspect(self, value):
         self._aspect = value
 
