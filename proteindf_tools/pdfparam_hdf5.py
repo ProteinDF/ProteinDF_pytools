@@ -58,6 +58,7 @@ class PdfParam_H5(PdfParamObject):
         self._load_sp(self._h5root)
 
     def save_basic(self, h5_path):
+        run_type = "rks"
         with h5py.File(h5_path, 'w') as h5:
             self._save_sp_condition(h5)
             self._write_sp_TEs(h5)
