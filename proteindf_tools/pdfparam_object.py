@@ -212,7 +212,7 @@ class PdfParamObject(object):
     # scf_acceleration/damping/damping_type
     def _get_scf_acceleration_damping_damping_type(self):
         value = self._data.get("scf_acceleration_damping_damping_type", None)
-        if value == None:
+        if value is None:
             if self._is_fitting_xc() == True:
                 value = "density"
             else:
@@ -229,18 +229,19 @@ class PdfParamObject(object):
         _set_scf_acceleration_damping_damping_type,
     )
 
-    # scf_acceleration/anderson/start_number
-    def _get_scf_acceleration_anderson_start_number(self):
-        return self._data["scf_acceleration_anderson_start_number"]
+    # scf_acceleration/anderson/start
+    def _get_scf_acceleration_anderson_start(self):
+        value = self._data.get("scf_acceleration_anderson_start", None)
+        return value
 
-    def _set_scf_acceleration_anderson_start_number(self, value):
+    def _set_scf_acceleration_anderson_start(self, value):
         if value != None:
             value = int(value)
-            self._data["scf_acceleration_anderson_start_number"] = value
+            self._data["scf_acceleration_anderson_start"] = value
 
-    scf_acceleration_anderson_start_number = property(
-        _get_scf_acceleration_anderson_start_number,
-        _set_scf_acceleration_anderson_start_number,
+    scf_acceleration_anderson_start = property(
+        _get_scf_acceleration_anderson_start,
+        _set_scf_acceleration_anderson_start,
     )
 
     # scf_acceleration/anderson/damping_factor
@@ -833,8 +834,8 @@ class PdfParamObject(object):
         output += "    scf_acceleration/damping/damping_factor = {0}\n".format(
             self.scf_acceleration_damping_damping_factor
         )
-        output += "    scf_acceleration/anderson/start_number = {0}\n".format(
-            self.scf_acceleration_anderson_start_number
+        output += "    scf_acceleration/anderson/start = {0}\n".format(
+            self.scf_acceleration_anderson_start
         )
         output += "    scf_acceleration/anderson/damping_factor = {0}\n".format(
             self.scf_acceleration_anderson_damping_factor
@@ -1232,11 +1233,11 @@ class PdfParamObject(object):
             )
             del odict["scf_acceleration/damping/damping_type"]
 
-        if "scf_acceleration/anderson/start_number" in odict:
-            self.scf_acceleration_anderson_start_number = odict.get(
-                "scf_acceleration/anderson/start_number", None
+        if "scf_acceleration/anderson/start" in odict:
+            self.scf_acceleration_anderson_start = odict.get(
+                "scf_acceleration/anderson/start", None
             )
-            del odict["scf_acceleration/anderson/start_number"]
+            del odict["scf_acceleration/anderson/start"]
 
         if "scf_acceleration/anderson/damping_factor" in odict:
             self.scf_acceleration_anderson_damping_factor = odict.get(
