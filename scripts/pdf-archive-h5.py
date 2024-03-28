@@ -28,6 +28,7 @@ import sys
 import argparse
 import traceback
 import rich.logging
+import rich.progress
 import yaml
 #import pprint
 
@@ -152,7 +153,7 @@ def archive_h2(pdfparam, entry):
 
 def archive_c(run_type, pdfparam, entry):
     iterations = pdfparam.iterations
-    for itr in range(1, iterations+1):
+    for itr in rich.progress.track(range(1, iterations+1)):
         logger.debug("save c({})".format(itr))
         filepath = pdfparam.get_c_mat_path(run_type, itr)
         c = pdf.Matrix()
@@ -162,7 +163,7 @@ def archive_c(run_type, pdfparam, entry):
 
 def archive_p(run_type, pdfparam, entry):
     iterations = pdfparam.iterations
-    for itr in range(1, iterations+1):
+    for itr in rich.progress.track(range(1, iterations+1)):
         logger.debug("save p({})".format(itr))
         filepath = pdfparam.get_density_matrix_path(run_type, itr)
         p = pdf.SymmetricMatrix()
@@ -172,7 +173,7 @@ def archive_p(run_type, pdfparam, entry):
 
 def archive_f(run_type, pdfparam, entry):
     iterations = pdfparam.iterations
-    for itr in range(1, iterations+1):
+    for itr in rich.progress.track(range(1, iterations+1)):
         logger.debug("save F({})".format(itr))
         filepath = pdfparam.get_f_mat_path(run_type, itr)
         f = pdf.SymmetricMatrix()
@@ -239,10 +240,7 @@ def main():
         archive(pdfparam, entry)
 
     except:
-        print('-'*60)
-        traceback.print_exc(file=sys.stdout)
-        # print(traceback.format_exc())
-        print('-'*60)
+        logger.exception("failed to archive")
 
 
 if __name__ == '__main__':
