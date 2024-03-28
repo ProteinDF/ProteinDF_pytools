@@ -22,7 +22,7 @@
 import copy
 
 from .basisset import ContractedGTO
-from .pdfarchive import PdfArchive
+# from .pdfarchive import PdfArchive
 from .pdfparam import PdfParam
 
 
@@ -34,39 +34,39 @@ class OrbInfo(object):
         self._orb_info = []
         self._atoms = []
         self._basissets = {}
-        if isinstance(obj, PdfArchive):
-            self._setup_by_db(obj)
-        elif isinstance(obj, PdfParam):
+        # if isinstance(obj, PdfArchive):
+        #     self._setup_by_db(obj)
+        if isinstance(obj, PdfParam):
             self._setup_by_param(obj)
 
-    def _setup_by_db(self, db):
-        assert(isinstance(db, PdfArchive))
+    # def _setup_by_db(self, db):
+    #     assert(isinstance(db, PdfArchive))
 
-        mol = db.get_molecule()
-        # make atom and basisset list
-        atom_index = 0
-        for key, atom in mol.atoms():
-            atom_label = self._get_atom_label(atom)
-            basisset_name = db.get_basisset_name(atom_label)
-            if basisset_name not in self._basissets.keys():
-                basisset = db.get_basisset(basisset_name)
-                self._basissets[basisset_name] = basisset
+    #     mol = db.get_molecule()
+    #     # make atom and basisset list
+    #     atom_index = 0
+    #     for key, atom in mol.atoms():
+    #         atom_label = self._get_atom_label(atom)
+    #         basisset_name = db.get_basisset_name(atom_label)
+    #         if basisset_name not in self._basissets.keys():
+    #             basisset = db.get_basisset(basisset_name)
+    #             self._basissets[basisset_name] = basisset
 
-            basisset = self._basissets[basisset_name]
-            num_of_CGTOs = len(basisset)
-            for CGTO_index in range(num_of_CGTOs):
-                CGTO = basisset[CGTO_index]
-                shell_type = CGTO.shell_type
-                shell_type_id = ContractedGTO.get_shell_type_id(shell_type)
-                num_of_basis_type = shell_type_id * 2 + 1
-                for basis_type in range(num_of_basis_type):
-                    data = {'atom_index': atom_index,
-                            'basisset_name': basisset_name,
-                            'CGTO_index': CGTO_index,
-                            'basis_type': basis_type}
-                    self._orb_info.append(data)
-            self._atoms.append(copy.deepcopy(atom))
-            atom_index += 1
+    #         basisset = self._basissets[basisset_name]
+    #         num_of_CGTOs = len(basisset)
+    #         for CGTO_index in range(num_of_CGTOs):
+    #             CGTO = basisset[CGTO_index]
+    #             shell_type = CGTO.shell_type
+    #             shell_type_id = ContractedGTO.get_shell_type_id(shell_type)
+    #             num_of_basis_type = shell_type_id * 2 + 1
+    #             for basis_type in range(num_of_basis_type):
+    #                 data = {'atom_index': atom_index,
+    #                         'basisset_name': basisset_name,
+    #                         'CGTO_index': CGTO_index,
+    #                         'basis_type': basis_type}
+    #                 self._orb_info.append(data)
+    #         self._atoms.append(copy.deepcopy(atom))
+    #         atom_index += 1
 
     def _setup_by_param(self, param):
         assert(isinstance(param, PdfParam))

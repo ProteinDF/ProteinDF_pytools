@@ -9,7 +9,6 @@ DOCTESTS=" \
   gauparam \
   matrix \
   orbinfo \
-  pdfarchive \
   pdfcommon \
   pdfgraph \
   pdfmath \

@@ -29,7 +29,7 @@ from .pdfparam import PdfParam
 from . import pdfcommon as pdf
 
 
-class PdfArchive(object):
+class PdfArchive_Sqlite3(object):
     """
     ProteinDFの結果をDBに格納するクラス
     """

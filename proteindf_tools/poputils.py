@@ -3,7 +3,7 @@
 
 import math
 
-from .pdfarchive import PdfArchive
+# from .pdfarchive import PdfArchive
 from .pdfcommon import load_pdfparam
 import proteindf_bridge as bridge
 
@@ -14,12 +14,11 @@ logger = logging.getLogger(__name__)
 class PopUtils(object):
     '''Population Utilities
     '''
-    @staticmethod
-    def get_atomlist_by_db(db_path):
-        entry = PdfArchive(db_path)
-        molecule = entry.get_molecule
-
-        return PopUtils._get_atomlist(molecule)
+    # @staticmethod
+    # def get_atomlist_by_db(db_path):
+    #     entry = PdfArchive(db_path)
+    #     molecule = entry.get_molecule
+    #     return PopUtils._get_atomlist(molecule)
 
     @staticmethod
     def get_atomlist_by_param(param_path):
