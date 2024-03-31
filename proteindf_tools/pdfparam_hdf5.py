@@ -51,7 +51,8 @@ class PdfParam_H5(PdfParamObject):
 
         if (isinstance(rhs, str)):
             self.open(rhs)
-            self._load_sp(self._h5root)
+            self.load_model()
+            self.get_TEs()
 
 
     def __del__(self):
@@ -170,10 +171,10 @@ class PdfParam_H5(PdfParamObject):
     # --------------------------------------------------------------------------
     # deprecated
     # --------------------------------------------------------------------------
-    def _load_sp(self, h5grp):
-        logger.debug("deprecated function: _load_sp")
-        self.load_model(h5grp)
-        self._load_TEs(h5grp)
+    # def _load_sp(self, h5grp):
+    #     logger.debug("deprecated function: _load_sp")
+    #     self.load_model(h5grp)
+    #     self._load_TEs(h5grp)
 
         # run_type = "rks"
         # self.get_occ_vector(h5grp, run_type)

@@ -29,14 +29,12 @@ import argparse
 import traceback
 import rich.logging
 import rich.progress
-import yaml
 #import pprint
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
 
 import logging
-import logging.config
 logger = logging.getLogger(__name__)
 
 

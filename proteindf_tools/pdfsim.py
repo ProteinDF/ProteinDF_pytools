@@ -113,13 +113,14 @@ class PdfSim(object):
             # if cmd_archive == 'archive':
             #     logger.info('read archived file(DB)')
             #     entry = PdfArchive(db_path)
-            if cmd_archive == 'archive-h5':
+            if "archive-h5" in cmd_archive:
                 logger.info('read archived file(HDF5)')
                 entry = PdfParam_H5()
                 entry.open('pdfresults.h5')
-            itr = entry.iterations
-            if itr is not None:
-                total_energy = entry.get_total_energy(itr)
+            if entry is not None:
+                itr = entry.iterations
+                if itr is not None:
+                    total_energy = entry.get_total_energy(itr)
 
         os.chdir(current_dir)
 

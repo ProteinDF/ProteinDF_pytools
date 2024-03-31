@@ -714,6 +714,8 @@ class PdfParamObject(object):
     def get_total_energy(self, iteration):
         iteration = int(iteration)
         value = None
+
+        self._data.setdefault("TEs", {})
         if iteration in self._data["TEs"]:
             value = float(self._data["TEs"][iteration])
         return value
