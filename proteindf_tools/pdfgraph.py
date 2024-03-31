@@ -20,19 +20,18 @@
 # along with ProteinDF.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from re import S
-import types
-import math
 import csv
-import numpy
+import logging
+import math
 import pprint
+import types
+from re import S
 
 import matplotlib
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
+import numpy
 import proteindf_bridge as bridge
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +133,15 @@ class DfGraph(object):
 
     ymax = property(_get_ymax, _set_ymax)
 
+    def _set_size(self, width_height):
+        assert isinstance(width_height, tuple)
+        self._fig.set_size_inches(width_height)
+
+    def _get_size(self):
+        return self._fig.get_size_inches()
+
+    size = property(_get_size, _set_size)
+
     def _set_aspect(self, value):
         self._aspect = value
 
@@ -143,6 +151,32 @@ class DfGraph(object):
         return self._aspect
 
     aspect = property(_get_aspect, _set_aspect)
+
+    def _set_xscale(self, value):
+        if value == "log":
+            self._xscale = "log"
+        else:
+            self._xscale = "linear"
+    
+    def _get_xscale(self):
+        if not "_xscale" in self.__dict__:
+            self._xscale = "linear"
+        return self._xscale
+
+    xscale = property(_get_xscale, _set_xscale)
+
+    def _set_yscale(self, value):
+        if value == "log":
+            self._yscale = "log"
+        else:
+            self._yscale = "linear"
+    
+    def _get_yscale(self):
+        if not "_yscale" in self.__dict__:
+            self._yscale = "linear"
+        return self._yscale
+
+    yscale = property(_get_yscale, _set_yscale)
 
     def _set_xticks(self, ticks):
         assert isinstance(ticks, list)
@@ -221,6 +255,9 @@ class DfGraph(object):
             self._ax.set_xticklabels(self.xticklabels)
         if self.yticklabels != None:
             self._ax.set_yticklabels(self.yticklabels)
+
+        self._ax.set_xscale(self.xscale)
+        self._ax.set_yscale(self.yscale)
 
         if self.aspect != None:
             self._ax.set_aspect(self.aspect)
@@ -513,6 +550,12 @@ class DfMatrixGraph(DfGraph):
 
     should_write_values = property(_get_should_write_values, _set_should_write_values)
 
+    def _find_range(self):
+        if self.vmin == None:
+            self.vmin = self._matrix.min()
+        if self.vmax == None:
+            self.vmax = self._matrix.max()
+
     def _draw_data(self):
         data = self._matrix.data
         if not self.is_diverging:
@@ -537,6 +580,8 @@ class DfMatrixGraph(DfGraph):
         # self._fig.colorbar(cax, ticks=[ 0, 1], shrink=0.92)
         color_bar = self._fig.colorbar(cax, shrink=0.92)
         color_bar.minorticks_off()
+
+        self._find_range()
         color_bar.set_ticks([self.vmin, 0.0, self.vmax])
         color_bar.set_ticklabels(["< {}".format(self.vmin), "0.0", "> {}".format(self.vmax)])
 
@@ -555,6 +600,18 @@ class DfMatrixGraph(DfGraph):
                         horizontalalignment="center",
                         verticalalignment="center",
                     )
+
+
+class DfVectorGraph(DfGraph):
+    def __init__(self, vector, **figure_kwd):
+        assert isinstance(vector, bridge.Vector)
+        DfGraph.__init__(self, **figure_kwd)
+        self._vector = vector
+
+    def _draw_data(self):
+        x = [ i for i in range(self._vector.size())]
+        y = self._vector.data
+        self._ax.scatter(x, y)
 
 
 class DfDosGraph(DfGraph):
@@ -829,7 +886,8 @@ class DfGvalsGraph(DfGraph):
         super().__init__()
 
         self.title = "g-values"
-        self.xlabel = "the order of MOs"
+        # self.xlabel = "the order of MOs"
+        self.xlabel = "energy level / eV"
         self.ylabel = "g-values"
 
         self._data_x_occ = []
@@ -844,8 +902,10 @@ class DfGvalsGraph(DfGraph):
         self._data_y_vir = y_vir
 
     def _draw_data(self):
-        self._ax.plot(self._data_x_occ, self._data_y_occ)
-        self._ax.plot(self._data_x_vir, self._data_y_vir)
+        # self._ax.plot(self._data_x_occ, self._data_y_occ)
+        # self._ax.plot(self._data_x_vir, self._data_y_vir)
+        self._ax.scatter(self._data_x_occ, self._data_y_occ)
+        self._ax.scatter(self._data_x_vir, self._data_y_vir)
 
 
 # ******************************************************************************

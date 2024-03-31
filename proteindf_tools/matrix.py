@@ -23,12 +23,13 @@ import proteindf_bridge as bridge
 import os
 import struct
 import logging
+
 logger = logging.getLogger(__name__)
 
 
 class Matrix(bridge.Matrix):
-    """
-    """
+    """ """
+
     __header_struct_little_endian = "<iii"
     __header_struct_big_endian = ">iii"
     __body_struct_little_endian = "<d"
@@ -59,7 +60,7 @@ class Matrix(bridge.Matrix):
             data = fin.read(size_of_header)
             fin.close()
 
-            header = struct.unpack(header_struct, data[0: size_of_header])
+            header = struct.unpack(header_struct, data[0:size_of_header])
             matrix_type = header[0]
             row = header[1]
             col = header[2]
@@ -79,38 +80,31 @@ class Matrix(bridge.Matrix):
             header_struct_list = ["iii", "bii", "ill", "bll"]
             for endian in endian_list:
                 for header_struct in header_struct_list:
-                    (matrix_type, row, col, chk_filesize) = get_header(
-                        file_path, endian + header_struct)
-                    answer = (filesize == chk_filesize)
+                    (matrix_type, row, col, chk_filesize) = get_header(file_path, endian + header_struct)
+                    answer = filesize == chk_filesize
                     if answer:
                         break
                 if answer:
                     break
 
-        return (endian, header_struct, matrix_type, row, col)
+        return (answer, row, col, endian, header_struct, matrix_type)
 
     @classmethod
     def is_loadable(cls, file_path):
-        answer = False
-        (endian, header_struct, matrix_type, row,
-         col) = cls.find_header_struct(file_path)
-        if endian != None:
-            answer = True
+        (answer, row, col, endian, header_struct, matrix_type) = cls.find_header_struct(file_path)
 
         return answer
 
     @classmethod
     def get_size(cls, file_path):
-        (endian, header_struct, matrix_type, row,
-         col) = cls.find_header_struct(file_path)
+        (answer, row, col, endian, header_struct, matrix_type) = cls.find_header_struct(file_path)
         return (row, col)
 
     def load(self, file_path):
-        """Load the matrix. True is returned if the reading is successful.
-        """
+        """Load the matrix. True is returned if the reading is successful."""
         if os.path.isfile(file_path):
-            (endian, header_struct, matrix_type, row,
-             col) = self.find_header_struct(file_path)
+            (answer, row, col, endian, header_struct, matrix_type) = self.find_header_struct(file_path)
+            assert answer
 
             with open(file_path, "rb") as fin:
                 # read header
@@ -126,19 +120,16 @@ class Matrix(bridge.Matrix):
                     # RSFD type
                     for r in range(row):
                         for c in range(col):
-                            value = struct.unpack(
-                                body_struct, fin.read(size_of_double))
+                            value = struct.unpack(body_struct, fin.read(size_of_double))
                             self.set(r, c, value[0])
                 elif matrix_type == 1:
                     # CSFD type
                     for c in range(col):
                         for r in range(row):
-                            value = struct.unpack(
-                                body_struct, fin.read(size_of_double))
+                            value = struct.unpack(body_struct, fin.read(size_of_double))
                             self.set(r, c, value[0])
                 else:
-                    logger.critical(
-                        "file type mismatch: type={}".format(matrix_type))
+                    logger.critical("file type mismatch: type={}".format(matrix_type))
                     raise
 
             return True
@@ -153,8 +144,7 @@ class Matrix(bridge.Matrix):
         fout = open(file_path, "wb")
         # write header
         header_struct = "=bii"
-        header = struct.pack(header_struct,
-                             matrix_type, row, col)
+        header = struct.pack(header_struct, matrix_type, row, col)
         fout.write(header)
 
         # write elements
@@ -178,8 +168,8 @@ class Matrix(bridge.Matrix):
 
 
 class SymmetricMatrix(bridge.SymmetricMatrix):
-    """
-    """
+    """ """
+
     __header_struct_little_endian = "<iii"
     __header_struct_big_endian = ">iii"
     __body_struct_little_endian = "<d"
@@ -211,7 +201,7 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
             data = fin.read(size_of_header)
             fin.close()
 
-            header = struct.unpack(header_struct, data[0: size_of_header])
+            header = struct.unpack(header_struct, data[0:size_of_header])
             matrix_type = header[0]
             row = header[1]
             col = header[2]
@@ -231,36 +221,31 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
             header_struct_list = ["iii", "bii", "ill", "bll"]
             for endian in endian_list:
                 for header_struct in header_struct_list:
-                    (matrix_type, row, col, chk_filesize) = get_header(
-                        file_path, endian + header_struct)
-                    answer = (filesize == chk_filesize)
+                    (matrix_type, row, col, chk_filesize) = get_header(file_path, endian + header_struct)
+                    answer = filesize == chk_filesize
                     if answer:
                         break
                 if answer:
                     break
 
-        return (endian, header_struct, matrix_type, row, col)
+        return (answer, row, col, endian, header_struct, matrix_type)
 
     @classmethod
     def is_loadable(cls, file_path):
-        answer = False
-        (endian, header_struct, matrix_type, row,
-         col) = cls.find_header_struct(file_path)
-        if endian != None:
-            answer = True
+        (answer, row, col, endian, header_struct, matrix_type) = cls.find_header_struct(file_path)
+        print("is_loadable: ", answer, endian, header_struct, matrix_type, row, col)
 
         return answer
 
     @classmethod
     def get_size(cls, file_path):
-        (endian, header_struct, matrix_type, row,
-         col) = cls.find_header_struct(file_path)
+        (answer, row, col, endian, header_struct, matrix_type) = cls.find_header_struct(file_path)
+        assert answer
         return (row, col)
 
     def load(self, file_path):
         if os.path.isfile(file_path):
-            (endian, header_struct, matrix_type, row,
-             col) = self.find_header_struct(file_path)
+            (answer, row, col, endian, header_struct, matrix_type) = self.find_header_struct(file_path)
 
             fin = open(file_path, "rb")
             # read header
@@ -268,7 +253,7 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
             size_of_header = struct.calcsize(endian_header_struct)
             header_bin = fin.read(size_of_header)
             dim = row
-            assert(row == col)
+            assert row == col
             self.resize(dim)
 
             # body
@@ -276,8 +261,7 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
             size_of_double = struct.calcsize(body_struct)
             for r in range(dim):
                 for c in range(r + 1):
-                    value = struct.unpack(
-                        body_struct, fin.read(size_of_double))
+                    value = struct.unpack(body_struct, fin.read(size_of_double))
                     self.set(r, c, value[0])
             fin.close()
         else:
@@ -285,14 +269,13 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
 
     def save(self, file_path, is_little_endian=True):
         dim = self.rows
-        assert(dim == self.cols)
+        assert dim == self.cols
         matrix_type = 2
 
         fout = open(file_path, "wb")
         # write header
         header_struct = "=bii"
-        header = struct.pack(header_struct,
-                             matrix_type, dim, dim)
+        header = struct.pack(header_struct, matrix_type, dim, dim)
         fout.write(header)
 
         # write elements

@@ -14,43 +14,20 @@ import logging
 
 def main():
     # parse args
-    parser = argparse.ArgumentParser(description='plot matrix')
-    parser.add_argument('matrix',
-                        nargs=1,
-                        help='matrix path')
-    parser.add_argument('-o', '--output',
-                        nargs=1,
-                        default=['mat.png'],
-                        help='output graph path')
-    parser.add_argument("--vmax",
-                        type=float)
-    parser.add_argument("--vmin",
-                        type=float)
-    parser.add_argument('--title',
-                        nargs=1,
-                        default=['matrix value'],
-                        help='graph title')
-    parser.add_argument('--no-x-tick-labels',
-                        action='store_true',
-                        default=False,
-                        help='draw x-tick labels')
-    parser.add_argument('--no-y-tick-labels',
-                        action='store_true',
-                        default=False,
-                        help='draw y-tick labels')
-    parser.add_argument('--cmap',
-                        nargs=1,
-                        default=['bwr'],
-                        help='color map name')
-    parser.add_argument("--write-values",
-                        action="store_true",
-                        default=False)
-    parser.add_argument("-v", "--verbose",
-                        action="store_true",
-                        default=False)
-    parser.add_argument('-D', '--debug',
-                        action='store_true',
-                        default=False)
+    parser = argparse.ArgumentParser(description="plot matrix")
+    parser.add_argument("matrix", nargs=1, help="matrix path")
+    parser.add_argument("-o", "--output", nargs=1, default=["mat.png"], help="output graph path")
+    parser.add_argument("--width", type=float, default=20, help="graph width (inch)")
+    parser.add_argument("--height", type=float, default=20, help="graph height (inch)")
+    parser.add_argument("--vmax", type=float)
+    parser.add_argument("--vmin", type=float)
+    parser.add_argument("--title", nargs=1, default=["matrix value"], help="graph title")
+    parser.add_argument("--no-x-tick-labels", action="store_true", default=False, help="draw x-tick labels")
+    parser.add_argument("--no-y-tick-labels", action="store_true", default=False, help="draw y-tick labels")
+    parser.add_argument("--cmap", nargs=1, default=["bwr"], help="color map name")
+    parser.add_argument("--write-values", action="store_true", default=False)
+    parser.add_argument("-v", "--verbose", action="store_true", default=False)
+    parser.add_argument("-D", "--debug", action="store_true", default=False)
     args = parser.parse_args()
 
     # setting
@@ -65,6 +42,12 @@ def main():
     output_path = args.output[0]
     if verbose:
         print("output path: {}".format(output_path))
+
+    width = args.width
+    height = args.height
+    if verbose:
+        print("width: {}".format(width))
+        print("height: {}".format(height))
 
     vmax = None
     if args.vmax != None:
@@ -98,7 +81,7 @@ def main():
     cols = mat.cols
 
     # matrix elements
-    mat_plot = pdf.DfMatrixGraph(mat, figsize=(20, 20))
+    mat_plot = pdf.DfMatrixGraph(mat, figsize=(width, height))
     if vmax:
         mat_plot.vmax = vmax
     if vmin:
@@ -131,13 +114,13 @@ def get_matrix(path, verbose=False):
         sys.stderr.write("load matrix: {}\n".format(path))
     mat = None
 
-    if pdf.SymmetricMatrix.is_loadable(path):
+    if pdf.Matrix.is_loadable(path):
+        mat = pdf.Matrix()
+        mat.load(path)
+    elif pdf.SymmetricMatrix.is_loadable(path):
         mat = pdf.SymmetricMatrix()
         mat.load(path)
         mat = mat.get_general_matrix()
-    elif pdf.Matrix.is_loadable(path):
-        mat = pdf.Matrix()
-        mat.load(path)
     else:
         print("matrix file cannnot load.")
         raise
@@ -146,11 +129,11 @@ def get_matrix(path, verbose=False):
 
 
 def distance_matrix(atomgroup, verbose=False):
-    '''
+    """
     create distance matrix
 
     support flat-atomgroup only
-    '''
+    """
     atomlist = atomgroup.get_atom_list()
     num_of_atoms = len(atomlist)
     if verbose:
@@ -169,7 +152,7 @@ def dist_vs_matvalue(orb_info, distance_mat, mat, path, verbose=False):
     if verbose:
         sys.stderr.write("matrix size: {} x {}\n".format(mat.rows, mat.cols))
 
-    f = open(path, 'w')
+    f = open(path, "w")
     for i in range(mat.rows):
         atom_i = orb_info.get_atom_id(i)
         for j in range(i):
@@ -182,5 +165,5 @@ def dist_vs_matvalue(orb_info, distance_mat, mat, path, verbose=False):
     f.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

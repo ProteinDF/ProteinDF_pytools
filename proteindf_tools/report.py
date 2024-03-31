@@ -26,10 +26,13 @@ class PdfReport(object):
     def report(self, iteration=0):
         if iteration == 0:
             iteration = self._pdfparam.iterations
-        logger.debug('report iteration=%d' % (iteration))
+        logger.debug('report iteration={}'.format(iteration))
 
         self._plot_convergence_check(iteration)
-        self._plot_convergence_energy_level(iteration)
+        
+        for run_type in self._pdfparam.run_types():
+            logger.info("make report [run_type: {}]".format(run_type))
+            self._plot_convergence_energy_level(run_type, iteration)
 
         # plot_energy_level(pdfdata,
         #                  workdir + '/level.png')
@@ -38,10 +41,20 @@ class PdfReport(object):
         #                  workdir + '/elapsed_time.png')
 
         # if self._pdfparam.scf_converged:
-        self._plot_pop_mulliken(iteration)
+        # self._plot_pop_mulliken(iteration)
 
         contents = self._get_rst()
         print(contents)
+
+    def _get_total_energy_vector(self):
+        """
+        Total Energyのヒストリ
+        """
+        num_of_iterations = self._pdfparam.iterations
+        TEs = [None] * num_of_iterations
+        for itr in range(num_of_iterations):
+            TEs[itr] = self._pdfparam.get_total_energy(itr +1)
+        return TEs
 
     def _get_rst(self):
         contents = """
@@ -61,12 +74,12 @@ class PdfReport(object):
         contents = textwrap.dedent(contents).strip()
 
         num_of_iterations = self._pdfparam.iterations
-        TEs = self._pdfparam.TEs
+        TEs = self._get_total_energy_vector()
         answer = contents.format(
             num_of_AOs=self._pdfparam.num_of_AOs,
             num_of_MOs=self._pdfparam.num_of_MOs,
             num_of_iterations=num_of_iterations,
-            total_energy=TEs[num_of_iterations])
+            total_energy=TEs[num_of_iterations -1])
 
         return answer
 
@@ -74,36 +87,33 @@ class PdfReport(object):
         """
         TEのヒストリ
         """
-        # itr = self._pdfparam.iterations
-        iterations = range(1, iteration + 1)
+        iterations = self._pdfparam.iterations
 
         # TE
-        TEs = self._pdfparam.TEs
+        TEs = self._get_total_energy_vector()
 
         data_path = os.path.join(self._workdir, "TE_hist.dat")
         self._make_work_dir()
         with open(data_path, 'w') as dat:
-            for i in iterations:
-                dat.write('%d, % 16.10f\n' % (i, TEs[i]))
+            for i in range(iterations):
+                dat.write('%d, % 16.10f\n' % (i +1, TEs[i]))
 
         graph = DfTotalEnergyHistGraph()
         graph.load_data(data_path)
         graph_path = os.path.join(self._workdir, "TE_hist.png")
         graph.save(graph_path)
 
-    def _plot_convergence_energy_level(self, iteration):
+    def _plot_convergence_energy_level(self, run_type, iteration):
         """
         EnergyLevelのヒストリ
         """
-        method = self._pdfparam.method
-        run_type = "rks"
         HOMO_level = self._pdfparam.get_HOMO_level(run_type)
 
-        data_path = os.path.join(self._workdir, "eigvals_hist.dat")
+        data_path = os.path.join(self._workdir, "eigvals_hist.{}.dat".format(run_type))
         self._make_work_dir()
         with open(data_path, 'w') as dat:
             for itr in range(1, iteration + 1):
-                eigvals = self._pdfparam.get_energy_level(method, itr)
+                eigvals = self._pdfparam.get_energy_level(run_type, itr)
                 if eigvals:
                     for level, e in enumerate(eigvals):
                         e *= 27.2116
@@ -112,7 +122,7 @@ class PdfReport(object):
         graphH = DfEnergyLevelHistoryGraphH()
         graphH.set_HOMO_level(HOMO_level)  # option base 0
         graphH.load_data(data_path)
-        graphH_path = os.path.join(self._workdir, "eigvals_hist.png")
+        graphH_path = os.path.join(self._workdir, "eigvals_hist.{}.png".format(run_type))
         graphH.save(graphH_path)
 
         # lastのグラフを作成する
@@ -125,7 +135,7 @@ class PdfReport(object):
         graphV.is_draw_grid = False
         graphV.y_ticks = [-1]
         graphV.y_ticklabels = [""]
-        graphV_path = os.path.join(self._workdir, "eigvals_last.png")
+        graphV_path = os.path.join(self._workdir, "eigvals_last.{}.png".format(run_type))
         graphV.save(graphV_path)
 
     def _plot_pop_mulliken(self, iteration):

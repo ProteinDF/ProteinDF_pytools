@@ -22,6 +22,8 @@
 import os
 import sys
 import argparse
+import yaml
+import rich.logging
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
@@ -29,6 +31,27 @@ import proteindf_tools as pdf
 import logging
 import logging.config
 logger = logging.getLogger(__name__)
+
+
+def setup_logger(is_debug=False, output_file='pdf-report-h5.log'):
+    handlers = []
+    level = logging.INFO
+    if is_debug:
+        level = logging.DEBUG
+
+    rich_handler = rich.logging.RichHandler(rich_tracebacks=True)
+    rich_handler.setLevel(level)
+    rich_handler.setFormatter(logging.Formatter("%(message)s"))
+    handlers.append(rich_handler)
+
+    if len(output_file) > 0:
+        file_handler = logging.FileHandler(output_file)
+        file_handler.setLevel(level)
+        file_handler.setFormatter(logging.Formatter("%(asctime)s@%(name)s[%(levelname)s] %(message)s"))
+        handlers.append(file_handler)
+
+    logging.basicConfig(level=logging.NOTSET,
+                        handlers=handlers)
 
 
 def main():
@@ -48,10 +71,10 @@ def main():
                         default=[0],
                         help='SCF iteration')
 
-    parser.add_argument("-v", "--verbose",
-                        action="store_true",
-                        default=False)
-    parser.add_argument('-d', '--debug',
+    # parser.add_argument("-v", "--verbose",
+    #                     action="store_true",
+    #                     default=False)
+    parser.add_argument('--debug',
                         action='store_true',
                         default=False)
     parser.add_argument("-p", "--profile",
@@ -60,18 +83,23 @@ def main():
                         help="do profiling")
 
     args = parser.parse_args()
+    do_profile = args.profile
+    is_debug = args.debug
+
+    setup_logger(is_debug)
+    # verbose = args.verbose
+    # if verbose:
+    #     logger.setLevel(logging.DEBUG)
+    #     logger.info("info: debug on")
+    # do_profile = args.profile
 
     # setting
     iteration = int(args.iteration[0])
 
-    verbose = args.verbose
-    if args.debug:
-        logging.basicConfig(level=logging.DEBUG)
-    do_profile = args.profile
-
     output_dir = args.output_dir
     pdfparam = pdf.PdfParam_H5()
     pdfparam.open(args.pdfresults_db)
+
 
     # run
     report = pdf.PdfReport(pdfparam=pdfparam, workdir=output_dir)

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-import sys
 import argparse
 import logging
+import os
+import sys
 
 import proteindf_tools as pdf
 
@@ -97,7 +97,7 @@ def make_pair(CSC_mat, pickup_ratio=0.1, verbose=False):
                 pair = [r, index, value]
                 pairs.append(pair)
                 if verbose:
-                    print("{}, {}: {:8.5f}".format(r, index, value))
+                    print("{:6d}, {:6d}, {:8.5f}".format(r, index, value))
             else:
                 break
 
@@ -133,6 +133,9 @@ def main():
 
     parser.add_argument("-o", "--output", default="mo-tracer.png", type=str)
 
+    parser.add_argument("--ymin", default=-20, type=float)  # for graph setting (ymin)
+    parser.add_argument("--ymax", default=10, type=float)  # for graph setting (ymax)
+
     parser.add_argument("pdf_path1", help="ProteinDF path1")
     parser.add_argument("pdf_path2", help="ProteinDF path2")
     args = parser.parse_args()
@@ -150,6 +153,12 @@ def main():
     if verbose:
         print("ProteinDF path1: {}".format(path1))
         print("ProteinDF path2: {}".format(path2))
+
+    ymin = args.ymin
+    ymax = args.ymax
+    if verbose:
+        print("ymin: {}".format(ymin))
+        print("ymax: {}".format(ymax))
 
     pdfparam_path1 = find_pdfparam_path(path1)
     pdfparam_path2 = find_pdfparam_path(path2)
@@ -210,8 +219,8 @@ def main():
     if verbose:
         print(">>>> make graph")
     graph = pdf.DfEnergyLevelTraceGraph()
-    graph.ymin = -20
-    graph.ymax = 10
+    graph.ymin = ymin
+    graph.ymax = ymax
     graph.xticks = []
     graph.set_data(elevel1.to_list(), elevel2.to_list(), pairs)
 

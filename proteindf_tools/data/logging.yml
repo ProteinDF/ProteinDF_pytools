@@ -1,0 +1,41 @@
+version: 1
+
+formatters:
+  brief:
+    format: '%(message)s'
+  default:
+    format: '%(asctime)s[%(levelname)s]@%(name)s %(message)s'
+    datefmt: '%Y/%m/%d %H:%M:%S'
+
+handlers:
+  console:
+    class : logging.StreamHandler
+    formatter: brief
+    level   : DEBUG
+    filters: 
+      - proteindf_tools_filter
+    stream  : ext://sys.stdout
+
+  file:
+    class : logging.handlers.RotatingFileHandler
+    formatter: default
+    level   : DEBUG
+    filters: 
+      - proteindf_tools_filter
+    filename: log.txt
+    # maxBytes: 1024
+    # backupCount: 3
+
+filters:
+  proteindf_tools_filter:
+    name: 'proteindf_tools'
+
+
+root:
+  level: INFO
+  handlers:
+    - console
+    # - file
+
+disable_existing_loggers: False
+

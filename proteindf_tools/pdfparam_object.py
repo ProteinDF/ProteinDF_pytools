@@ -3,14 +3,16 @@
 
 from .basis2 import Basis2
 from .basisset import BasisSet
+from .functions import deprecated
+
 import proteindf_bridge as bridge
+
 import sys
 import os
 import pickle
 import copy
 
 import logging
-
 logger = logging.getLogger(__name__)
 
 
@@ -34,9 +36,8 @@ class PdfParamObject(object):
     # --------------------------------------------------------------------------
     # properties
     # --------------------------------------------------------------------------
-
+    @deprecated
     def digest(self):
-        logger.warning("deprecated: {}".format(sys._getframe().f_code.co_name))
         import hashlib
 
         md5obj = hashlib.md5()
@@ -55,16 +56,16 @@ class PdfParamObject(object):
 
     # run type
 
-    def runtypes(self):
+    def run_types(self):
         """ """
-        runtypes = []
+        run_types = []
         if self.method == "rks":
-            runtypes = ["rks"]
+            run_types = ["rks"]
         elif self.method == "uks":
-            runtypes = ["uks_alpha", "uks_beta"]
+            run_types = ["uks_alpha", "uks_beta"]
         elif self.method == "roks":
-            runtypes = ["roks_close", "roks_open"]
-        return runtypes
+            run_types = ["roks_close", "roks_open"]
+        return run_types
 
     # step_control
 
@@ -211,7 +212,7 @@ class PdfParamObject(object):
     # scf_acceleration/damping/damping_type
     def _get_scf_acceleration_damping_damping_type(self):
         value = self._data.get("scf_acceleration_damping_damping_type", None)
-        if value == None:
+        if value is None:
             if self._is_fitting_xc() == True:
                 value = "density"
             else:
@@ -228,18 +229,19 @@ class PdfParamObject(object):
         _set_scf_acceleration_damping_damping_type,
     )
 
-    # scf_acceleration/anderson/start_number
-    def _get_scf_acceleration_anderson_start_number(self):
-        return self._data["scf_acceleration_anderson_start_number"]
+    # scf_acceleration/anderson/start
+    def _get_scf_acceleration_anderson_start(self):
+        value = self._data.get("scf_acceleration_anderson_start", None)
+        return value
 
-    def _set_scf_acceleration_anderson_start_number(self, value):
+    def _set_scf_acceleration_anderson_start(self, value):
         if value != None:
             value = int(value)
-            self._data["scf_acceleration_anderson_start_number"] = value
+            self._data["scf_acceleration_anderson_start"] = value
 
-    scf_acceleration_anderson_start_number = property(
-        _get_scf_acceleration_anderson_start_number,
-        _set_scf_acceleration_anderson_start_number,
+    scf_acceleration_anderson_start = property(
+        _get_scf_acceleration_anderson_start,
+        _set_scf_acceleration_anderson_start,
     )
 
     # scf_acceleration/anderson/damping_factor
@@ -696,10 +698,14 @@ class PdfParamObject(object):
         else:
             raise "type mispatch"
 
+    # -------------------------------------------------------------------------
     # total energies (each iteration)
+    # -------------------------------------------------------------------------
+    @deprecated
     def _get_TEs(self):
         return self._data.get("TEs", {})
 
+    @deprecated
     def _set_TEs(self, value):
         self._data["TEs"] = value
 
@@ -708,17 +714,29 @@ class PdfParamObject(object):
     def get_total_energy(self, iteration):
         iteration = int(iteration)
         value = None
+
+        self._data.setdefault("TEs", {})
         if iteration in self._data["TEs"]:
             value = float(self._data["TEs"][iteration])
         return value
 
+    def set_total_energy(self, iteration, total_energy):
+        iteration = int(iteration)
+        total_energy = float(total_energy)
+        self._data.setdefault("TEs", {})
+        self._data["TEs"][iteration] = total_energy
+
+    # -------------------------------------------------------------------------
     # counterpoise
+    # -------------------------------------------------------------------------
     def _get_counterpoise(self):
         return self._data.get("counterpoise", False)
 
     counterpoise = property(_get_counterpoise)
 
-    # LO ===============================================================
+    # -------------------------------------------------------------------------
+    # LO
+    # -------------------------------------------------------------------------
     def _get_lo_satisfied(self):
         answer = self._data.get("lo/satisfied", False)
 
@@ -818,8 +836,8 @@ class PdfParamObject(object):
         output += "    scf_acceleration/damping/damping_factor = {0}\n".format(
             self.scf_acceleration_damping_damping_factor
         )
-        output += "    scf_acceleration/anderson/start_number = {0}\n".format(
-            self.scf_acceleration_anderson_start_number
+        output += "    scf_acceleration/anderson/start = {0}\n".format(
+            self.scf_acceleration_anderson_start
         )
         output += "    scf_acceleration/anderson/damping_factor = {0}\n".format(
             self.scf_acceleration_anderson_damping_factor
@@ -1032,6 +1050,13 @@ class PdfParamObject(object):
         filename = self._get_file_base_name("Hpq_matrix")
         return os.path.join(self.work_path, filename)
 
+    def get_h2_mat_path(self):
+        """
+        return Hpq2 matrix path
+        """
+        filename = self._get_file_base_name("Hpq2_matrix")
+        return os.path.join(self.work_path, filename)
+
     def get_f_mat_path(self, runtype="rks", itr=-1):
         """
         return Fmatrix path
@@ -1120,7 +1145,9 @@ class PdfParamObject(object):
         odict = self._alias_conversion(odict)
 
         if "TEs" in odict:
-            self.TEs = odict.get("TEs", {})
+            # self.TEs = odict.get("TEs", {})
+            for itr, TE in odict["TEs"].items():
+                self.set_total_energy(itr, TE)            
             del odict["TEs"]
 
         basisset_kinds = [
@@ -1208,11 +1235,11 @@ class PdfParamObject(object):
             )
             del odict["scf_acceleration/damping/damping_type"]
 
-        if "scf_acceleration/anderson/start_number" in odict:
-            self.scf_acceleration_anderson_start_number = odict.get(
-                "scf_acceleration/anderson/start_number", None
+        if "scf_acceleration/anderson/start" in odict:
+            self.scf_acceleration_anderson_start = odict.get(
+                "scf_acceleration/anderson/start", None
             )
-            del odict["scf_acceleration/anderson/start_number"]
+            del odict["scf_acceleration/anderson/start"]
 
         if "scf_acceleration/anderson/damping_factor" in odict:
             self.scf_acceleration_anderson_damping_factor = odict.get(

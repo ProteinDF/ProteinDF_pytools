@@ -23,12 +23,12 @@ import proteindf_bridge as bridge
 import os
 import struct
 import logging
+
 logger = logging.getLogger(__name__)
 
 
 class Vector(bridge.Vector):
-    """
-    """
+    """ """
 
     def __init__(self, obj=[]):
         super(Vector, self).__init__(obj)
@@ -41,7 +41,7 @@ class Vector(bridge.Vector):
             data = fin.read(size_of_header)
             fin.close()
 
-            header = struct.unpack(header_struct, data[0: size_of_header])
+            header = struct.unpack(header_struct, data[0:size_of_header])
             size = header[0]
             size_of_data = struct.calcsize("d") * size
             size_of_file = size_of_header + size_of_data
@@ -57,49 +57,43 @@ class Vector(bridge.Vector):
             header_struct_list = ["i", "l"]
             for endian in endian_list:
                 for header_struct in header_struct_list:
-                    (size, chk_filesize) = get_header(
-                        file_path, endian + header_struct)
-                    answer = (filesize == chk_filesize)
+                    (size, chk_filesize) = get_header(file_path, endian + header_struct)
+                    answer = filesize == chk_filesize
                     if answer:
                         break
                 if answer:
                     break
 
-        return (endian, header_struct, size)
+        return (answer, size, endian, header_struct)
 
     @classmethod
     def is_loadable(cls, file_path):
-        answer = False
-        (endian, header_struct, size) = cls.find_header_struct(file_path)
-        if endian != None:
-            answer = True
+        (answer, size, endian, header_struct) = cls.find_header_struct(file_path)
 
         return answer
 
     def load(self, file_path):
-        """Load the vector. True is returned if the reading is successful.
-        """
+        """Load the vector. True is returned if the reading is successful."""
         if os.path.isfile(file_path):
-            (endian, header_struct, size) = self.find_header_struct(file_path)
+            (answer, size, endian, header_struct) = self.find_header_struct(file_path)
+            assert answer
 
             data = open(file_path, "rb").read()
             # read header
             header_struct = endian + header_struct
             start = 0
             size_of_header = struct.calcsize(header_struct)
-            header = struct.unpack(
-                header_struct, data[start: start + size_of_header])
+            header = struct.unpack(header_struct, data[start : start + size_of_header])
             start += size_of_header
             size = header[0]
-            assert(size >= 0)
+            assert size >= 0
 
             # read contents
             body_struct = endian + "d"
             self.resize(size)
             size_of_double = struct.calcsize(body_struct)
             for i in range(len(self)):
-                value = struct.unpack(
-                    body_struct, data[start: start + size_of_double])
+                value = struct.unpack(body_struct, data[start : start + size_of_double])
                 self[i] = float(value[0])
                 start += size_of_double
 

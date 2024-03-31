@@ -22,7 +22,7 @@
 from .pdfparam_hdf5 import PdfParam_H5
 from .pdfparam import PdfParam
 from .pdfcommon import get_default_pdfparam, run_pdf
-from .pdfarchive import PdfArchive
+# from .pdfarchive import PdfArchive
 import proteindf_bridge as bridge
 import os
 import sys
@@ -110,16 +110,17 @@ class PdfSim(object):
             run_pdf(cmd_archive)
 
             entry = None
-            if cmd_archive == 'archive':
-                logger.info('read archived file(DB)')
-                entry = PdfArchive(db_path)
-            elif cmd_archive == 'archive-h5':
+            # if cmd_archive == 'archive':
+            #     logger.info('read archived file(DB)')
+            #     entry = PdfArchive(db_path)
+            if "archive-h5" in cmd_archive:
                 logger.info('read archived file(HDF5)')
                 entry = PdfParam_H5()
                 entry.open('pdfresults.h5')
-            itr = entry.iterations
-            if itr is not None:
-                total_energy = entry.get_total_energy(itr)
+            if entry is not None:
+                itr = entry.iterations
+                if itr is not None:
+                    total_energy = entry.get_total_energy(itr)
 
         os.chdir(current_dir)
 
@@ -219,13 +220,13 @@ class PdfSim(object):
                     pdfparam1.molecule[atom_id] = atom1
                     workdir1 = os.path.join(
                         workdir, "{}_d{}_h{}_1".format(atom_id, direction, h))
-                    (itr, total_energy1) = self.calc_pdf(pdfparam1, workdir1)
+                    (itr, total_energy1) = self.sp(pdfparam1, workdir1)
 
                     pdfparam2 = pdfparam
                     pdfparam2.molecule[atom_id] = atom2
                     workdir2 = os.path.join(
                         workdir, "{}_d{}_h{}_2".format(atom_id, direction, h))
-                    (itr, total_energy2) = self.calc_pdf(pdfparam2, workdir2)
+                    (itr, total_energy2) = self.sp(pdfparam2, workdir2)
 
                     delta_TE = total_energy2 - total_energy1
                     print("h={: e}, delta_TE={: e}, v={: e}".format(
@@ -295,24 +296,24 @@ class PdfSim(object):
 
         return answer
 
-    def calc_pdf(self, pdfparam, workdir):
-        current_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or ".")
+    # def calc_pdf(self, pdfparam, workdir):
+    #     current_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or ".")
 
-        pdf_workdir = os.path.join('.', workdir)
-        if not os.path.exists(pdf_workdir):
-            os.mkdir(pdf_workdir)
-        else:
-            logger.info('already exist {}'.format(pdf_workdir))
+    #     pdf_workdir = os.path.join('.', workdir)
+    #     if not os.path.exists(pdf_workdir):
+    #         os.mkdir(pdf_workdir)
+    #     else:
+    #         logger.info('already exist {}'.format(pdf_workdir))
 
-        self.setup(pdfparam, pdf_workdir)
-        os.chdir(pdf_workdir)
-        run_pdf(['-o', 'pdf.log', 'serial'])
-        run_pdf('archive')
+    #     self.setup(pdfparam, pdf_workdir)
+    #     os.chdir(pdf_workdir)
+    #     run_pdf(['-o', 'pdf.log', 'serial'])
+    #     run_pdf('archive')
 
-        entry = pdf.PdfArchive(self._db_path)
-        itr = entry.iterations
-        total_energy = entry.get_total_energy(itr)
+    #     entry = pdf.PdfArchive(self._db_path)
+    #     itr = entry.iterations
+    #     total_energy = entry.get_total_energy(itr)
 
-        os.chdir(current_dir)
+    #     os.chdir(current_dir)
 
-        return (itr, total_energy)
+    #     return (itr, total_energy)
