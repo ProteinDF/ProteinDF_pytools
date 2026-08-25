@@ -1,0 +1,32 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2014, The ProteinDF development team
+# This file is distributed under the same license as the ProteinDF_pytools
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ProteinDF_pytools 2024.3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-25 13:01+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../api/proteindf_tools.basisset_parser.rst:2
+#: fa7c01f4cef04658bd895dabca5a69ea
+msgid "proteindf\\_tools.basisset\\_parser module"
+msgstr ""
+
+#: 03c5d92e5b384c108cc91f8ab4eb7961 of
+#: proteindf_tools.basisset_parser.BasisSetParser:1
+msgid "gaussian94 format text data (eg. ESML html) parser"
+msgstr ""
+

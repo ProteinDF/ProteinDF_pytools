@@ -1,0 +1,102 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2014, The ProteinDF development team
+# This file is distributed under the same license as the ProteinDF_pytools
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ProteinDF_pytools 2024.3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-25 15:32+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: ja <LL@li.org>\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../api/proteindf_tools.pdfparam_object.rst:2
+#: 335892092e57426dbd9a7ae73589af9e
+msgid "proteindf\\_tools.pdfparam\\_object module"
+msgstr ""
+
+#: 52585afbe3ef494d928b1cc9bb88f17a of
+#: proteindf_tools.pdfparam_object.PdfParamObject:1
+msgid "ProteinDF parameter object"
+msgstr ""
+
+#: fdbba96a891e411facf58d8340a35f54 of
+#: proteindf_tools.pdfparam_object.PdfParamObject.find_atom_index:1
+msgid ""
+"If the given atom is registered, return its index (0-based). If there is no "
+"match, return -1."
+msgstr "入力された原子が登録されている場合、そのインデックス(0スタート)を返す。 該当するものがない場合は-1を返す。"
+
+#: 8dca44f31afc46cead5ce668c8d9e365 of
+#: proteindf_tools.pdfparam_object.PdfParamObject.get_c_mat_path:1
+msgid "return Cmatrix path"
+msgstr ""
+
+#: 6c1960c37f1c49c6aa81556f1988ec32 of
+#: proteindf_tools.pdfparam_object.PdfParamObject.get_clo_mat_path:1
+msgid "return localized matrix (C_lo) path"
+msgstr ""
+
+#: a700ea2fb7fb4cbcb0bff8f312419a7c of
+#: proteindf_tools.pdfparam_object.PdfParamObject.get_density_matrix_path:1
+msgid "return density matrix path"
+msgstr ""
+
+#: 2ee522478bf94fc180feca5dc8f97b55 of
+#: proteindf_tools.pdfparam_object.PdfParamObject.get_energy_level_path:1
+msgid "return energy level vector file path"
+msgstr ""
+
+#: 91fa6f1d389c40bf89355a892e48f772 of
+#: proteindf_tools.pdfparam_object.PdfParamObject.get_f_mat_path:1
+msgid "return Fmatrix path"
+msgstr ""
+
+#: 167634a4086e46db828e980e3a0f8a4d of
+#: proteindf_tools.pdfparam_object.PdfParamObject.get_gradient_rms:1
+msgid "Return the RMS of the gradient."
+msgstr "gradientのRMSを返す"
+
+#: 0d762d7c33084d7eb2c4404ecd2c7d04 of
+#: proteindf_tools.pdfparam_object.PdfParamObject.get_h2_mat_path:1
+msgid "return Hpq2 matrix path"
+msgstr ""
+
+#: 689cf5912dc44478acff88008159ad78 of
+#: proteindf_tools.pdfparam_object.PdfParamObject.get_h_mat_path:1
+msgid "return Hpq matrix path"
+msgstr ""
+
+#: dc9c9efa33184940abdcba41ace7fc05 of
+#: proteindf_tools.pdfparam_object.PdfParamObject.get_inputfile_contents:1
+msgid "Create the contents of the ProteinDF input file (fl_Userinput)."
+msgstr "ProteinDF入力ファイル(fl_Userinput)の内容を作成する"
+
+#: d92fe8f6b8024984996da3a8c5084eb0 of
+#: proteindf_tools.pdfparam_object.PdfParamObject.get_occ_path:1
+msgid "return electron occupation information file path"
+msgstr ""
+
+#: 2ad33d7d72104285b385678425825c3a of
+#: proteindf_tools.pdfparam_object.PdfParamObject.get_s_mat_path:1
+msgid "return overlap matrix path"
+msgstr ""
+
+#: 3848b6ca00d94340908ff9ce588954a8 of
+#: proteindf_tools.pdfparam_object.PdfParamObject.get_x_mat_path:1
+msgid "return X matrix path"
+msgstr ""
+
+#: 50bfcb27489b4350b5797e047320df30 of
+#: proteindf_tools.pdfparam_object.PdfParamObject.get_xinv_mat_path:1
+msgid "return X^-1 matrix path"
+msgstr ""

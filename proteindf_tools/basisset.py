@@ -284,7 +284,7 @@ class ContractedGTO(list):
     @classmethod
     def get_shell_type_id(cls, shell_type):
         """
-        shell_typeに対応するidを返す
+        Return the id corresponding to shell_type.
 
         s: 0, p: 1, d: 2
         """
@@ -306,7 +306,7 @@ class ContractedGTO(list):
     @classmethod
     def get_basis_type(cls, shell_type_id, basis_id):
         """
-        軌道種類の文字列を返す
+        Return the orbital type string.
         shell_type_id=0, basis_id=0: s
         shell_type_id=1, basis_id=0: px
         shell_type_id=1, basis_id=1: py
@@ -323,7 +323,7 @@ class ContractedGTO(list):
 
     def expand(self):
         """
-        shell_typeが'spd'などの場合に分解する
+        Expand the case where shell_type is e.g. 'spd'.
         """
         answer = None
         if (self.shell_type == 'spd'):
@@ -478,7 +478,7 @@ class BasisSet(list):
 
     def expand(self):
         """
-        shell_typeが'spd'などの場合に分解する
+        Expand the case where shell_type is e.g. 'spd'.
         """
         tmp = BasisSet(self.name)
         for i in self:
@@ -493,7 +493,7 @@ class BasisSet(list):
         for cgto in self:
             shell_type = cgto.shell_type
             CGTOs[shell_type].append(cgto)
-        del self[:] # 全削除
+        del self[:] # remove all
         for shell_type in ContractedGTO.get_supported_shell_types():
             self.extend(CGTOs[shell_type])
 

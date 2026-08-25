@@ -48,7 +48,7 @@ class PdfReport(object):
 
     def _get_total_energy_vector(self):
         """
-        Total Energyのヒストリ
+        History of the total energy.
         """
         num_of_iterations = self._pdfparam.iterations
         TEs = [None] * num_of_iterations
@@ -85,7 +85,7 @@ class PdfReport(object):
 
     def _plot_convergence_check(self, iteration):
         """
-        TEのヒストリ
+        History of TE.
         """
         iterations = self._pdfparam.iterations
 
@@ -105,7 +105,7 @@ class PdfReport(object):
 
     def _plot_convergence_energy_level(self, run_type, iteration):
         """
-        EnergyLevelのヒストリ
+        History of the energy level.
         """
         HOMO_level = self._pdfparam.get_HOMO_level(run_type)
 
@@ -125,7 +125,7 @@ class PdfReport(object):
         graphH_path = os.path.join(self._workdir, "eigvals_hist.{}.png".format(run_type))
         graphH.save(graphH_path)
 
-        # lastのグラフを作成する
+        # create the graph for the last iteration
         graphV = DfEnergyLevelHistoryGraphV()
         graphV.set_HOMO_level(HOMO_level)  # option base 0
         graphV.set_LUMO_level(HOMO_level + 1)  # option base 0

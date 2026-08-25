@@ -1,0 +1,50 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2014, The ProteinDF development team
+# This file is distributed under the same license as the ProteinDF_pytools
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ProteinDF_pytools 2024.3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-25 13:01+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../api/proteindf_tools.pdfsim.rst:2 63df568e28d3441c89f77b8800dcd96e
+msgid "proteindf\\_tools.pdfsim module"
+msgstr ""
+
+#: 514509bbc377494dbd0b4b6766020790 of proteindf_tools.pdfsim.PdfSim.pop:1
+msgid "calc population"
+msgstr ""
+
+#: af1a170ca9c34af797c6f09ecd628257 of proteindf_tools.pdfsim.PdfSim.setup:1
+msgid "setup to run ProteinDF"
+msgstr ""
+
+#: c82895f364b04276b429da958a372e88 of proteindf_tools.pdfsim.PdfSim.sp:1
+msgid "calc single-point"
+msgstr ""
+
+#: e220286af34f414db18c9fc0a0153c14 of proteindf_tools.pdfsim.PdfSim.sp:3
+msgid ""
+"Keyword arguments: pdfparam --- PdfParam object represented the "
+"calculation condition. workdir --- working directory. db_path --- "
+"ProteinDF ArchiveDB path (default: pdfresults.db) dry_run --- if True, "
+"the calculation is NOT carried out. Default is False."
+msgstr ""
+
+#: 0c0b89a35689463abd3d02347bb90ca3 of proteindf_tools.pdfsim.PdfSim.sp:9
+msgid "Returns: tuple of the number of iterations and the total energy."
+msgstr ""
+

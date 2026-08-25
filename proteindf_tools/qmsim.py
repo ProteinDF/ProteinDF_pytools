@@ -21,7 +21,7 @@
 
 class QmSim(object):
     """
-    QmSimulatorの基本クラス
+    Base class for QmSimulator.
     """
     def __init__(self):
         self._data = {}

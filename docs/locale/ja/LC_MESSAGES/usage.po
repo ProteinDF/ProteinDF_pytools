@@ -1,0 +1,376 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2014, The ProteinDF development team
+# This file is distributed under the same license as the ProteinDF_pytools
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ProteinDF_pytools 2024.3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-25 13:01+0900\n"
+"PO-Revision-Date: 2026-08-25 13:01+0900\n"
+"Last-Translator: Toshiyuki HIRANO <hiracchi@gmail.com>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../usage.md:1 95820d6cdcb044029846dc6311d8eece
+msgid "Command-line tools"
+msgstr "コマンドラインツール"
+
+#: ../../usage.md:3 0811ef9ea73c4944b1c520c8c0918c02
+msgid ""
+"`ProteinDF_pytools` installs a set of `pdf-*` command-line scripts on top"
+" of the `proteindf_tools` library. Each one is a thin wrapper that reads "
+"ProteinDF's binary parameter files (`pdfparam.mpac` / HDF5) and other "
+"result files, and produces a report, plot, or converted file. Run any of "
+"them with `-h` / `--help` for the full list of options."
+msgstr ""
+"`ProteinDF_pytools` は、`proteindf_tools` ライブラリの上に構築された "
+"`pdf-*` コマンドライン群をインストールします。それぞれは ProteinDF の"
+"バイナリパラメータファイル(`pdfparam.mpac` / HDF5)やその他の結果ファイル"
+"を読み込み、レポート・プロット・変換ファイルを生成する薄いラッパーです。"
+"オプションの詳細は各コマンドに `-h` / `--help` を付けて実行してください。"
+
+#: ../../usage.md:9 4e6bd2b5009a4ba6aeced5770bd3d319
+msgid "Command dispatcher"
+msgstr "コマンドディスパッチャ"
+
+#: ../../usage.md 105defc219dc48a3ba2c03cb7ad3dd8c
+#: 131529d56b884f08945cb87722dd74d8 1a04d161c25f47a6b31addc7f4482e6b
+#: 4deda4dff6aa4ab48948af420f44045e 5c22003f5f4f44c393e54d832663b9d2
+#: 7df9f7dcd81c4da1bc547f919f8a41bd
+msgid "Script"
+msgstr "スクリプト"
+
+#: ../../usage.md 4ced10c48ebf46b18ea0451623a8ae4b
+#: 69870f2b3253409e9a3aaa61ff7efa4e b04d2bc3176b4ee6b0d616c93735a953
+#: c8be9d61a968469da91ca0bd5746f7d9 e68a93fa57e04353b60661335325f3d1
+#: fc430a3190b6416eba92e294f7520e72
+msgid "Description"
+msgstr "説明"
+
+#: ../../usage.md 33d3985993a948ffb1e786a7f099df7f
+msgid "`pdf` (`pdfcmd.py`)"
+msgstr "`pdf` (`pdfcmd.py`)"
+
+#: ../../usage.md 0b658a1a9d6144d8b30c3fad9a2c04a9
+msgid ""
+"dispatch a `pdf-*` subcommand by name, e.g. `pdf report` runs `pdf-"
+"report.py`"
+msgstr ""
+"名前を指定して `pdf-*` サブコマンドを実行する(例: `pdf report` は "
+"`pdf-report.py` を実行する)"
+
+#: ../../usage.md:15 6021bf26a8a04264b5259db3740a5d0d
+msgid "Archiving, reporting & testing"
+msgstr "アーカイブ・レポート・テスト"
+
+#: ../../usage.md d49a580b03314000920a5f9e976d0109
+msgid "`pdf-archive.py`"
+msgstr "`pdf-archive.py`"
+
+#: ../../usage.md a19d71862da14d7e84f7ab805e1242be
+msgid "archive ProteinDF results"
+msgstr "ProteinDF の計算結果をアーカイブする"
+
+#: ../../usage.md dd530749b0f94f2889d9ca85fdcdc580
+msgid "`pdf-archive-h5.py`"
+msgstr "`pdf-archive-h5.py`"
+
+#: ../../usage.md feab3a6474684bc594f2e33655cb1140
+msgid "archive ProteinDF results (HDF5)"
+msgstr "ProteinDF の計算結果をアーカイブする(HDF5)"
+
+#: ../../usage.md f8a62afef6774a7b90776bdcdb02041b
+msgid "`pdf-report.py`"
+msgstr "`pdf-report.py`"
+
+#: ../../usage.md a385d18607e34851b7f636ecfc49d2e6
+msgid "make a ProteinDF report"
+msgstr "ProteinDF のレポートを作成する"
+
+#: ../../usage.md e2b766c74ad2433184610772657cfe1b
+msgid "`pdf-report-h5.py`"
+msgstr "`pdf-report-h5.py`"
+
+#: ../../usage.md 990a9f8b6729406596abe1f640661b50
+msgid "make a ProteinDF report (HDF5)"
+msgstr "ProteinDF のレポートを作成する(HDF5)"
+
+#: ../../usage.md 9603a61c3078485b93f4e41d0676e024
+msgid "`pdf-test.py`"
+msgstr "`pdf-test.py`"
+
+#: ../../usage.md e4e21d34e2384cde8dbbef44355bdf22
+msgid "compare ProteinDF results"
+msgstr "ProteinDF の計算結果を比較する"
+
+#: ../../usage.md 165de361423e49b08a63e80cbdcb1ef3
+msgid "`pdf-test-h5.py`"
+msgstr "`pdf-test-h5.py`"
+
+#: ../../usage.md bc2e45be3dd945cc9ff3c3cf6b6f640d
+msgid "compare ProteinDF results (HDF5)"
+msgstr "ProteinDF の計算結果を比較する(HDF5)"
+
+#: ../../usage.md 747d7c3be9ad423485beea39dca531bf
+msgid "`pdf-test-eri.py`"
+msgstr "`pdf-test-eri.py`"
+
+#: ../../usage.md dc77bad6e86d4fd7a7e821f959b2810c
+msgid "test ERI (electron repulsion integral) values"
+msgstr "ERI(電子反発積分)の値をテストする"
+
+#: ../../usage.md:27 bdd137030def451785b517b0e582a65a
+msgid "Inspecting results"
+msgstr "結果の確認"
+
+#: ../../usage.md 77a667be60b24261a864e2b295cc16e2
+msgid "`pdf-env.py`"
+msgstr "`pdf-env.py`"
+
+#: ../../usage.md e777ba67ad37441692a82c1424bc3a5a
+msgid "report the ProteinDF runtime environment"
+msgstr "ProteinDF の実行環境を報告する"
+
+#: ../../usage.md 966c22b154a940ca8a8991922bbdbbc5
+msgid "`pdf-atom-index.py`"
+msgstr "`pdf-atom-index.py`"
+
+#: ../../usage.md 55a2974ccf2f406c8862911aa1a1ad46
+msgid "output the atom index"
+msgstr "原子インデックスを出力する"
+
+#: ../../usage.md b61824402208463188fbb8717584ff9c
+msgid "`pdf-info-geom.py`"
+msgstr "`pdf-info-geom.py`"
+
+#: ../../usage.md 23fa75ffbfa04a6cbe39573b573cf839
+msgid "output the molecular geometry in XYZ format"
+msgstr "分子構造を XYZ 形式で出力する"
+
+#: ../../usage.md 7f1ff797ec1e45fca25078d8d0e6f027
+msgid "`pdf-info-iteration.py`"
+msgstr "`pdf-info-iteration.py`"
+
+#: ../../usage.md 04c55922fe714ed585fe4f1fb957c317
+msgid "output per-iteration geometry in XYZ format"
+msgstr "各イテレーションの構造を XYZ 形式で出力する"
+
+#: ../../usage.md 8cd6cb6f67b64a68ac53986d9c3acb0b
+msgid "`pdf-info-orb.py`"
+msgstr "`pdf-info-orb.py`"
+
+#: ../../usage.md 149f766d736e4b089d1a56e54181760b
+msgid "output orbital information"
+msgstr "軌道情報を出力する"
+
+#: ../../usage.md 62bc7805914d45428438bf2794b05cb7
+msgid "`pdf-info-xyz.py`"
+msgstr "`pdf-info-xyz.py`"
+
+#: ../../usage.md 68b4585ea39a40f4aedafa675f12e4a5
+msgid "output the geometry as an XYZ file"
+msgstr "構造を XYZ ファイルとして出力する"
+
+#: ../../usage.md 5a9f961753434afcbc959f82dfbe0b18
+msgid "`pdf-mat-info.py`"
+msgstr "`pdf-mat-info.py`"
+
+#: ../../usage.md a0f6a209eae443ef933d034996d52ae7
+msgid "show matrix metadata (size, type, ...)"
+msgstr "行列のメタ情報(サイズ、型など)を表示する"
+
+#: ../../usage.md 4d18b3e99f224fe3a7846e60c877209f
+msgid "`pdf-mat-show.py`"
+msgstr "`pdf-mat-show.py`"
+
+#: ../../usage.md e937aeb0dd244d97a8e61dbb5208533b
+msgid "show matrix contents"
+msgstr "行列の内容を表示する"
+
+#: ../../usage.md 2fb79986fe0644ba987fbd6da13cc119
+msgid "`pdf-estimate-ao.py`"
+msgstr "`pdf-estimate-ao.py`"
+
+#: ../../usage.md 2d64400e27024d6ab0dcee13688324f1
+msgid "estimate the AO cell size"
+msgstr "AO のセルサイズを見積もる"
+
+#: ../../usage.md 8b510980f300411ead2a1d35240915f8
+msgid "`pdf-show-profile.py`"
+msgstr "`pdf-show-profile.py`"
+
+#: ../../usage.md 43cb9870bc9745a5a5ab12587dc460b9
+msgid "[expert] show a profile from a `cProfile` stats file"
+msgstr "[上級者向け] `cProfile` の統計ファイルからプロファイルを表示する"
+
+#: ../../usage.md:42 0e80fa9f4b7249ef823a0fe7a3d88703
+msgid "Plotting"
+msgstr "プロット"
+
+#: ../../usage.md f082cc45c36d46449258be0889e042cc
+msgid "`pdf-plot-basisset.py`"
+msgstr "`pdf-plot-basisset.py`"
+
+#: ../../usage.md 0d38af1ed11a43c28416881d478ddc7e
+msgid "plot a basis set"
+msgstr "基底関数系をプロットする"
+
+#: ../../usage.md 3ff611a5ad8441a78495bebd59a4ba02
+msgid "`pdf-plot-elevel.py`"
+msgstr "`pdf-plot-elevel.py`"
+
+#: ../../usage.md 68885574fd61419e95417d8877a08e0a
+msgid "plot energy levels (single, vertical)"
+msgstr "エネルギー準位をプロットする(単一・縦方向)"
+
+#: ../../usage.md b684a484f4dd41cb8364d30931da2d83
+msgid "`pdf-plot-mo-tracer.py`"
+msgstr "`pdf-plot-mo-tracer.py`"
+
+#: ../../usage.md e7390d3bc7e24d49899780d3ba3b2c0e
+msgid "plot energy levels across iterations"
+msgstr "イテレーションごとのエネルギー準位をプロットする"
+
+#: ../../usage.md 2641a389c7a84ba687f5c79997c31355
+msgid "`pdf-plot-mat.py`"
+msgstr "`pdf-plot-mat.py`"
+
+#: ../../usage.md aea23a537be448d3b7997f621b8f70c9
+msgid "plot a matrix"
+msgstr "行列をプロットする"
+
+#: ../../usage.md b59e20ab2b244e498c1531e3df78ac1e
+msgid "`pdf-plot-decaymat.py`"
+msgstr "`pdf-plot-decaymat.py`"
+
+#: ../../usage.md 0b2d5d2e27744cc7abc92a995c444c1c
+msgid "plot a matrix (decay/thinning view)"
+msgstr "行列をプロットする(減衰/間引き表示)"
+
+#: ../../usage.md 308fb5e1606445a08ddfd518b6a1bb89
+msgid "`pdf-plot-dos.py`"
+msgstr "`pdf-plot-dos.py`"
+
+#: ../../usage.md f1c667d10f284df690ca0ad23ff58028
+msgid "plot the density of states"
+msgstr "状態密度をプロットする"
+
+#: ../../usage.md d146df57c35d4e6488914bcff1548775
+msgid "`pdf-plot-gvalues.py`"
+msgstr "`pdf-plot-gvalues.py`"
+
+#: ../../usage.md ab243014314e4086abd5d53cab848b9b
+msgid "plot G-values"
+msgstr "G値をプロットする"
+
+#: ../../usage.md 9928155461114abc9bbf0eb89f67df3d
+msgid "`pdf-plot-pop.py`"
+msgstr "`pdf-plot-pop.py`"
+
+#: ../../usage.md 89c5a7b9f90e4f0e9667087e89309147
+msgid "plot population analysis results"
+msgstr "電荷分布解析の結果をプロットする"
+
+#: ../../usage.md c6faa94b496043cb9a9e3d3de9222357
+msgid "`pdf-plot-vector.py`"
+msgstr "`pdf-plot-vector.py`"
+
+#: ../../usage.md 19530c42b32d421aac6fd33e46ea4403
+msgid "plot a vector"
+msgstr "ベクトルをプロットする"
+
+#: ../../usage.md:56 d364511799684830a21fceec53986061
+msgid "Population analysis & charges"
+msgstr "電荷分布解析・電荷"
+
+#: ../../usage.md d085a297f8c9456e869dba6803638cf3
+msgid "`pdf-pop-resp.py`"
+msgstr "`pdf-pop-resp.py`"
+
+#: ../../usage.md 6a777075d7804d42877e323fbe27d0b1
+msgid "calculate RESP charges"
+msgstr "RESP 電荷を計算する"
+
+#: ../../usage.md faff59872e224545be8af9276909deed
+msgid "`pdf-pop-classo.py`"
+msgstr "`pdf-pop-classo.py`"
+
+#: ../../usage.md aeb58638929c4d3fb3f22f7066754a61
+msgid "fit charges via constrained LASSO regression"
+msgstr "制約付き LASSO 回帰により電荷をフィッティングする"
+
+#: ../../usage.md 65f39f58949c45b09995c9fa7acf6866
+msgid "`pdf-pop-ridge.py`"
+msgstr "`pdf-pop-ridge.py`"
+
+#: ../../usage.md e7440d0e7b47438186e47fb42a70db70
+msgid "fit charges via ridge regression"
+msgstr "リッジ回帰により電荷をフィッティングする"
+
+#: ../../usage.md 2bc36a728c4943a2980dadcec608fec0
+msgid "`pdf-pop-rrms.py`"
+msgstr "`pdf-pop-rrms.py`"
+
+#: ../../usage.md 083b585345a44784958a06baf99a25e0
+msgid "calculate the relative RMS (rrms) of a charge fit"
+msgstr "電荷フィッティングの相対 RMS(rrms)を計算する"
+
+#: ../../usage.md 0890c752b02640c0b93d24b6c8a24ac2
+msgid "`pdf-set-charges.py`"
+msgstr "`pdf-set-charges.py`"
+
+#: ../../usage.md d61fe6034f874322ac4ec6aa52c2c41b
+msgid "write fitted charges into a `pdfparam` file"
+msgstr "フィッティングした電荷を `pdfparam` ファイルへ書き込む"
+
+#: ../../usage.md 65bc9c63f473403c9753e4c7bbf2c55b
+msgid "`pdf-reg-harris.py`"
+msgstr "`pdf-reg-harris.py`"
+
+#: ../../usage.md 1280e0f31516430dba09655731c961e5
+msgid "register results in the Harris DB"
+msgstr "結果を Harris DB に登録する"
+
+#: ../../usage.md:67 ed3ce261bed24302b6f500a45138f832
+msgid "Format conversion & input generation"
+msgstr "フォーマット変換・入力生成"
+
+#: ../../usage.md fd0011a3009b49d89c938e6343d67c26
+msgid "`pdf-make-basis2.py`"
+msgstr "`pdf-make-basis2.py`"
+
+#: ../../usage.md a362705058d340a380400135d141b786
+msgid "build a `basis2` basis-set database file"
+msgstr "`basis2` 基底関数系データベースファイルを作成する"
+
+#: ../../usage.md 93baa05d55e54fcbac2081139af19bb7
+msgid "`xyz2pdf.py`"
+msgstr "`xyz2pdf.py`"
+
+#: ../../usage.md 3b6efb2c2f5744d7ae7fb9ad910fb936
+msgid "make a ProteinDF input from an XYZ file"
+msgstr "XYZ ファイルから ProteinDF の入力を作成する"
+
+#: ../../usage.md 2a39d949241e40d9a279361707b49ad8
+msgid "`xyz2gau.py`"
+msgstr "`xyz2gau.py`"
+
+#: ../../usage.md 98271cecc2df44deab98a577f36f1382
+msgid "make a Gaussian input from an XYZ file"
+msgstr "XYZ ファイルから Gaussian の入力を作成する"
+
+#: ../../usage.md db4e26a7c9ca4d94ae1a85060f8b8a4b
+msgid "`g0xeri2mpac.py`"
+msgstr "`g0xeri2mpac.py`"
+
+#: ../../usage.md 7200a05082dc4e7a8f6aac2f74e12ffd
+msgid "convert Gaussian output to MessagePack"
+msgstr "Gaussian の出力を MessagePack に変換する"

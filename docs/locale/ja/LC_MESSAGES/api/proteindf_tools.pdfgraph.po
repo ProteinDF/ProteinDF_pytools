@@ -1,0 +1,84 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2014, The ProteinDF development team
+# This file is distributed under the same license as the ProteinDF_pytools
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ProteinDF_pytools 2024.3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-25 15:32+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: ja <LL@li.org>\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../api/proteindf_tools.pdfgraph.rst:2 990e4ee3922f4906b0b19ff4fa86f09a
+msgid "proteindf\\_tools.pdfgraph module"
+msgstr ""
+
+#: 5257a4069fec4664ae9bfe355ab82300 of
+#: proteindf_tools.pdfgraph.DfEnergyLevelHistoryGraphH:1
+msgid "Draw the energy levels as horizontal lines."
+msgstr "エネルギー準位を水平線で描画します"
+
+#: 123bced547ce483eba758a5d749098d4 of
+#: proteindf_tools.pdfgraph.DfEnergyLevelHistoryGraphV:1
+msgid "Draw the energy levels as vertical lines."
+msgstr "エネルギー準位を垂直線で描画します。"
+
+#: c4ad87922179442ea266c950c127286f of
+#: proteindf_tools.pdfgraph.DfEnergyLevelTraceGraph.set_data:1
+msgid "set data"
+msgstr ""
+
+#: ../../api/proteindf_tools.pdfgraph.rst 04118301ef6246bd812ec4453cb33cb9
+msgid "Parameters"
+msgstr ""
+
+#: 9d1ac36d9d504392bb31c03fd9ffe24b of
+#: proteindf_tools.pdfgraph.DfEnergyLevelTraceGraph.set_data:4
+msgid "energy level for data0"
+msgstr ""
+
+#: 5be56d3bd1254d5bae030f3bb881587d of
+#: proteindf_tools.pdfgraph.DfEnergyLevelTraceGraph.set_data:7
+msgid "energy level for data1"
+msgstr ""
+
+#: 3112d2236e094bf7be0d13616af8cff8 of
+#: proteindf_tools.pdfgraph.DfEnergyLevelTraceGraph.set_data:10
+msgid "connection; [index1, index2, ratio]"
+msgstr ""
+
+#: 07f78c583faf4ddd9d4ece21d5201a24 of
+#: proteindf_tools.pdfgraph.Graph.plot_basis:1
+msgid "print Gaussian"
+msgstr ""
+
+#: 0be5b954eafe4b298c19e1614f280dae of
+#: proteindf_tools.pdfgraph.GraphConvergenceCheck.plot:1
+msgid "plot convergence history data"
+msgstr ""
+
+#: 7a1f8459fd454f9a8ab5ff2bf8112af0 of
+#: proteindf_tools.pdfgraph.GraphConvergenceCheck.plotLog:1
+msgid "plot convergence history data (log)"
+msgstr ""
+
+#: eade06b046164f00aa92b245f5b21fdc fa31216c59a44ec1adc4f3e89a32a095 of
+#: proteindf_tools.pdfgraph.GraphEnergyLevelHistory.plot_energy_levels:1
+#: proteindf_tools.pdfgraph.GraphEnergyLevelSingle.plot_energy_levels:1
+msgid "levels is the list of energy level."
+msgstr ""
+
+#: 12c8a3b5e0974c55bfab1596e356a4c9 of
+#: proteindf_tools.pdfgraph.GraphTotalEnergyHistory.plot:1
+msgid "plot total energy history data"
+msgstr ""

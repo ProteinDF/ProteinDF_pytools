@@ -1,0 +1,79 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2014, The ProteinDF development team
+# This file is distributed under the same license as the ProteinDF_pytools
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ProteinDF_pytools 2024.3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-25 15:32+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: ja <LL@li.org>\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../api/proteindf_tools.basisset.rst:2 06b7fde2b9b34c3d861d448ed1bc6fc7
+msgid "proteindf\\_tools.basisset module"
+msgstr ""
+
+#: a3c4443297aa4a4d8c2d3e94f48347f0 f57f05620dad407081984faae97d2ae0 of
+#: proteindf_tools.basisset.BasisSet.expand:1
+#: proteindf_tools.basisset.ContractedGTO.expand:1
+msgid "Expand the case where shell_type is e.g. 'spd'."
+msgstr "shell_typeが'spd'などの場合に分解する"
+
+#: af39d68cd08048b0bb471d57f76a586a of
+#: proteindf_tools.basisset.BasisSet.sort:1
+msgid "Sort the list in ascending order and return None."
+msgstr ""
+
+#: 44c9f553687342cba05a074e4e8f4e66 of
+#: proteindf_tools.basisset.BasisSet.sort:3
+msgid ""
+"The sort is in-place (i.e. the list itself is modified) and stable (i.e. the"
+" order of two equal elements is maintained)."
+msgstr ""
+
+#: dc0056a8d1b446d086cc8bd59cd256d9 of
+#: proteindf_tools.basisset.BasisSet.sort:6
+msgid ""
+"If a key function is given, apply it once to each list item and sort them, "
+"ascending or descending, according to their function values."
+msgstr ""
+
+#: ffeb48756d7c49d68ebb98f40425450c of
+#: proteindf_tools.basisset.BasisSet.sort:9
+msgid "The reverse flag can be set to sort in descending order."
+msgstr ""
+
+#: 29061d98d46c412dbfcd48551b6519d7 of
+#: proteindf_tools.basisset.ContractedGTO.get_basis_type:1
+msgid ""
+"Return the orbital type string. shell_type_id=0, basis_id=0: s "
+"shell_type_id=1, basis_id=0: px shell_type_id=1, basis_id=1: py "
+"shell_type_id=1, basis_id=2: pz shell_type_id=2, basis_id=0: dxy "
+"shell_type_id=2, basis_id=1: dyz shell_type_id=2, basis_id=2: dzx "
+"shell_type_id=2, basis_id=3: dxx-yy shell_type_id=2, basis_id=4: dzz"
+msgstr ""
+"軌道種類の文字列を返す shell_type_id=0, basis_id=0: s shell_type_id=1, basis_id=0: px "
+"shell_type_id=1, basis_id=1: py shell_type_id=1, basis_id=2: pz "
+"shell_type_id=2, basis_id=0: dxy shell_type_id=2, basis_id=1: dyz "
+"shell_type_id=2, basis_id=2: dzx shell_type_id=2, basis_id=3: dxx-yy "
+"shell_type_id=2, basis_id=4: dzz"
+
+#: e999ccf395de4a2080a8e51c596bed3a of
+#: proteindf_tools.basisset.ContractedGTO.get_shell_type_id:1
+msgid "Return the id corresponding to shell_type."
+msgstr "shell_typeに対応するidを返す"
+
+#: b1bf710f38c14a519e14bf3efe26ad6d of
+#: proteindf_tools.basisset.ContractedGTO.get_shell_type_id:3
+msgid "s: 0, p: 1, d: 2"
+msgstr ""

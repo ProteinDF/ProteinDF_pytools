@@ -262,7 +262,7 @@ class DfGraph(object):
         if self.aspect != None:
             self._ax.set_aspect(self.aspect)
 
-        # 枠
+        # frame
         self._ax.spines["top"].set_linewidth(1.0)
         self._ax.spines["bottom"].set_linewidth(1.0)
         self._ax.spines["left"].set_linewidth(1.0)
@@ -308,7 +308,7 @@ class DfTotalEnergyHistGraph(DfGraph):
 
 class DfEnergyLevelHistoryGraphH(DfGraph):
     """
-    エネルギー準位を水平線で描画します
+    Draw the energy levels as horizontal lines.
     """
 
     def __init__(self):
@@ -391,7 +391,7 @@ class DfEnergyLevelHistoryGraphH(DfGraph):
 
 class DfEnergyLevelHistoryGraphV(DfEnergyLevelHistoryGraphH):
     """
-    エネルギー準位を垂直線で描画します。
+    Draw the energy levels as vertical lines.
     """
 
     def __init__(self):
@@ -998,7 +998,7 @@ class Graph(object):
 
     def __init__(self, size=None):
         """
-        sizeはinchで指定する(width x height)
+        size is specified in inches (width x height).
         """
         # clear the figure
         # self.fig.clf()

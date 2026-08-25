@@ -1,0 +1,56 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2014, The ProteinDF development team
+# This file is distributed under the same license as the ProteinDF_pytools
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ProteinDF_pytools 2024.3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-25 13:01+0900\n"
+"PO-Revision-Date: 2026-08-25 13:01+0900\n"
+"Last-Translator: Toshiyuki HIRANO <hiracchi@gmail.com>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../installation.md:1 5ac1d029478145a5808a4e6437510756
+msgid "Installation"
+msgstr "インストール"
+
+#: ../../installation.md:3 ab05230312034a498b606b24f86c96fc
+msgid "Requirements"
+msgstr "必要要件"
+
+#: ../../installation.md:5 48d8e70d71eb40808963957c57c24a5f
+msgid "Python 3.7 or later"
+msgstr "Python 3.7 以降"
+
+#: ../../installation.md:6 faea6a44e9784feeb0985a0d2d4960ff
+msgid "[`ProteinDF_bridge`](https://proteindf.github.io/ProteinDF_bridge/)"
+msgstr "[`ProteinDF_bridge`](https://proteindf.github.io/ProteinDF_bridge/)"
+
+#: ../../installation.md:7 8934e4b1b4454fb9a07cdafa7f510ac6
+msgid ""
+"`numpy`, `scipy`, `pandas`, `matplotlib`, `scikit-learn`, `h5py`, "
+"`BeautifulSoup4`, `rich`"
+msgstr ""
+"`numpy`, `scipy`, `pandas`, `matplotlib`, `scikit-learn`, `h5py`, "
+"`BeautifulSoup4`, `rich`"
+
+#: ../../installation.md:10 1242956276e94d0da66f658f24face2e
+msgid "From source"
+msgstr "ソースからのインストール"
+
+#: ../../installation.md:20 881f0bb1936740c687e78311e498ba2b
+msgid ""
+"This also installs the `pdf-*` command-line tools listed in [Command-line"
+" tools](usage.md)."
+msgstr ""
+"これにより、[コマンドラインツール](usage.md) に記載の `pdf-*` "
+"コマンドラインツールも合わせてインストールされます。"

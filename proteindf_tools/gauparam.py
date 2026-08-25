@@ -24,7 +24,7 @@ from .qmsim import QmSim
 
 class GaussianParam(QmSim):
     """
-    Gaussianの計算条件を設定する
+    Set the Gaussian calculation conditions.
     """
     def __init__(self):
         self._data = {}

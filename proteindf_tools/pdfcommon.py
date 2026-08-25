@@ -35,8 +35,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-epsilon = 1.0e-10  # 計算機イプシロン
-error = 1.0e-4  # 許容誤差
+epsilon = 1.0e-10  # machine epsilon
+error = 1.0e-4  # allowable error
 
 
 def pdf_home():
@@ -49,13 +49,13 @@ def pdf_home():
 
 def get_default_pdfparam(verbose=False):
     """
-    defaultのpdfparamを返す
+    Return the default pdfparam.
     """
     # make temp dir & filepath
     tempfile_fd, tempfile_path = tempfile.mkstemp()
     os.close(tempfile_fd)
 
-    # 一時ファイルの初期化情報を読取る
+    # read the initialization info from the temp file
     args = ["init-param"]
     if verbose:
         args.append("-v")
@@ -96,7 +96,7 @@ def set_basisset(
     basisset_name_gridfree="cc-pVDZ-SP",
 ):
     """
-    pdfparamにbasissetを設定する
+    Set the basisset on pdfparam.
     """
     assert isinstance(pdfparam, PdfParam)
 

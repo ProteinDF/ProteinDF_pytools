@@ -25,7 +25,17 @@ $ pip install --use-feature=in-tree-build .
 
 ## Documents
 
-sorry, in preparation.
+Documentation (English / 日本語) is published at
+https://proteindf.github.io/ProteinDF_pytools/ via GitHub Pages.
+
+It can also be built locally:
+
+```bash
+pip install -e .[docs]
+make -C docs html      # English HTML -> docs/_build/html/en
+make -C docs html-ja   # Japanese HTML -> docs/_build/html/ja
+make -C docs latexpdf  # English PDF (requires a local TeX install)
+```
 
 
 ## License

@@ -353,8 +353,8 @@ class PdfParam_H5(PdfParamObject):
 
     def get_HOMO_level(self, run_type):
         """
-        HOMOのレベルを返す
-        0から始まることに注意。
+        Return the HOMO level.
+        Note that it is 0-indexed.
         """
         answer = None
         occ = self.get_occ_vector(run_type)

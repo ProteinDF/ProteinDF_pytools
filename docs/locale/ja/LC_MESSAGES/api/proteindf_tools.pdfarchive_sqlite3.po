@@ -1,0 +1,81 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2014, The ProteinDF development team
+# This file is distributed under the same license as the ProteinDF_pytools
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ProteinDF_pytools 2024.3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-25 15:32+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: ja <LL@li.org>\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../api/proteindf_tools.pdfarchive_sqlite3.rst:2
+#: 4a3f0542022d4d2abedfb66064e0a573
+msgid "proteindf\\_tools.pdfarchive\\_sqlite3 module"
+msgstr ""
+
+#: 8106cf5d3b724d72a3ed306fb743d3a9 of
+#: proteindf_tools.pdfarchive_sqlite3.PdfArchive_Sqlite3:1
+msgid "Class that stores ProteinDF results in a DB."
+msgstr "ProteinDFの結果をDBに格納するクラス"
+
+#: 1b1b8a19db7b4b6987d8bb36409a5666 of
+#: proteindf_tools.pdfarchive_sqlite3.PdfArchive_Sqlite3.get_HOMO_level:1
+msgid "Return the HOMO level. Note that it is 0-indexed."
+msgstr "HOMOのレベルを返す 0から始まることに注意。"
+
+#: b9ba66d4ebd442fab63c41b23ca4e959 of
+#: proteindf_tools.pdfarchive_sqlite3.PdfArchive_Sqlite3.get_basisset:1
+msgid ""
+"Return the basis function information (Basis object) for the given name."
+msgstr "与えられた名前の基底関数情報(Basisオブジェクト)を返す"
+
+#: 62fa8d7b88b24dfab8311cb9b7e02893 of
+#: proteindf_tools.pdfarchive_sqlite3.PdfArchive_Sqlite3.get_basisset_name:1
+msgid "Return the name corresponding to the atom name (atom_label)."
+msgstr "原子名(atom_label)に対応する名前を返す"
+
+#: dd28727f4763459fb1be8c132e48c5f0 of
+#: proteindf_tools.pdfarchive_sqlite3.PdfArchive_Sqlite3.get_energylevel:1
+msgid "Retrieve the energy level."
+msgstr "エネルギー準位を取得する"
+
+#: 84213e49fce0432f863381e904c282f3 of
+#: proteindf_tools.pdfarchive_sqlite3.PdfArchive_Sqlite3.get_gradient_rms:1
+msgid "Return the RMS of the gradient."
+msgstr "gradientのRMSを返す"
+
+#: d5fe52827d25476ca22e5b2f79944c16 of
+#: proteindf_tools.pdfarchive_sqlite3.PdfArchive_Sqlite3.get_molecule:1
+msgid "Return the AtomGroup."
+msgstr "AtomGroupを返す"
+
+#: e25f2466009441a6b02269918d7865dd of
+#: proteindf_tools.pdfarchive_sqlite3.PdfArchive_Sqlite3.get_occupations:1
+msgid "Retrieve the occupied orbital information."
+msgstr "占有軌道情報を取得する"
+
+#: 0ec996ccbf454b4a972bbe90e2a56f6c of
+#: proteindf_tools.pdfarchive_sqlite3.PdfArchive_Sqlite3.set_energylevel:1
+msgid "Set the energy level."
+msgstr "エネルギー準位を設定する"
+
+#: 2b8893ea32fc45609e20da62c357746c of
+#: proteindf_tools.pdfarchive_sqlite3.PdfArchive_Sqlite3.set_lcao:1
+msgid "Set the LCAO."
+msgstr "LCAOを設定する"
+
+#: 8d80a9659a934941b2a8395cfd70bcf6 of
+#: proteindf_tools.pdfarchive_sqlite3.PdfArchive_Sqlite3.set_occupations:1
+msgid "Set the occupied orbital information."
+msgstr "占有軌道情報を設定する"

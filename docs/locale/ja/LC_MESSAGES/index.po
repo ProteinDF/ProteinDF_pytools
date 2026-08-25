@@ -1,0 +1,79 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2014, The ProteinDF development team
+# This file is distributed under the same license as the ProteinDF_pytools
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ProteinDF_pytools 2024.3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-25 13:01+0900\n"
+"PO-Revision-Date: 2026-08-25 13:01+0900\n"
+"Last-Translator: Toshiyuki HIRANO <hiracchi@gmail.com>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../index.md:15
+msgid "Contents"
+msgstr "目次"
+
+#: ../../index.md:1 70ce7e3b8ec148ac9325bf4a9f27f3b5
+msgid "ProteinDF_pytools"
+msgstr "ProteinDF_pytools"
+
+#: ../../index.md:3 0963f1670f3d4051842c56462b3b5daf
+msgid ""
+"`ProteinDF_pytools` (package name `proteindf_tools`) is a Python library "
+"and set of command-line tools for pre- and post-processing around the "
+"[ProteinDF](https://proteindf.github.io/) quantum chemistry engine."
+msgstr ""
+"`ProteinDF_pytools`(パッケージ名 `proteindf_tools`)は、量子化学計算エンジン"
+" [ProteinDF](https://proteindf.github.io/) の前処理・後処理を行うための "
+"Python ライブラリおよびコマンドラインツール群です。"
+
+#: ../../index.md:7 18d40a41c6a94f6c8e7e870106fed4ce
+msgid "It provides:"
+msgstr "以下を提供します。"
+
+#: ../../index.md:9 bb72d826826549b7b539dbd43fc5ce8c
+msgid ""
+"Python classes to read and manipulate ProteinDF's binary parameter files "
+"(`pdfparam.mpac` / HDF5), matrices, vectors, basis sets, and orbital "
+"information (`PdfParam`, `Matrix`, `BasisSet`, `OrbInfo`, ...)."
+msgstr ""
+"ProteinDF のバイナリパラメータファイル(`pdfparam.mpac` / HDF5)、行列、"
+"ベクトル、基底関数系、軌道情報などを読み書き・操作するための Python クラス"
+"(`PdfParam`, `Matrix`, `BasisSet`, `OrbInfo` など)。"
+
+#: ../../index.md:12 a41b9d8a36c54015bc96d877617432db
+msgid ""
+"A collection of `pdf-*` command-line tools to inspect, plot, and report "
+"on ProteinDF calculation results without writing any Python code."
+msgstr ""
+"Python コードを書かずに ProteinDF の計算結果を確認・プロット・レポート"
+"できる `pdf-*` コマンドライン群。"
+
+#: ../../index.md:24 ed8d755b02db4ac897dda3f217b864af
+msgid "Indices and tables"
+msgstr "索引と表"
+
+#: ../../index.md:26 b9be9ce89eca419e838bd0cf6ce3c66f
+#, python-brace-format
+msgid "{ref}`genindex`"
+msgstr "{ref}`genindex`"
+
+#: ../../index.md:27 3d2ed6bf563f4988bac240393b9eb2c4
+#, python-brace-format
+msgid "{ref}`modindex`"
+msgstr "{ref}`modindex`"
+
+#: ../../index.md:28 5774640ec10d48be931160454553e59f
+#, python-brace-format
+msgid "{ref}`search`"
+msgstr "{ref}`search`"

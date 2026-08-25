@@ -31,7 +31,7 @@ from . import pdfcommon as pdf
 
 class PdfArchive_Sqlite3(object):
     """
-    ProteinDFの結果をDBに格納するクラス
+    Class that stores ProteinDF results in a DB.
     """
     _format_version = 20121230  # DB format version
 
@@ -39,7 +39,7 @@ class PdfArchive_Sqlite3(object):
                  db_path='pdfentry.db',
                  pdfparam=None):
         """
-        オブジェクトを作成する
+        Create the object.
         """
         self._logger = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ class PdfArchive_Sqlite3(object):
 
     def _create_table_conditions(self):
         """
-        pdf_id は多重登録を防ぐため
+        pdf_id is to prevent duplicate registration.
         """
         table_name = 'conditions'
         if not self._db.has_table(table_name):
@@ -89,9 +89,9 @@ class PdfArchive_Sqlite3(object):
 
     def _create_table_vectors(self):
         """
-        ベクトル情報のDBを作成
+        Create the DB for vector information.
 
-        dtype(data type): occ, elevelなど
+        dtype(data type): occ, elevel, etc.
         """
         table_name = 'vectors'
         if not self._db.has_table(table_name):
@@ -107,9 +107,9 @@ class PdfArchive_Sqlite3(object):
 
     def _create_table_matrices(self):
         """
-        行列情報のDBを作成
+        Create the DB for matrix information.
 
-        dtype(data type): C, Pなど
+        dtype(data type): C, P, etc.
         """
         table_name = 'matrices'
         if not self._db.has_table(table_name):
@@ -127,7 +127,7 @@ class PdfArchive_Sqlite3(object):
 
     def _create_table_gradient(self):
         """
-        gradient情報のDBを作成
+        Create the DB for gradient information.
         """
         table_name = 'gradient'
         if not self._db.has_table(table_name):
@@ -202,7 +202,7 @@ class PdfArchive_Sqlite3(object):
                                    'charge',
                                    'label'],
                                   ['atom_id'])
-        # pdfparam.moleculeはbridge.AtomGroupを返す
+        # pdfparam.molecule returns a bridge.AtomGroup
         for atom_id, atom in pdfparam.molecule.atoms():
             symbol = atom.symbol
             xyz = atom.xyz
@@ -232,7 +232,7 @@ class PdfArchive_Sqlite3(object):
 
     def _set_pdfparam_basisset(self, pdfparam):
         """
-        BasisSet情報を格納する
+        Store the BasisSet information.
         """
         assert(isinstance(pdfparam, PdfParam))
         table_name = 'basis'
@@ -466,10 +466,10 @@ class PdfArchive_Sqlite3(object):
 
     scf_converged = property(_get_scf_converged)
 
-    # 出力 ----------
+    # output ----------
     def get_molecule(self):
         """
-        AtomGroupを返す
+        Return the AtomGroup.
         """
         mol = bridge.AtomGroup()
         table_name = 'coordinates'
@@ -500,7 +500,7 @@ class PdfArchive_Sqlite3(object):
 
     def get_basisset_name(self, atom_label):
         """
-        原子名(atom_label)に対応する名前を返す
+        Return the name corresponding to the atom name (atom_label).
         """
         atom_label = str(atom_label)
         name = ""
@@ -515,7 +515,7 @@ class PdfArchive_Sqlite3(object):
 
     def get_basisset(self, name):
         """
-        与えられた名前の基底関数情報(Basisオブジェクト)を返す
+        Return the basis function information (Basis object) for the given name.
         """
         name = str(name)
         basisset = BasisSet()
@@ -553,8 +553,8 @@ class PdfArchive_Sqlite3(object):
 
     def get_HOMO_level(self, runtype):
         """
-        HOMOのレベルを返す
-        0から始まることに注意。
+        Return the HOMO level.
+        Note that it is 0-indexed.
         """
         answer = None
         v = self.get_occupations(runtype)
@@ -576,12 +576,12 @@ class PdfArchive_Sqlite3(object):
                 value = values[0]['energy']
         return value
 
-    # 入力 ---------------
+    # input ---------------
 
     # vectors ------------------------------------------------------------------
     def _set_vector(self, dtype, runtype, iteration, v):
         """
-        ベクトルを保存する
+        Save the vector.
         """
         dtype = str(dtype)
         dtype = dtype.upper()
@@ -608,7 +608,7 @@ class PdfArchive_Sqlite3(object):
 
     def _get_vector(self, dtype, runtype, iteration):
         """
-        ベクトルを取得する
+        Retrieve the vector.
         """
         dtype = str(dtype)
         dtype = dtype.upper()
@@ -635,7 +635,7 @@ class PdfArchive_Sqlite3(object):
     # matrix -------------------------------------------------------------------
     def _set_matrix(self, dtype, runtype, iteration, m):
         """
-        行列を設定する
+        Set the matrix.
         """
         dtype = str(dtype)
         dtype = dtype.upper()
@@ -679,7 +679,7 @@ class PdfArchive_Sqlite3(object):
 
     def _get_matrix(self, dtype, runtype, iteration):
         """
-        行列を取得する
+        Retrieve the matrix.
         """
         dtype = str(dtype)
         dtype = dtype.upper()
@@ -715,33 +715,33 @@ class PdfArchive_Sqlite3(object):
     # occ ----------------------------------------------------------------------
     def set_occupations(self, runtype, occ_level):
         """
-        占有軌道情報を設定する
+        Set the occupied orbital information.
         """
         self._set_vector('occ', runtype, 0, occ_level)
 
     def get_occupations(self, runtype):
         """
-        占有軌道情報を取得する
+        Retrieve the occupied orbital information.
         """
         return self._get_vector('occ', runtype, 0)
 
     # energy level -------------------------------------------------------------
     def set_energylevel(self, runtype, iteration, energy_levels):
         """
-        エネルギー準位を設定する
+        Set the energy level.
         """
         self._set_vector('energy_level', runtype, iteration, energy_levels)
 
     def get_energylevel(self, runtype, iteration):
         """
-        エネルギー準位を取得する
+        Retrieve the energy level.
         """
         return self._get_vector('energy_level', runtype, iteration)
 
     # LCAO ---------------------------------------------------------------------
     def set_lcao(self, runtype, iteration, lcao):
         """
-        LCAOを設定する
+        Set the LCAO.
         """
         self._set_matrix('C', runtype, iteration, lcao)
 
@@ -777,7 +777,7 @@ class PdfArchive_Sqlite3(object):
 
     def get_gradient_rms(self):
         """
-        gradientのRMSを返す
+        Return the RMS of the gradient.
         """
         rms = 0.0
         for atom_index in range(self.num_of_atoms):

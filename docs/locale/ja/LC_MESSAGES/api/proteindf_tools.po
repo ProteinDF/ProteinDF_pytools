@@ -1,0 +1,145 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2014, The ProteinDF development team
+# This file is distributed under the same license as the ProteinDF_pytools
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ProteinDF_pytools 2024.3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-25 15:32+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: ja <LL@li.org>\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../api/proteindf_tools.rst:2 262e3cc9bd784fe6bb31aeb7496db95c
+msgid "proteindf\\_tools package"
+msgstr ""
+
+#: b8abca19a7004b67989159cf6cbdedc7 of proteindf_tools.basis2.Basis2:1
+msgid "read ProteinDF basis2 file"
+msgstr ""
+
+#: 0922e34505114301b47a35a8c4d52a61 55c292f7e39e4fffb97a5bde9fc6b856 of
+#: proteindf_tools.basisset.BasisSet.expand:1
+#: proteindf_tools.basisset.ContractedGTO.expand:1
+msgid "Expand the case where shell_type is e.g. 'spd'."
+msgstr "shell_typeが'spd'などの場合に分解する"
+
+#: 99d2d7fa10be41288082ada9b130e107 of
+#: proteindf_tools.basisset.BasisSet.sort:1
+msgid "Sort the list in ascending order and return None."
+msgstr ""
+
+#: 82dbb25e294c45378fef31521830d7c8 of
+#: proteindf_tools.basisset.BasisSet.sort:3
+msgid ""
+"The sort is in-place (i.e. the list itself is modified) and stable (i.e. the"
+" order of two equal elements is maintained)."
+msgstr ""
+
+#: a6a9be929fd54a208e6e71e267d8701f of
+#: proteindf_tools.basisset.BasisSet.sort:6
+msgid ""
+"If a key function is given, apply it once to each list item and sort them, "
+"ascending or descending, according to their function values."
+msgstr ""
+
+#: dc458bf0336249d69402ee1ef8d7c677 of
+#: proteindf_tools.basisset.BasisSet.sort:9
+msgid "The reverse flag can be set to sort in descending order."
+msgstr ""
+
+#: 4a4a72ecf9514434a5eee9da1722a682 of
+#: proteindf_tools.basisset.ContractedGTO.get_basis_type:1
+msgid ""
+"Return the orbital type string. shell_type_id=0, basis_id=0: s "
+"shell_type_id=1, basis_id=0: px shell_type_id=1, basis_id=1: py "
+"shell_type_id=1, basis_id=2: pz shell_type_id=2, basis_id=0: dxy "
+"shell_type_id=2, basis_id=1: dyz shell_type_id=2, basis_id=2: dzx "
+"shell_type_id=2, basis_id=3: dxx-yy shell_type_id=2, basis_id=4: dzz"
+msgstr ""
+"軌道種類の文字列を返す shell_type_id=0, basis_id=0: s shell_type_id=1, basis_id=0: px "
+"shell_type_id=1, basis_id=1: py shell_type_id=1, basis_id=2: pz "
+"shell_type_id=2, basis_id=0: dxy shell_type_id=2, basis_id=1: dyz "
+"shell_type_id=2, basis_id=2: dzx shell_type_id=2, basis_id=3: dxx-yy "
+"shell_type_id=2, basis_id=4: dzz"
+
+#: dde4c101792e49b2a56b528678d75d70 of
+#: proteindf_tools.basisset.ContractedGTO.get_shell_type_id:1
+msgid "Return the id corresponding to shell_type."
+msgstr "shell_typeに対応するidを返す"
+
+#: 8b57b7118fe24a019d4ec1eebf3bd5e3 of
+#: proteindf_tools.basisset.ContractedGTO.get_shell_type_id:3
+msgid "s: 0, p: 1, d: 2"
+msgstr ""
+
+#: de2d6aee47374d4cb4ae33b981e7c504 of
+#: proteindf_tools.gauparam.GaussianParam:1
+msgid "Set the Gaussian calculation conditions."
+msgstr "Gaussianの計算条件を設定する"
+
+#: 8e9734156a9948a58cb10cfdcee1664d of proteindf_tools.matrix.Matrix.load:1
+msgid "Load the matrix. True is returned if the reading is successful."
+msgstr ""
+
+#: acd2395d98eb45d7ac995bfca8d2bbed of proteindf_tools.orbinfo.OrbInfo:1
+msgid "Manage orbital information."
+msgstr "軌道情報を管理する"
+
+#: 3198d749463e4b1095f6f85278f87226 of proteindf_tools.pdfsim.PdfSim.pop:1
+msgid "calc population"
+msgstr ""
+
+#: 2c6e717bd3b54533b2692eea48ce8afa of proteindf_tools.pdfsim.PdfSim.setup:1
+msgid "setup to run ProteinDF"
+msgstr ""
+
+#: 8ad7b51b941042c1b8c20c3593bd1753 of proteindf_tools.pdfsim.PdfSim.sp:1
+msgid "calc single-point"
+msgstr ""
+
+#: 898181eb792b487ca03095a583b40a9b of proteindf_tools.pdfsim.PdfSim.sp:3
+msgid ""
+"Keyword arguments: pdfparam --- PdfParam object represented the calculation "
+"condition. workdir --- working directory. db_path --- ProteinDF ArchiveDB "
+"path (default: pdfresults.db) dry_run --- if True, the calculation is NOT "
+"carried out. Default is False."
+msgstr ""
+
+#: 74c4dd63de504380bf2ee07309875f50 of proteindf_tools.pdfsim.PdfSim.sp:9
+msgid "Returns: tuple of the number of iterations and the total energy."
+msgstr ""
+
+#: 62bb306055d147e5b3ce927e4d89ea64 of proteindf_tools.poputils.PopEspUtils:1
+msgid "Population Utilities for ESP"
+msgstr ""
+
+#: b3264cd2533741fa97228a73f4475fd3 of proteindf_tools.poputils.PopUtils:1
+msgid "Population Utilities"
+msgstr ""
+
+#: 2db1d2fec9a44daba92e007da548181b of
+#: proteindf_tools.poputils.PopUtils.set_atomlist:1
+msgid "substitute atom_charges for atomlist"
+msgstr ""
+
+#: 4d3828392a084f288d796de58d0f54d4 of proteindf_tools.qmsim.QmSim:1
+msgid "Base class for QmSimulator."
+msgstr "QmSimulatorの基本クラス"
+
+#: 91b8c8f9e32843929b6442ba7fe90211 of proteindf_tools.vector.Vector.load:1
+msgid "Load the vector. True is returned if the reading is successful."
+msgstr ""
+
+#: ../../api/proteindf_tools.rst:10 cf1fe004f205467788c2b27c1c7f8a8c
+msgid "Submodules"
+msgstr ""

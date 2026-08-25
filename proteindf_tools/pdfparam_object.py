@@ -273,7 +273,7 @@ class PdfParamObject(object):
 
     def _is_fitting_xc(self):
         """
-        使用している交換相関汎関数がRI法を利用するならばTrueを返す
+        Return True if the exchange-correlation functional in use uses the RI method.
         """
         last_char = self.xc_functional[-1]
         return last_char == "~"
@@ -580,7 +580,7 @@ class PdfParamObject(object):
 
     def _get_basis_set_atomlabels_common(self, group):
         """
-        原子(ラベル)名のリストを返す
+        Return the list of atom (label) names.
         """
         assert group in (
             "basis_set",
@@ -660,7 +660,7 @@ class PdfParamObject(object):
 
     def _get_basisset_common(self, atom_label, key):
         """
-        原子(ラベル)名のBasisSetがあれば、そのBasisSetオブジェクトを返す
+        If a BasisSet exists for the atom (label) name, return that BasisSet object.
         """
         atom_label = bridge.StrUtils.to_unicode(atom_label)
         answer = BasisSet()
@@ -671,7 +671,7 @@ class PdfParamObject(object):
 
     def _set_basisset_common(self, atom_label, basisset, key):
         """
-        原子(ラベル)名にBasisSetオブジェクトを設定する
+        Set the BasisSet object for the atom (label) name.
         """
         atom_label = bridge.StrUtils.to_unicode(atom_label)
         self._data.setdefault(key, {})
@@ -779,7 +779,7 @@ class PdfParamObject(object):
 
     def get_gradient_rms(self):
         """
-        gradientのRMSを返す
+        Return the RMS of the gradient.
         """
         rms = 0.0
         for atom_index in range(self.num_of_atoms):
@@ -794,7 +794,7 @@ class PdfParamObject(object):
 
     def get_inputfile_contents(self):
         """
-        ProteinDF入力ファイル(fl_Userinput)の内容を作成する
+        Create the contents of the ProteinDF input file (fl_Userinput).
         """
         output = ""
         output += ">>>>MAIN\n"
@@ -1355,7 +1355,7 @@ class PdfParamObject(object):
                 self.set_gradient(atom_index, gradient[0], gradient[1], gradient[2])
             del odict["force"]
 
-        # 未入力部分をマージ
+        # merge the unspecified parts
         self._data.update(odict)
 
     def get_raw_data(self):
@@ -1409,7 +1409,7 @@ class PdfParamObject(object):
 
     def _alias_conversion(self, rhs):
         """
-        キーおよび値に別名(alias)が使用されていた場合、処理すべきキーに変換する
+        If an alias is used for a key or value, convert it to the key that should be processed.
         """
         answer = {}
         for k, v in rhs.items():
@@ -1552,8 +1552,8 @@ class PdfParamObject(object):
     # --------------------------------------------------------------------------
 
     def find_atom_index(self, atom):
-        """入力された原子が登録されている場合、そのインデックス(0スタート)を返す。
-        該当するものがない場合は-1を返す。
+        """If the given atom is registered, return its index (0-based).
+        If there is no match, return -1.
         """
         answer = -1
         (index, found) = PdfParamObject._find_atom_index(self.molecule, atom)

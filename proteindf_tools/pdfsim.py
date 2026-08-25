@@ -240,7 +240,7 @@ class PdfSim(object):
                     sys.stderr.flush()
                     sys.stdout.flush()
 
-                # x,y,zのどれかが終了
+                # one of x, y, z has finished
                 value = delta_TE / (2.0 * h)
                 grad_mat[index][direction] = float(value)
                 logger.debug("gradient value [{}][{}] = {}".format(atom_id,

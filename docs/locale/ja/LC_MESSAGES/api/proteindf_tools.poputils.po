@@ -1,0 +1,39 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2014, The ProteinDF development team
+# This file is distributed under the same license as the ProteinDF_pytools
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ProteinDF_pytools 2024.3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-25 13:01+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../api/proteindf_tools.poputils.rst:2 67245bad05414ba1bcdd5ba00417f16c
+msgid "proteindf\\_tools.poputils module"
+msgstr ""
+
+#: e9e1f0022e064cb08fd94d6e0ae71e7f of proteindf_tools.poputils.PopEspUtils:1
+msgid "Population Utilities for ESP"
+msgstr ""
+
+#: 6480f3f032cb434da6f7c467c9c03763 of proteindf_tools.poputils.PopUtils:1
+msgid "Population Utilities"
+msgstr ""
+
+#: 276e7414897b4146a4827a5b63b08788 of
+#: proteindf_tools.poputils.PopUtils.set_atomlist:1
+msgid "substitute atom_charges for atomlist"
+msgstr ""
+

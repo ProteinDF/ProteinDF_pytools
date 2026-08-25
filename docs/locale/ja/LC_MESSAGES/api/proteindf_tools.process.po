@@ -1,0 +1,52 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2014, The ProteinDF development team
+# This file is distributed under the same license as the ProteinDF_pytools
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ProteinDF_pytools 2024.3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-25 13:01+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../api/proteindf_tools.process.rst:2 a0cd6c81e34f48b5bdd47f8d7c75866e
+msgid "proteindf\\_tools.process module"
+msgstr ""
+
+#: 5bf64c71b5d34246ab9483e6e17e08c9 of proteindf_tools.process.Process:1
+msgid "create Process object. >>> p = Process()"
+msgstr ""
+
+#: d712a109c1324183811b4de4becc4856 of proteindf_tools.process.Process:4
+msgid ""
+"register command. >>> p.cmd('echo \"Hello world!\"') ... #doctest: "
+"+ELLIPSIS, +NORMALIZE_WHITESPACE <__main__.Process object at 0x...>"
+msgstr ""
+
+#: 30e37ebf9e3f4a3a84414bb64238915f of proteindf_tools.process.Process:9
+msgid ""
+"use pipe. >>> p.pipe('sed -e \"s/world/python/\"') ... #doctest: "
+"+ELLIPSIS, +NORMALIZE_WHITESPACE <__main__.Process object at 0x...>"
+msgstr ""
+
+#: c6df40c9556b4c4a86f724964a4e2aa1 of proteindf_tools.process.Process:14
+msgid ""
+"execute command. >>> return_code = p.commit() ... #doctest: +ELLIPSIS, "
+"+NORMALIZE_WHITESPACE Hello python!"
+msgstr ""
+
+#: d1322934a271445f85ac86de628628fc of proteindf_tools.process.Process:19
+msgid "..."
+msgstr ""
+

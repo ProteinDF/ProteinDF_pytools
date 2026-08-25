@@ -28,7 +28,7 @@ from .pdfparam import PdfParam
 
 class OrbInfo(object):
     """
-    軌道情報を管理する
+    Manage orbital information.
     """
     def __init__(self, obj = None):
         self._orb_info = []
