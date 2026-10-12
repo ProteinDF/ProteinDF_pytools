@@ -16,6 +16,7 @@
 5. **マージする**: 収束したら、**ユーザーの承認を得てから**`devtool/flow.sh finish <branch>`を実行する(`develop`へ`--no-ff`マージし、worktreeとブランチを削除する)。マージ後、タスク指示書に「マージ済み(`<merge commit>`)」と記録し、非公開リポジトリにコミットする。
 6. **pushしない**: pushはユーザーの指示があったときだけ行う。
 7. **まとめる**: 状況を聞かれたら`devtool/tasks.sh`(未マージのTASKと作業ブランチの一覧。`--all`でマージ済みも)で確認して報告する。`devtool/`やドキュメントの自分の変更も`chore/*`ブランチで行い、ユーザーの承認を得てからマージする。
+8. **ほかのリポジトリとのやり取り**: ほかのリポジトリ(ProteinDF_bridgeなど)への依頼と返事は、非公開リポジトリの`requests/`にメモとして置く(決まりは`requests/README.md`)。作業を始めるときに、自分宛ての未完了の依頼(`*-to-pytools_*.md`)がないか確認する。対応したら状態を「完了」にし、必要なら返事を書く。
 
 ## Claudeがやらないこと
 
@@ -32,7 +33,6 @@
 ## テスト環境についての注意(2026-10-12時点)
 
 - `devtool/check.sh`は`run_test.sh`のdoctest・unittestを、ブランチのworktreeのソースに対して実行する(`PYTHONPATH`で指定)。`PDF_HOME`にProteinDF本体のソースのパスを設定する。未設定の間はtestsがSKIPになる。
-- Pythonは`PDFTOOLS_PYTHON`、なければ`.git/check-venv/`のものを使う。`.git/check-venv/`は`devtool/setup-check-venv.sh`で作る。要件: Python 3.12、`numpy<2`(`proteindf_bridge`が`ndarray.tostring`・`numpy.fromstring`を使うため)、`h5py`、`matplotlib`、`proteindf_bridge`。
+- Pythonは`PDFTOOLS_PYTHON`、なければ`.git/check-venv/`のものを使う。`.git/check-venv/`は`devtool/setup-check-venv.sh`で作る。要件: Python 3.12、`numpy`(2.xでよい)、`h5py`、`matplotlib`、`proteindf_bridge` 2026.10.6以上(それより前は`Matrix.set_buffer`が壊れており、numpy 2でも動かない)。`proteindf_bridge`はPyPIにないので、`PDFTOOLS_BRIDGE_DIR`にソースのディレクトリかリリースのwheelを指定する。
 - **`sitecustomize.py`のあるvenv(他リポジトリの回帰テスト用のvenvなど)を使わない。** 起動時に`proteindf_tools`の不具合を上書きするため、不具合が隠れてテストが通ってしまう。`devtool/setup-check-venv.sh`は、見つけると警告する。
-- `proteindf_bridge`(別リポジトリ)に既知の不具合がある: `Matrix.set_buffer`が代入の直後に`self.rows`を参照して`ValueError`になる(`test_pdfarchive_sqlite3.py`の`test_population_roundtrip`が`expectedFailure`)。
 - ローカルの場所は、公開ファイルではなく環境変数や`.git/`内の設定に置く。
