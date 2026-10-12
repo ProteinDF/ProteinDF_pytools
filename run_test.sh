@@ -38,6 +38,11 @@ UNITTESTS="\
   pdfmath \
   functions \
   orbinfo \
+  process \
+  pdfcommon \
+  gauparam \
+  poputils \
+  package \
   "
 
 for i in ${UNITTESTS}; do
