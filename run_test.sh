@@ -47,6 +47,7 @@ UNITTESTS="\
   gauparam \
   poputils \
   package \
+  report \
   "
 
 for i in ${UNITTESTS}; do
