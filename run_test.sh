@@ -48,6 +48,7 @@ UNITTESTS="\
   poputils \
   package \
   pdfgraph_base \
+  pdfgraph_extra \
   "
 
 for i in ${UNITTESTS}; do
