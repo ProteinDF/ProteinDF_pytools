@@ -24,6 +24,6 @@ if [[ -e "$venv" ]]; then
 fi
 "$py" -m venv "$venv"
 "$venv/bin/pip" install -q "numpy<2" h5py matplotlib "${PDFTOOLS_BRIDGE_DIR:-proteindf_bridge}"
-"$venv/bin/python" -c "import proteindf_bridge, h5py, numpy, matplotlib" 
+"$venv/bin/python" -c "import proteindf_bridge, h5py, numpy, matplotlib"
 echo "created $venv"
 find "$venv" -name sitecustomize.py | grep . && echo "warning: sitecustomize.py found" >&2 || true
