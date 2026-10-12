@@ -173,10 +173,11 @@ class TestPdfArchiveSqlite3(unittest.TestCase):
 
     @unittest.expectedFailure
     def test_population_roundtrip(self):
-        # get_population は _get_matrix を経由して bridge.Matrix.set_buffer() を呼ぶが、
-        # bridge.Matrix.set_buffer() 内で 1D numpy array に対して self.rows を参照するため
-        # ValueError: not enough values to unpack (expected 2, got 1) となる不具合がある。
-        # 本来は設定した人口行列が復元されることが期待される。
+        # get_population は _get_matrix を経由して bridge.Matrix.set_buffer() を呼ぶ。
+        # しかし ProteinDF_bridge の Matrix.set_buffer() (proteindf_bridge/matrix.py) 内で
+        # self._data に 1D numpy 配列を代入した直後に self.rows (self._data.shape をアンパック)
+        # を参照するため、ValueError: not enough values to unpack (expected 2, got 1) となる。
+        # 原因は ProteinDF_bridge 側にあり、ProteinDF_bridge 側の修正が必要。
         with mock.patch.object(pdfarchive_sqlite3, "PdfArchive", PdfArchive_Sqlite3, create=True):
             archive = PdfArchive_Sqlite3(self.db_path)
             m = bridge.Matrix(2, 2)
