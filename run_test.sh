@@ -39,6 +39,7 @@ UNITTESTS="\
   functions \
   orbinfo \
   pdfparam_basic \
+  pdfparam_model \
   "
 
 for i in ${UNITTESTS}; do
