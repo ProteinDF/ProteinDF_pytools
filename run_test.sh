@@ -33,6 +33,8 @@ UNITTESTS="\
   basis2 \
   matrix \
   vector \
+  basisset \
+  basisset_parser \
   "
 
 for i in ${UNITTESTS}; do
