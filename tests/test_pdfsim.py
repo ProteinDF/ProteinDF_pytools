@@ -264,11 +264,10 @@ class TestPdfSim(unittest.TestCase):
             self.assertAlmostEqual(rms, math.sqrt(392.0 / 3.0), places=4)
 
     # ------------------------------------------------------------------
-    # 6. opt と total_energy (expectedFailure)
+    # 6. opt と total_energy
     # ------------------------------------------------------------------
-    @unittest.expectedFailure
-    def test_opt_existing_workdir_references_undefined_logger(self):
-        """opt で既存の作業ディレクトリが存在する場合、未定義の self._logger を参照して AttributeError になる。"""
+    def test_opt_existing_workdir(self):
+        """opt で既存の作業ディレクトリが存在する場合でも正常に opt が完了すること。"""
         sim = PdfSim()
         param = PdfParam()
         mol = bridge.AtomGroup()
@@ -289,9 +288,8 @@ class TestPdfSim(unittest.TestCase):
             # 期待値: 既存ディレクトリが存在していてもエラーにならず opt が完了すること
             sim.opt(param, max_cycle=1)
 
-    @unittest.expectedFailure
-    def test_opt_multi_atom_index_does_not_advance(self):
-        """opt の更新ループで原子ごとの添字 i が進まず、すべての原子が grad_mat[0] で更新される (さらに shift_by の引数数エラーも発生する)。"""
+    def test_opt_multi_atom_index_advances_and_moves_opposite_to_gradient(self):
+        """opt の更新ループで原子ごとの添字 i が進み、各原子が自身の勾配の逆向き (-alpha * grad) に更新されること。"""
         sim = PdfSim()
         param = PdfParam()
         mol = bridge.AtomGroup()
@@ -322,22 +320,85 @@ class TestPdfSim(unittest.TestCase):
                 return_value=([[1.0, 0.0, 0.0], [0.0, 2.0, 0.0]], 1.0)
             )
 
-            # 期待値: alpha=0.5 のため atom1 は x+0.5, atom2 は y+1.0 に移動すること
+            # 期待値: alpha=0.5、勾配の逆向きのため atom1 は x-0.5, atom2 は y-1.0 に移動すること
             sim.opt(param, max_cycle=1)
 
-            self.assertAlmostEqual(mol["1"].xyz.x, 0.5)
+            self.assertAlmostEqual(mol["1"].xyz.x, -0.5)
             self.assertAlmostEqual(mol["1"].xyz.y, 0.0)
             self.assertAlmostEqual(mol["2"].xyz.x, 0.0)
-            self.assertAlmostEqual(mol["2"].xyz.y, 1.0)
+            self.assertAlmostEqual(mol["2"].xyz.y, -1.0)
 
-    @unittest.expectedFailure
-    def test_total_energy_calls_commented_out_calc_pdf(self):
-        """total_energy はコメントアウトされた self.calc_pdf を呼び出すため AttributeError になる。"""
+    def test_opt_energy_decreases_with_mock_sp(self):
+        """sp をモックした解析的エネルギーで opt を実行し、1ステップ後にエネルギーが下がること、
+        pdfparam.molecule が更新され複数原子で各原子が自身の勾配で動くことを確認する。"""
         sim = PdfSim()
         param = PdfParam()
-        # 期待値: (iterations, total_energy) のタプルが返ること
-        ret = sim.total_energy(param)
-        self.assertIsInstance(ret, tuple)
+        mol = bridge.AtomGroup()
+
+        atom1 = bridge.Atom()
+        atom1.symbol = "H"
+        atom1.label = "1"
+        atom1.xyz.x = 1.0
+        atom1.xyz.y = 0.0
+        atom1.xyz.z = 0.0
+        mol.set_atom("1", atom1)
+
+        atom2 = bridge.Atom()
+        atom2.symbol = "H"
+        atom2.label = "2"
+        atom2.xyz.x = 0.0
+        atom2.xyz.y = 2.0
+        atom2.xyz.z = 0.0
+        mol.set_atom("2", atom2)
+
+        param.molecule = mol
+
+        def calc_energy(m):
+            energy = 0.0
+            for atom_id, atom in m.atoms():
+                energy += float(atom.xyz.x) ** 2 + float(atom.xyz.y) ** 2 + float(atom.xyz.z) ** 2
+            return energy
+
+        initial_energy = calc_energy(param.molecule)
+        self.assertAlmostEqual(initial_energy, 5.0)
+
+        def mock_sp(p, workdir):
+            return (1, calc_energy(p.molecule))
+
+        sim.sp = mock_sp
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            sys.argv = [os.path.join(tmpdir, "main.py")]
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+                sim.opt(param, max_cycle=1)
+
+            final_energy = calc_energy(param.molecule)
+            # 1ステップ後にエネルギーが下がること
+            self.assertLess(final_energy, initial_energy)
+
+            # 各原子が各自の勾配に応じて更新されていること
+            self.assertLess(param.molecule["1"].xyz.x, 0.5)
+            self.assertAlmostEqual(param.molecule["1"].xyz.y, 0.0, places=2)
+            self.assertAlmostEqual(param.molecule["1"].xyz.z, 0.0, places=2)
+
+            self.assertAlmostEqual(param.molecule["2"].xyz.x, 0.0, places=2)
+            self.assertLess(param.molecule["2"].xyz.y, 0.5)
+            self.assertAlmostEqual(param.molecule["2"].xyz.z, 0.0, places=2)
+
+            # 解析解に収束 (x=0, y=0)
+            self.assertAlmostEqual(param.molecule["1"].xyz.x, 0.0, places=2)
+            self.assertAlmostEqual(param.molecule["2"].xyz.y, 0.0, places=2)
+            self.assertAlmostEqual(final_energy, 0.0, places=2)
+
+    def test_total_energy_calls_sp(self):
+        """total_energy は self.sp を呼び出して (iterations, total_energy) を返すこと。"""
+        sim = PdfSim()
+        param = PdfParam()
+        sim.sp = MagicMock(return_value=(10, -50.0))
+        ret = sim.total_energy(param, workdir="dummy_dir")
+        sim.sp.assert_called_once_with(param, workdir="dummy_dir")
+        self.assertEqual(ret, (10, -50.0))
 
 
 if __name__ == "__main__":
