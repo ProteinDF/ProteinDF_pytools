@@ -47,6 +47,7 @@ UNITTESTS="\
   gauparam \
   poputils \
   package \
+  pdfgraph_base \
   "
 
 for i in ${UNITTESTS}; do
