@@ -11,6 +11,7 @@ import sys
 import os
 import pickle
 import copy
+import math
 
 import logging
 logger = logging.getLogger(__name__)
@@ -1457,11 +1458,15 @@ class PdfParamObject(object):
             v = abs(val1 - val2)
             answer = v < threshold
         elif isinstance(val1, list) and isinstance(val2, list):
-            if len(val1) == len(val2):
+            if len(val1) != len(val2):
+                answer = False
+            else:
+                answer = True
                 for i in range(len(val1)):
-                    answer = answer ^ self._check(
+                    elem_ok = self._check(
                         val1[i], val2[i], "{0}[{1}]".format(msg, i), threshold
                     )
+                    answer = answer and elem_ok
         else:
             answer = val1 == val2
 
@@ -1506,24 +1511,13 @@ class PdfParamObject(object):
         answer = answer & self._check(
             self.num_of_atoms, rhs.num_of_atoms, "num of atoms"
         )
-        num_of_atoms = self.num_of_atoms
+        if not answer or self.num_of_atoms is None:
+            return answer
 
-        itr1 = self.iterations
-        itr2 = rhs.iterations
-        pop1 = self.get_population("mulliken", itr1)
-        pop2 = rhs.get_population("mulliken", itr2)
-
-        if isinstance(pop1, bridge.Matrix):
-            if isinstance(pop2, bridge.Matrix):
-                answer = answer & self._check(pop1.rows, pop2.rows, "pop rows")
-                answer = answer & self._check(pop1.cols, pop2.cols, "pop cols")
-                answer = answer & self._check(pop1, pop2, "pop matrix")
-            else:
-                logger.warning("type mismatch(rhs): POP not found")
-                answer = False
-        else:
-            logger.warning("type mismatch(lhs): POP not found")
-            answer = False
+        for atom_index in range(self.num_of_atoms):
+            pop1 = self.get_mulliken_atom_population(atom_index)
+            pop2 = rhs.get_mulliken_atom_population(atom_index)
+            answer = answer & self._check(pop1, pop2, "pop[%d]" % atom_index)
 
         return answer
 
