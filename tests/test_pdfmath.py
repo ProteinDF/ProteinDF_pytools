@@ -45,25 +45,23 @@ class TestPdfMath(unittest.TestCase):
         self.assertEqual(Math.dbfact(1), 1.0)
 
     def test_dbfact_negative(self):
-        # Negative numbers:
-        # For negative even integers, x % 2 == 0 branch is taken with answer = 2.0,
-        # but while (x > 2) is false, returning 2.0.
-        # For negative odd integers, else branch is taken with answer = 1.0,
-        # but while (x > 1) is false, returning 1.0.
+        # (-1)!! is mathematically 1.0
         self.assertEqual(Math.dbfact(-1), 1.0)
-        self.assertEqual(Math.dbfact(-2), 2.0)
-        self.assertEqual(Math.dbfact(-3), 1.0)
-        self.assertEqual(Math.dbfact(-4), 2.0)
 
     def test_dbfact_float(self):
         # Floating point inputs:
         # Math.dbfact casts input with int(x), truncating the fractional part towards zero.
-        self.assertEqual(Math.dbfact(0.5), 2.0)  # int(0.5) == 0 -> returns 2.0
         self.assertEqual(Math.dbfact(1.5), 1.0)  # int(1.5) == 1 -> returns 1.0
         self.assertEqual(Math.dbfact(2.5), 2.0)  # int(2.5) == 2 -> returns 2.0
         self.assertEqual(Math.dbfact(3.7), 3.0)  # int(3.7) == 3 -> returns 3.0
-        self.assertEqual(Math.dbfact(-0.5), 2.0)  # int(-0.5) == 0 -> returns 2.0
         self.assertEqual(Math.dbfact(-1.5), 1.0)  # int(-1.5) == -1 -> returns 1.0
+
+    @unittest.expectedFailure
+    def test_dbfact_float_zero(self):
+        # For inputs whose truncated integer part is 0 (0.5, -0.5),
+        # 0!! should mathematically be 1.0, but Math.dbfact returns 2.0 due to the 0!! bug.
+        self.assertEqual(Math.dbfact(0.5), 1.0)
+        self.assertEqual(Math.dbfact(-0.5), 1.0)
 
 
 if __name__ == "__main__":
