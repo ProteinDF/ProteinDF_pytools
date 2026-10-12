@@ -35,6 +35,9 @@ UNITTESTS="\
   vector \
   basisset \
   basisset_parser \
+  pdfmath \
+  functions \
+  orbinfo \
   "
 
 for i in ${UNITTESTS}; do
