@@ -31,6 +31,9 @@ done
 # ======================================================================
 UNITTESTS="\
   basis2 \
+  pdfmath \
+  functions \
+  orbinfo \
   "
 
 for i in ${UNITTESTS}; do
