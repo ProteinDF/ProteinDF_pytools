@@ -168,6 +168,24 @@ class TestBasis2Additional(unittest.TestCase):
         dzvp = bs2.get_basisset("O-DZVP.H")
         self.assertTrue(len(dzvp) > 0)
 
+    def test_basis2_unknown_basis_name(self):
+        sample = textwrap.dedent("""\
+        X-SAMPLE.H
+         1 1 0 0 0 0 0 0 0 0 0
+         2
+             5.000000e+01  1.000000e-01
+             5.000000e-01  9.000000e-01
+        """)
+        with tempfile.NamedTemporaryFile("w", delete=False) as f:
+            f.write(sample)
+            path = f.name
+        try:
+            with self.assertRaises(ValueError) as ctx:
+                Basis2(path)
+            self.assertEqual(str(ctx.exception), "unknown basis set name: X-SAMPLE.H")
+        finally:
+            os.remove(path)
+
 
 if __name__ == "__main__":
     unittest.main()

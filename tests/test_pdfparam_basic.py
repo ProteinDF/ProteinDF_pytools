@@ -376,6 +376,12 @@ class TestPdfParamBasic(unittest.TestCase):
             "/work/default/pop.mulliken.rks1.vtr",
         )
 
+    def test_set_basisset_common_unknown_key(self):
+        param = PdfParam()
+        with self.assertRaises(ValueError) as ctx:
+            param._set_basisset_common("H", "O-DZVP.H", "unknown_key")
+        self.assertEqual(str(ctx.exception), "unknown key: unknown_key")
+
 
 if __name__ == "__main__":
     unittest.main()
