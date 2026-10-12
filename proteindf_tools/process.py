@@ -119,7 +119,7 @@ class Process(object):
 
         logfile = None
         if len(self._logfile_path) > 0:
-            logfile = open(self._logfile_path, mode='ab')
+            logfile = open(self._logfile_path, mode='a', encoding='utf-8')
 
         while True:
             to_check = [stdout_fd]*(not stdout_eof) + [stderr_fd]*(not stderr_eof)
@@ -144,7 +144,7 @@ class Process(object):
                     sys.stderr.write(stderr_chunk)
                     sys.stderr.flush()
                     if logfile != None:
-                        logfile.write(stdout_chunk)
+                        logfile.write(stderr_chunk)
                     # stderr_data.append(stderr_chunk)
             if stdout_eof and stderr_eof:
                 break

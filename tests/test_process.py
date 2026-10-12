@@ -66,13 +66,8 @@ class TestProcess(unittest.TestCase):
         self.assertFalse(p._is_shell_script("echo hello"))
         self.assertFalse(p._is_shell_script(""))
 
-    @unittest.expectedFailure
     def test_commit_with_logfile(self):
-        """logfile_path 指定時、Process.commit はログファイルに出力を書き込んで終了するべき。
-
-        実際には commit() 内で open(..., 'ab') したファイルに str 型を書き込もうとするため
-        TypeError: a bytes-like object is required, not 'str' が発生する。
-        """
+        """logfile_path 指定時、Process.commit はログファイルに出力を書き込んで終了するべき。"""
         with tempfile.NamedTemporaryFile(delete=False) as f:
             log_path = f.name
         try:
@@ -85,6 +80,15 @@ class TestProcess(unittest.TestCase):
             with open(log_path, "r", encoding="utf-8") as f:
                 content = f.read()
             self.assertIn("logged_output", content)
+
+            p2 = Process(logfile_path=log_path)
+            with contextlib.redirect_stdout(stdout_buf), contextlib.redirect_stderr(stderr_buf):
+                ret2 = p2.cmd("sh -c 'echo logged_err 1>&2'").commit()
+            self.assertEqual(ret2, 0)
+            with open(log_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            self.assertIn("logged_output", content)
+            self.assertIn("logged_err", content)
         finally:
             if os.path.exists(log_path):
                 os.remove(log_path)
