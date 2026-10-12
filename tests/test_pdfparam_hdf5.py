@@ -80,7 +80,6 @@ class TestPdfParamH5(unittest.TestCase):
         self.assertEqual(p2.scf_acceleration, "damping")
         p2._close()
 
-    @unittest.expectedFailure
     def test_save_load_model_molecule(self):
         """Verify that molecule structure is preserved across save_model and load_model.
 
@@ -107,13 +106,12 @@ class TestPdfParamH5(unittest.TestCase):
 
         p2 = PdfParam_H5()
         p2.open(self.h5_path)
-        self.assertEqual(p2.molecule.num_of_atoms(), 1)
+        self.assertEqual(p2.molecule.get_number_of_atoms(), 1)
         atom_loaded = p2.molecule.get_atom("1")
         self.assertIsNotNone(atom_loaded)
         self.assertEqual(atom_loaded.symbol, "H")
         p2._close()
 
-    @unittest.expectedFailure
     def test_save_load_model_basisset(self):
         """Verify that basis sets are preserved across save_model and load_model.
 
