@@ -42,6 +42,11 @@ UNITTESTS="\
   pdfparam_model \
   pdfparam_hdf5 \
   pdfarchive_sqlite3 \
+  process \
+  pdfcommon \
+  gauparam \
+  poputils \
+  package \
   "
 
 for i in ${UNITTESTS}; do
