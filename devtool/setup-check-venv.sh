@@ -17,7 +17,7 @@ recreate=0
 common_dir=$(git rev-parse --path-format=absolute --git-common-dir)
 venv=$common_dir/check-venv
 py=${PDFTOOLS_BASE_PYTHON:-python3.12}
-command -v "$py" >/dev/null || { echo "error: $py not found; set PDFTOOLS_BASE_PYTHON" >&2; exit 1; }
+"$py" -c "import venv" 2>/dev/null || { echo "error: $py is not a working Python; set PDFTOOLS_BASE_PYTHON" >&2; exit 1; }
 
 if [[ -e "$venv" ]]; then
     ((recreate)) || { echo "error: $venv exists (use --recreate)" >&2; exit 1; }
