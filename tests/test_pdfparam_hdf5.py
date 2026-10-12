@@ -261,6 +261,50 @@ class TestPdfParamH5(unittest.TestCase):
             self.assertAlmostEqual(ene[i], ene_loaded[i])
         p2._close()
 
+    def test_homo_level_single_occ(self):
+        """Verify get_HOMO_level returns 0 when only index 0 is occupied ([2.0, 0.0])."""
+        p = PdfParam_H5()
+        p.open(self.h5_path)
+        p.iterations = 0
+        p.num_of_atoms = 1
+        p.num_of_AOs = 2
+        p.num_of_MOs = 2
+        p.save_model()
+
+        occ = Vector([2.0, 0.0])
+        p.save_occ("rks", occ)
+        p._close()
+
+        p2 = PdfParam_H5()
+        p2.open(self.h5_path)
+        self.assertEqual(p2.get_HOMO_level("rks"), 0)
+        p2._close()
+
+    def test_pop_mulliken_atom_roundtrip(self):
+        """Verify get_pop_mulliken_atom reads back pop/mulliken/<run_type>_<iteration>."""
+        p = PdfParam_H5()
+        p.open(self.h5_path)
+        p.iterations = 1
+        p.num_of_atoms = 2
+        p.num_of_AOs = 4
+        p.num_of_MOs = 4
+        p.save_model()
+        p.save_TEs(Vector([-100.0]))
+
+        pop = Vector([0.45, -0.45])
+        h5path = p._get_h5path_pop_mulliken_atom("rks", 1)
+        p._write_vector(p._h5root, h5path, pop)
+        p._close()
+
+        p2 = PdfParam_H5()
+        p2.open(self.h5_path)
+        pop_loaded = p2.get_pop_mulliken_atom("rks", 1)
+        self.assertIsInstance(pop_loaded, Vector)
+        self.assertEqual(len(pop_loaded), 2)
+        for i in range(len(pop)):
+            self.assertAlmostEqual(pop[i], pop_loaded[i])
+        p2._close()
+
     # -------------------------------------------------------------------------
     # 3. matrix roundtrip
     # -------------------------------------------------------------------------

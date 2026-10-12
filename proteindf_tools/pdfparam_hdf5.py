@@ -426,7 +426,7 @@ class PdfParam_H5(PdfParamObject):
         """
         answer = None
         occ = self.get_occ_vector(run_type)
-        for i in range(len(occ) - 1, 0, -1):
+        for i in range(len(occ) - 1, -1, -1):
             if occ[i] > 0.0:
                 answer = i
                 break
@@ -620,7 +620,7 @@ class PdfParam_H5(PdfParamObject):
     # --------------------------------------------------------------------------
     def get_pop_mulliken_atom(self, run_type, iteration):
         h5path = self._get_h5path_pop_mulliken_atom(run_type, iteration)
-        return self._load_vector(self._h5root, h5path)
+        return self._get_vector(self._h5root, h5path)
 
     def _write_sp_pop_mulliken_atom(self, h5grp, run_type, iteration, force=False):
         file_path = self.get_pop_mulliken_path(run_type, iteration)
@@ -703,6 +703,8 @@ class PdfParam_H5(PdfParamObject):
         h5mat.attrs["dim"] = len(vector)
         for key, value in extra_kwds.items():
             h5mat.attrs[key] = value
+
+    _write_vector = _set_vector
 
 
     # --------------------------------------------------------------------------
