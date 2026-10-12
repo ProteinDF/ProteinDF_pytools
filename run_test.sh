@@ -40,6 +40,7 @@ UNITTESTS="\
   orbinfo \
   pdfparam_basic \
   pdfparam_model \
+  pdfparam_hdf5 \
   "
 
 for i in ${UNITTESTS}; do
