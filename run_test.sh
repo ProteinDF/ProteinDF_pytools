@@ -41,6 +41,7 @@ UNITTESTS="\
   pdfparam_basic \
   pdfparam_model \
   pdfparam_hdf5 \
+  pdfarchive_sqlite3 \
   "
 
 for i in ${UNITTESTS}; do
