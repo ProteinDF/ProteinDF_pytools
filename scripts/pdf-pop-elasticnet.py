@@ -134,7 +134,7 @@ class ElasticNet(object):
 
     def _fit_with_intercept(self, X, y):
         # to inprement
-        raise
+        raise NotImplementedError("fit with intercept is not implemented")
 
     def _soft_thresholding_operator(self, x, lambda_):
         if x > 0 and lambda_ < abs(x):
@@ -340,7 +340,7 @@ def main():
         tmp.load(design_matrix_path)
         X = tmp.get_general_matrix()
     else:
-        raise
+        raise ValueError("cannot load the file: {}".format(design_matrix_path))
     y = pdf.Vector()
     y.load(target_vector_path)
 
