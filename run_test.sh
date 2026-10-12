@@ -31,6 +31,8 @@ done
 # ======================================================================
 UNITTESTS="\
   basis2 \
+  matrix \
+  vector \
   "
 
 for i in ${UNITTESTS}; do
