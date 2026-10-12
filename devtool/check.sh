@@ -61,16 +61,17 @@ else
     record whitespace FAIL
 fi
 
-# 2. syntax of the changed Python files
-echo; echo "--- syntax (py_compile)"
+# 2. syntax of the changed Python files (ast.parse; writes no .pyc)
+echo; echo "--- syntax (ast.parse)"
 if ((${#changed_py[@]} == 0)); then
     record syntax SKIP "no Python changes"
-elif "$py" -I -c 'import sys, py_compile
+elif "$py" -I -c 'import ast, sys
 bad = 0
 for f in sys.argv[1:]:
     try:
-        py_compile.compile(f, doraise=True, cfile="/dev/null")
-    except Exception as e:
+        with open(f, "rb") as fin:
+            ast.parse(fin.read(), f)
+    except SyntaxError as e:
         print(e); bad = 1
 sys.exit(bad)' "${changed_py[@]}"; then
     record syntax PASS
