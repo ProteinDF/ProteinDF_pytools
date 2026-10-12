@@ -31,6 +31,8 @@ done
 # ======================================================================
 UNITTESTS="\
   basis2 \
+  basisset \
+  basisset_parser \
   "
 
 for i in ${UNITTESTS}; do
