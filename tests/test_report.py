@@ -63,8 +63,14 @@ class TestPdfReport(unittest.TestCase):
             p.save_TEs(Vector([-100.0, -101.5][:iterations]))
             p.save_occ("rks", Vector([2.0, 2.0, 0.0, 0.0]))
             p.save_energy_level("rks", 1, Vector([-1.0, -0.5, 0.2, 0.8]))
+            p._set_vector(
+                p._h5root, p._get_h5path_pop_mulliken_atom("rks", 1), Vector([1.0])
+            )
             if iterations >= 2:
                 p.save_energy_level("rks", 2, Vector([-1.1, -0.6, 0.1, 0.7]))
+                p._set_vector(
+                    p._h5root, p._get_h5path_pop_mulliken_atom("rks", 2), Vector([1.0])
+                )
         p._close()
 
         p_loaded = PdfParam_H5()
@@ -85,8 +91,14 @@ class TestPdfReport(unittest.TestCase):
             for rt in ["uks_alpha", "uks_beta"]:
                 p.save_occ(rt, Vector([1.0, 1.0, 0.0, 0.0]))
                 p.save_energy_level(rt, 1, Vector([-1.0, -0.5, 0.2, 0.8]))
+                p._set_vector(
+                    p._h5root, p._get_h5path_pop_mulliken_atom(rt, 1), Vector([0.5])
+                )
                 if iterations >= 2:
                     p.save_energy_level(rt, 2, Vector([-1.1, -0.6, 0.1, 0.7]))
+                    p._set_vector(
+                        p._h5root, p._get_h5path_pop_mulliken_atom(rt, 2), Vector([0.5])
+                    )
         p._close()
 
         p_loaded = PdfParam_H5()
@@ -147,14 +159,16 @@ class TestPdfReport(unittest.TestCase):
             p._close()
 
     def test_get_rst_iterations_zero(self):
-        """_get_rst raises IndexError when iterations == 0 due to TEs[-1] access."""
+        """_get_rst displays n/a for Total energy when iterations == 0 without IndexError."""
         p = self._create_h5_rks(iterations=0)
         try:
             rep = PdfReport(p, self.workdir)
             tes = rep._get_total_energy_vector()
             self.assertEqual(tes, [])
-            with self.assertRaises(IndexError):
-                rep._get_rst()
+            rst = rep._get_rst()
+            self.assertIn("ProteinDF report:", rst)
+            self.assertRegex(rst, r"the number of iterations\s+0")
+            self.assertRegex(rst, r"Total energy\s+n/a")
         finally:
             p._close()
 
@@ -273,39 +287,33 @@ class TestPdfReport(unittest.TestCase):
             lines = [line.strip() for line in f if line.strip()]
         self.assertEqual(lines, ["1, 0.15", "2, -0.25", "3, 0.1"])
 
-    @unittest.expectedFailure
     def test_plot_pop_mulliken_with_pdfparam_h5(self):
-        """_plot_pop_mulliken generates mulliken.dat and mulliken.png.
-
-        Expected failure: PdfParam_H5.get_pop_mulliken_atom calls nonexistent
-        self._load_vector, raising AttributeError: 'PdfParam_H5' object has no attribute '_load_vector'.
-        """
+        """_plot_pop_mulliken generates mulliken.<run_type>.dat and mulliken.<run_type>.png."""
         p = self._create_h5_rks(iterations=1)
         try:
             rep = PdfReport(p, self.workdir)
             rep._plot_pop_mulliken(1)
-            self.assertTrue(os.path.isfile(os.path.join(self.workdir, "mulliken.dat")))
-            self.assertTrue(is_valid_png(os.path.join(self.workdir, "mulliken.png")))
+            self.assertTrue(os.path.isfile(os.path.join(self.workdir, "mulliken.rks.dat")))
+            self.assertTrue(is_valid_png(os.path.join(self.workdir, "mulliken.rks.png")))
         finally:
             p._close()
 
-    @unittest.expectedFailure
     def test_plot_pop_mulliken_uks_run_type(self):
-        """_plot_pop_mulliken uses appropriate run_type for UKS method.
-
-        Expected failure: _plot_pop_mulliken hardcodes run_type = 'rks' regardless
-        of self._pdfparam.method.
-        """
-        p = MagicMock(spec=PdfParamObject)
+        """_plot_pop_mulliken uses appropriate run_types for UKS method."""
+        p = MagicMock(spec=PdfParam_H5)
         p.method = "uks"
+        p.run_types.return_value = ["uks_alpha", "uks_beta"]
         p.get_pop_mulliken_atom.return_value = Vector([0.1, -0.1])
         rep = PdfReport(p, self.workdir)
         rep._make_work_dir()
         rep._plot_pop_mulliken(1)
 
-        # Should query for UKS run_type (e.g. uks_alpha / uks_beta), not hardcoded "rks"
-        call_args = p.get_pop_mulliken_atom.call_args[0]
-        self.assertIn(call_args[0], ["uks_alpha", "uks_beta"])
+        self.assertEqual(p.get_pop_mulliken_atom.call_count, 2)
+        call_types = [call[0][0] for call in p.get_pop_mulliken_atom.call_args_list]
+        self.assertEqual(call_types, ["uks_alpha", "uks_beta"])
+        for rt in ["uks_alpha", "uks_beta"]:
+            self.assertTrue(os.path.isfile(os.path.join(self.workdir, f"mulliken.{rt}.dat")))
+            self.assertTrue(is_valid_png(os.path.join(self.workdir, f"mulliken.{rt}.png")))
 
 
 if __name__ == "__main__":

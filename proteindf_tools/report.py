@@ -68,18 +68,24 @@ class PdfReport(object):
         the number of AOs        {num_of_AOs:>16d}
         the number of MOs        {num_of_MOs:>16d}
         the number of iterations {num_of_iterations:>16d}
-        Total energy             {total_energy:>16.8f}
+        Total energy             {total_energy:>16}
         ======================== ================
         """
         contents = textwrap.dedent(contents).strip()
 
         num_of_iterations = self._pdfparam.iterations
         TEs = self._get_total_energy_vector()
+        if num_of_iterations > 0 and len(TEs) >= num_of_iterations:
+            total_energy_str = "{:>16.8f}".format(TEs[num_of_iterations - 1])
+        else:
+            total_energy_str = "{:>16}".format("n/a")
+
         answer = contents.format(
             num_of_AOs=self._pdfparam.num_of_AOs,
             num_of_MOs=self._pdfparam.num_of_MOs,
             num_of_iterations=num_of_iterations,
-            total_energy=TEs[num_of_iterations -1])
+            total_energy=total_energy_str,
+        )
 
         return answer
 
@@ -139,17 +145,21 @@ class PdfReport(object):
         graphV.save(graphV_path)
 
     def _plot_pop_mulliken(self, iteration):
-        method = self._pdfparam.method
-        run_type = "rks"
+        self._make_work_dir()
+        for run_type in self._pdfparam.run_types():
+            pop = self._pdfparam.get_pop_mulliken_atom(run_type, iteration)
+            if pop is not None:
+                pop_data_path = os.path.join(
+                    self._workdir, "mulliken.{}.dat".format(run_type)
+                )
+                self._make_plot_pop_mulliken_data(pop, pop_data_path)
 
-        pop = self._pdfparam.get_pop_mulliken_atom(run_type, iteration)
-        pop_data_path = os.path.join(self._workdir, "mulliken.dat")
-        self._make_plot_pop_mulliken_data(pop, pop_data_path)
-
-        graph1 = DfPopulationGraph()
-        graph1.load_data(pop_data_path)
-        graph1_path = os.path.join(self._workdir, "mulliken.png")
-        graph1.save(graph1_path)
+                graph1 = DfPopulationGraph()
+                graph1.load_data(pop_data_path)
+                graph1_path = os.path.join(
+                    self._workdir, "mulliken.{}.png".format(run_type)
+                )
+                graph1.save(graph1_path)
 
     def _make_plot_pop_mulliken_data(self, pop_vtr, output_path):
         num_of_items = len(pop_vtr)
