@@ -24,7 +24,9 @@ from .matrix import Matrix, SymmetricMatrix
 from .pdfparam_object import PdfParamObject
 from .pdfcommon import run_pdf
 from .functions import deprecated
+from .basisset import BasisSet, ContractedGTO, PrimitiveGTO
 
+import proteindf_bridge as bridge
 import h5py
 import os
 import numpy
@@ -216,9 +218,75 @@ class PdfParam_H5(PdfParamObject):
         self.scf_acceleration = h5grp.attrs.get("scf_acceleration")
         self.scf_acceleration_damping_factor = h5grp.attrs.get("scf_acceleration_damping_factor")
 
-        # self._load_sp_model_molecule(h5grp) # TODO
-        # self._load_sp_model_basisset(h5grp) # TODO
+        self._load_sp_model_molecule(h5grp)
+        self._load_sp_model_basisset(h5grp)
         self._load_model_control(h5grp)
+
+    def _load_sp_model_molecule(self, h5grp):
+        if "molecule/xyzc" not in h5grp:
+            return
+        mol = bridge.AtomGroup()
+        for i, row in enumerate(h5grp["molecule/xyzc"]):
+            symbol = row[0].decode("utf-8") if isinstance(row[0], bytes) else str(row[0])
+            label = row[1].decode("utf-8") if isinstance(row[1], bytes) else str(row[1])
+            x = float(row[2])
+            y = float(row[3])
+            z = float(row[4])
+            charge = float(row[5])
+            atom = bridge.Atom(
+                symbol=symbol,
+                position=bridge.Position(x, y, z),
+                charge=charge,
+                name=label,
+            )
+            key = label if (label and not mol.has_atomkey(label)) else str(i)
+            mol.set_atom(key, atom)
+        self.molecule = mol
+
+    def _load_sp_model_basisset(self, h5grp):
+        if "basisset/name" not in h5grp:
+            return
+
+        pgto_map = {}
+        if "basisset/pgto" in h5grp:
+            for row in h5grp["basisset/pgto"]:
+                name = row[0].decode("utf-8") if isinstance(row[0], bytes) else str(row[0])
+                cgto_id = int(row[1])
+                pgto_id = int(row[2])
+                coef = float(row[3])
+                exp = float(row[4])
+                pgto_map.setdefault((name, cgto_id), []).append((pgto_id, exp, coef))
+
+        cgto_map = {}
+        if "basisset/cgto" in h5grp:
+            for row in h5grp["basisset/cgto"]:
+                name = row[0].decode("utf-8") if isinstance(row[0], bytes) else str(row[0])
+                cgto_id = int(row[1])
+                shell_type = row[2].decode("utf-8") if isinstance(row[2], bytes) else str(row[2])
+                scale_factor = float(row[3])
+                cgto_map.setdefault(name, []).append((cgto_id, shell_type, scale_factor))
+
+        basis_dict = {}
+        for name, cgtos in cgto_map.items():
+            cgtos.sort(key=lambda x: x[0])
+            bs = BasisSet(name, len(cgtos))
+            for cgto_id, shell_type, scale_factor in cgtos:
+                pgtos = pgto_map.get((name, cgto_id), [])
+                pgtos.sort(key=lambda x: x[0])
+                cgto = ContractedGTO(shell_type, len(pgtos))
+                cgto.scale_factor = scale_factor
+                for p_idx, (pgto_id, exp, coef) in enumerate(pgtos):
+                    cgto[p_idx] = PrimitiveGTO(exp, coef)
+                bs[cgto_id] = cgto
+            basis_dict[name] = bs
+
+        for row in h5grp["basisset/name"]:
+            name = row[0].decode("utf-8") if isinstance(row[0], bytes) else str(row[0])
+            atom_label = row[1].decode("utf-8") if isinstance(row[1], bytes) else str(row[1])
+            if name in basis_dict:
+                self.set_basisset(atom_label, BasisSet(basis_dict[name]))
+            else:
+                self.set_basisset(atom_label, BasisSet(name))
 
 
     def _load_model_control(self, h5grp):
