@@ -132,13 +132,47 @@ class TestMatrix(unittest.TestCase):
         ret = m.load("/nonexistent_file_path_12345.bin")
         self.assertFalse(ret)
 
+    @unittest.expectedFailure
     def test_symmetric_matrix_load_nonexistent_file(self):
         # SymmetricMatrix.load logs error but does not return False when file does not exist
+        # (returns None). Expected behavior according to docstring/Matrix convention is False.
         sm = SymmetricMatrix()
         ret = sm.load("/nonexistent_file_path_12345.bin")
-        # In current implementation, load() does not return False (returns None)
-        # Expected behavior according to docstring/Matrix convention would be returning False
-        self.assertIsNone(ret)
+        self.assertIs(ret, False)
+
+    @unittest.expectedFailure
+    def test_matrix_load_unknown_matrix_type(self):
+        # Matrix.load currently executes a bare 'raise' on unknown matrix_type,
+        # which raises 'RuntimeError: No active exception to reraise'.
+        # Expected behavior is raising ValueError (or returning False).
+        hdr = struct.pack("<iii", 99, 2, 2)
+        body = struct.pack("<4d", 1.0, 2.0, 3.0, 4.0)
+        tmpfile = self._create_tempfile(content=hdr + body)
+        m = Matrix()
+        with self.assertRaises(ValueError):
+            m.load(tmpfile)
+
+    @unittest.expectedFailure
+    def test_symmetric_matrix_find_header_struct_non_square(self):
+        # Non-square header (row != col) where file size happens to match row*(row+1)/2.
+        # A symmetric matrix must be square (row == col). Currently, find_header_struct
+        # does not check row == col and returns answer=True.
+        # Expected behavior is returning answer=False.
+        hdr = struct.pack("<iii", 2, 2, 3)
+        body = struct.pack("<3d", 1.0, 2.0, 3.0)
+        tmpfile = self._create_tempfile(content=hdr + body)
+        answer, row, col, endian, header_struct, matrix_type = (
+            SymmetricMatrix.find_header_struct(tmpfile)
+        )
+        self.assertFalse(answer)
+
+    def test_symmetric_matrix_is_loadable_non_square_matrix_file(self):
+        # A standard non-square Matrix file (e.g. 2x3, 6 doubles)
+        # is not loadable as SymmetricMatrix
+        m = Matrix(2, 3)
+        tmpfile = self._create_tempfile()
+        m.save(tmpfile)
+        self.assertFalse(SymmetricMatrix.is_loadable(tmpfile))
 
     def test_is_loadable_wrong_size(self):
         tmpfile = self._create_tempfile(content=b"\x00" * 100)
