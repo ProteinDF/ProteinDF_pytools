@@ -32,5 +32,4 @@
 ## テスト環境についての注意(2026-10-12時点)
 
 - `devtool/check.sh`は`run_test.sh`のdoctest・unittestを、ブランチのworktreeのソースに対して実行する(`PYTHONPATH`で指定)。`proteindf_bridge`を入れたPythonを`PDFTOOLS_PYTHON`(または`.git/check-venv/`)で指定し、`PDF_HOME`にProteinDF本体のソースのパスを設定する。未設定の間はtestsがSKIPになる。
-- `doctest `basis2`は、相対パス`data/basis2.sample`が存在しないため失敗する(既知。develop時点で14件中1件)。変更の影響と区別する。
 - ローカルの場所(上記のパス)は、公開ファイルではなく環境変数や`.git/`内の設定に置く。

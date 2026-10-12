@@ -37,7 +37,7 @@ worktreeで次を実行し、成功することを確認する。
 devtool/check.sh
 ```
 
-`check.sh`は、ブランチの差分の空白エラー、変更したPythonファイルの構文とblack、`run_test.sh`のdoctest・unittestを実行する。`PDF_HOME`の設定と`proteindf_bridge`が必要(`CLAUDE.md`参照)。doctest `basis2`は既知の失敗。
+`check.sh`は、ブランチの差分の空白エラー、変更したPythonファイルの構文とblack、`run_test.sh`のdoctest・unittestを実行する。`PDF_HOME`の設定と`proteindf_bridge`が必要(`CLAUDE.md`参照)。全件PASSするのが正常で、失敗は変更の影響とみなす。
 SKIPになった項目(blackが未インストールなど)は、そのまま報告すればよい。
 
 ## 完了報告
