@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+from unittest.mock import patch
 
 import proteindf_bridge as bridge
 from proteindf_tools.pdfparam import PdfParam
@@ -375,6 +376,13 @@ class TestPdfParamBasic(unittest.TestCase):
             param.get_pop_mulliken_path("rks", 1),
             "/work/default/pop.mulliken.rks1.vtr",
         )
+
+    @patch("proteindf_tools.pdfparam_object.Basis2")
+    def test_set_basisset_common_unknown_key(self, mock_basis2):
+        param = PdfParam()
+        with self.assertRaises(ValueError) as ctx:
+            param._set_basisset_common("H", "O-DZVP.H", "unknown_key")
+        self.assertEqual(str(ctx.exception), "unknown key: unknown_key")
 
 
 if __name__ == "__main__":

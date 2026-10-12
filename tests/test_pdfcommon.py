@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 
 import proteindf_bridge as bridge
-from proteindf_tools.pdfcommon import load_pdfparam, pdf_home, save_pdfparam, set_basisset
+from proteindf_tools.pdfcommon import load_pdfparam, pdf_home, run_pdf, save_pdfparam, set_basisset
 from proteindf_tools.pdfparam import PdfParam
 
 
@@ -74,6 +74,18 @@ class TestPdfCommon(unittest.TestCase):
         p = PdfParam()
         result = set_basisset(p)
         self.assertIsInstance(result, PdfParam)
+
+    @patch("proteindf_tools.pdfcommon.Process")
+    def test_run_pdf_failure(self, mock_process_cls):
+        mock_proc = mock_process_cls.return_value
+        mock_proc.cmd.return_value = mock_proc
+        mock_proc.commit.return_value = 1
+        with self.assertRaises(RuntimeError) as ctx:
+            run_pdf("test_subcmd")
+        self.assertEqual(
+            str(ctx.exception),
+            "Failed to execute command: pdf test_subcmd (return code=1)",
+        )
 
 
 if __name__ == "__main__":

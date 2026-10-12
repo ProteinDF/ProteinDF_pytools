@@ -478,6 +478,13 @@ class TestPdfParamModel(unittest.TestCase):
 
         self.assertTrue(p1.compare_grad(p2))
 
+    def test_get_inputfile_contents_unsupported_method(self):
+        param = PdfParam()
+        param.method = "uks"
+        with self.assertRaises(NotImplementedError) as ctx:
+            param.get_inputfile_contents()
+        self.assertEqual(str(ctx.exception), "method not supported: uks")
+
 
 if __name__ == "__main__":
     unittest.main()
