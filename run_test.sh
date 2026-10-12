@@ -46,6 +46,7 @@ UNITTESTS="\
   pdfcommon \
   gauparam \
   poputils \
+  pdfsim \
   package \
   pdfgraph_base \
   pdfgraph_extra \
