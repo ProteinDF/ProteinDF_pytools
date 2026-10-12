@@ -29,7 +29,6 @@ class TestVector(unittest.TestCase):
         self.tmpfiles.append(path)
         return path
 
-    @unittest.expectedFailure
     def test_vector_roundtrip(self):
         """Vector roundtrip test.
 

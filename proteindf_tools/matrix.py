@@ -129,8 +129,9 @@ class Matrix(bridge.Matrix):
                             value = struct.unpack(body_struct, fin.read(size_of_double))
                             self.set(r, c, value[0])
                 else:
-                    logger.critical("file type mismatch: type={}".format(matrix_type))
-                    raise
+                    msg = "file type mismatch: type={}".format(matrix_type)
+                    logger.critical(msg)
+                    raise ValueError(msg)
 
             return True
         else:
@@ -222,7 +223,7 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
             for endian in endian_list:
                 for header_struct in header_struct_list:
                     (matrix_type, row, col, chk_filesize) = get_header(file_path, endian + header_struct)
-                    answer = filesize == chk_filesize
+                    answer = filesize == chk_filesize and row == col
                     if answer:
                         break
                 if answer:
@@ -233,7 +234,6 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
     @classmethod
     def is_loadable(cls, file_path):
         (answer, row, col, endian, header_struct, matrix_type) = cls.find_header_struct(file_path)
-        print("is_loadable: ", answer, endian, header_struct, matrix_type, row, col)
 
         return answer
 
@@ -264,8 +264,10 @@ class SymmetricMatrix(bridge.SymmetricMatrix):
                     value = struct.unpack(body_struct, fin.read(size_of_double))
                     self.set(r, c, value[0])
             fin.close()
+            return True
         else:
             logger.error("file not found: %s" % (file_path))
+            return False
 
     def save(self, file_path, is_little_endian=True):
         dim = self.rows
