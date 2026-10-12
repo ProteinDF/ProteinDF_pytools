@@ -692,7 +692,7 @@ class PdfParamObject(object):
                 self._data[key][atom_label] = bs
             else:
                 print("unknown key: {}".format(key))
-                raise
+                raise ValueError("unknown key: {}".format(key))
 
         elif isinstance(basisset, BasisSet) == True:
             self._data[key][atom_label] = basisset
@@ -811,7 +811,7 @@ class PdfParamObject(object):
             output += "    method/rks/electrons = %d\n" % (self.num_of_electrons)
             output += "    method/rks/occlevel = %s\n" % (self.occupation_level)
         else:
-            raise
+            raise NotImplementedError("method not supported: {}".format(self.method))
         output += "    max_iteration = {0}\n".format(self.max_iterations)
         if self.orbital_independence_threshold != None:
             output += "    orbital_independence_threshold  = {0}\n".format(

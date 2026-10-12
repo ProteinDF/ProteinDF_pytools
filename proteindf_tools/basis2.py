@@ -139,7 +139,7 @@ class Basis2(object):
                         name = None
                     else:
                         logger.critical("basisset name is not found: {}".format(name))
-                        raise
+                        raise ValueError("unknown basis set name: {}".format(name))
 
     def _load_basis(self, fh):
         basisset = None

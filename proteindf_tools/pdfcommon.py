@@ -151,7 +151,9 @@ def run_pdf(subcmd):
         sys.stderr.write("return code = {}".format(return_code))
         logger.critical("Failed to execute command: %s" % cmd)
         logger.critical("return code = {}".format(return_code))
-        raise
+        raise RuntimeError(
+            "Failed to execute command: {} (return code={})".format(cmd, return_code)
+        )
 
 
 def mpac2py(path):
