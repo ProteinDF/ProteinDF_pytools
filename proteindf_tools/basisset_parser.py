@@ -139,7 +139,7 @@ class BasisSetParser(object):
                 cgtos.append(cgto1)
                 cgtos.append(cgto2)
             else:
-                raise
+                raise ValueError("unsupported shell type: {}".format(cgto_type))
 
         basisset = BasisSet('', len(cgtos))
         for cgto_index in range(len(cgtos)):

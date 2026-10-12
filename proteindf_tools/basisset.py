@@ -197,7 +197,7 @@ class ContractedGTO(list):
     # shell_type_id ------------------------------------------------------------
     def _get_shell_type_id(self):
         if not '_shell_type_id' in self.__dict__:
-            raise
+            raise ValueError("_shell_type_id is not set")
         return self._shell_type_id
 
     def _set_shell_type_id(self, id):
@@ -295,7 +295,7 @@ class ContractedGTO(list):
                 break
         if answer == None:
             print(shell_type)
-            raise
+            raise ValueError("unsupported shell type: {}".format(shell_type))
         return answer
 
     @classmethod
