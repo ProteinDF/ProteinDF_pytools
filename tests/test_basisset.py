@@ -26,7 +26,7 @@ class TestContractedGTO(unittest.TestCase):
             self.assertEqual(ContractedGTO.get_shell_type_id(st), expected_id)
             self.assertEqual(ContractedGTO.get_shell_type(expected_id), st)
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValueError):
             ContractedGTO.get_shell_type_id("invalid")
 
     def test_shell_type_properties(self):
