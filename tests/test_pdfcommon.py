@@ -60,7 +60,6 @@ class TestPdfCommon(unittest.TestCase):
         with self.assertRaises(AssertionError):
             save_pdfparam(p, 12345)
 
-    @unittest.expectedFailure
     def test_set_basisset(self):
         """set_basisset(pdfparam) は基底関数を設定した PdfParam を返すべき。
 

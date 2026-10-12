@@ -21,6 +21,7 @@
 
 from .process import Process
 from .pdfparam import PdfParam
+from .basis2 import Basis2
 
 import proteindf_bridge as bridge
 

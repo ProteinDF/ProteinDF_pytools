@@ -70,7 +70,6 @@ class TestPdfArchiveSqlite3(unittest.TestCase):
         return param
 
     # 1. 構築テスト (未パッチ状態)
-    @unittest.expectedFailure
     def test_init_without_patch(self):
         # 現状の pdfarchive_sqlite3.py は __init__ で未定義の PdfArchive._format_version を参照するため
         # NameError となる不具合がある。本来はパッチなしで正常に構築できることが期待される。
@@ -139,7 +138,6 @@ class TestPdfArchiveSqlite3(unittest.TestCase):
             expected_rms = math.sqrt((0.01**2 + 0.01**2) / (3 * 2))
             self.assertAlmostEqual(archive.get_gradient_rms(), expected_rms, places=6)
 
-    @unittest.expectedFailure
     def test_get_basisset(self):
         # pdfarchive_sqlite3.py の get_basisset() は未インポートの BasisSet, ContractedGTO, PrimitiveGTO を
         # 参照するため NameError となる。本来は保存された基底関数情報が取得できることが期待される。
@@ -201,7 +199,6 @@ class TestPdfArchiveSqlite3(unittest.TestCase):
             archive.set_occupations("rks", occ)
             self.assertEqual(archive.get_HOMO_level("rks"), 1)
 
-    @unittest.expectedFailure
     def test_get_homo_level_single_occ(self):
         # get_HOMO_level は range(len(v) - 1, 0, -1) で走査するため、index 0 の占有軌道が探索されず
         # 占有軌道が index 0 のみの場合に None を返す不具合がある。本来は 0 が返るべき。

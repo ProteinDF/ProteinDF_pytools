@@ -46,7 +46,6 @@ class TestPackage(unittest.TestCase):
             if orig_pdfarchive is not None:
                 setattr(proteindf_tools, "PdfArchive", orig_pdfarchive)
 
-    @unittest.expectedFailure
     def test_wildcard_import(self):
         local_scope = {}
         exec("from proteindf_tools import *", {}, local_scope)
