@@ -246,7 +246,7 @@ class PdfParamObject(object):
 
     # scf_acceleration/anderson/damping_factor
     def _get_scf_acceleration_anderson_damping_factor(self):
-        return self._data["scf_acceleration_anderson_damping_factor"]
+        return self._data.get("scf_acceleration_anderson_damping_factor", None)
 
     def _set_scf_acceleration_anderson_damping_factor(self, value):
         if value != None:
@@ -516,16 +516,15 @@ class PdfParamObject(object):
         return bridge.StrUtils.str_to_bool(self._data.get("level_shift", False))
 
     def _set_level_shift(self, value):
-        value = value.to_upper()
         v = False
-        if value == "YES" or value == "TRUE" or value == 1:
+        if str(value).upper() in ("YES", "TRUE", "1"):
             v = True
         self._data["level_shift"] = v
 
     level_shift = property(_get_level_shift, _set_level_shift)
 
     def _get_level_shift_start_iteration(self):
-        return self._data.get("level_shift_start_iterartion", 1)
+        return self._data.get("level_shift_start_iteration", 1)
 
     def _set_level_shift_start_iteration(self, value):
         self._data["level_shift_start_iteration"] = int(value)
@@ -545,14 +544,15 @@ class PdfParamObject(object):
     )
 
     # SCF converged
-    @property
-    def scf_converged(self):
+    def _get_scf_converged(self):
         self._data.setdefault("control", {})
         return self._data["control"].get("scf_converged", False)
 
     def _set_scf_converged(self, yn):
         self._data.setdefault("control", {})
         self._data["control"]["scf_converged"] = bool(yn)
+
+    scf_converged = property(_get_scf_converged, _set_scf_converged)
 
     # molecule
     def _get_molecule(self):
@@ -1403,7 +1403,8 @@ class PdfParamObject(object):
             return raw_data
 
         odict["coordinates"] = get_coordinates(self.molecule)
-        del odict["molecule"]
+        if "molecule" in odict:
+            del odict["molecule"]
 
         return odict
 
@@ -1443,7 +1444,9 @@ class PdfParamObject(object):
         answer = answer & self.compare_energy(other)
 
         # check Total Energy
-        iterations = max(self.iterations, other.iterations)
+        itr_self = 0 if self.iterations is None else self.iterations
+        itr_other = 0 if other.iterations is None else other.iterations
+        iterations = max(itr_self, itr_other)
         for itr in range(1, iterations + 1):
             TE1 = self.get_total_energy(itr)
             TE2 = other.get_total_energy(itr)
@@ -1494,8 +1497,10 @@ class PdfParamObject(object):
     def compare_energy(self, rhs, threshold=error_threshold):
         answer = True
 
-        TE_self = self.get_total_energy(self.iterations)
-        TE_other = rhs.get_total_energy(rhs.iterations)
+        itr_self = 0 if self.iterations is None else self.iterations
+        itr_other = 0 if rhs.iterations is None else rhs.iterations
+        TE_self = self.get_total_energy(itr_self)
+        TE_other = rhs.get_total_energy(itr_other)
         answer = answer & self._check(TE_self, TE_other, "TE", threshold)
 
         return answer
