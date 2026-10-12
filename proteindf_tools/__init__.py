@@ -34,6 +34,7 @@ from .qmsim import QmSim
 from .pdfcommon import *
 
 from .pdfarchive_sqlite3 import PdfArchive_Sqlite3
+PdfArchive = PdfArchive_Sqlite3
 from .report import PdfReport
 from .pdfgraph import *
 

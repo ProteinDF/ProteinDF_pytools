@@ -60,7 +60,11 @@ class TestPdfCommon(unittest.TestCase):
         with self.assertRaises(AssertionError):
             save_pdfparam(p, 12345)
 
-    @unittest.expectedFailure
+    @unittest.skipUnless(
+        os.environ.get("PDF_HOME")
+        and os.path.exists(os.path.join(os.environ.get("PDF_HOME", ""), "data/basis2")),
+        "PDF_HOME data/basis2 is not available",
+    )
     def test_set_basisset(self):
         """set_basisset(pdfparam) は基底関数を設定した PdfParam を返すべき。
 

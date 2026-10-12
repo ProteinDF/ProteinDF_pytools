@@ -26,27 +26,17 @@ class TestPackage(unittest.TestCase):
                     f"'{name}' in __all__ is not defined in proteindf_tools",
                 )
 
-    @unittest.expectedFailure
     def test_pdfarchive_in_all_defined(self):
-        """__all__ に含まれる 'PdfArchive' がパッケージ自身で定義されていること。
+        """__all__ に含まれる 'PdfArchive' がパッケージ自身で定義されていること。"""
+        self.assertTrue(
+            hasattr(proteindf_tools, "PdfArchive"),
+            "'PdfArchive' in __all__ should be defined in proteindf_tools",
+        )
+        self.assertIs(
+            proteindf_tools.PdfArchive,
+            proteindf_tools.PdfArchive_Sqlite3,
+        )
 
-        実際には proteindf_tools/__init__.py で PdfArchive はインポートまたは定義されていない。
-        (テスト実行環境の sitecustomize.py により外部から注入されている場合があるため、
-        パッケージ本来の属性として定義されているかを検証する)
-        """
-        orig_pdfarchive = getattr(proteindf_tools, "PdfArchive", None)
-        try:
-            if hasattr(proteindf_tools, "PdfArchive"):
-                delattr(proteindf_tools, "PdfArchive")
-            self.assertTrue(
-                hasattr(proteindf_tools, "PdfArchive"),
-                "'PdfArchive' in __all__ should be defined in proteindf_tools",
-            )
-        finally:
-            if orig_pdfarchive is not None:
-                setattr(proteindf_tools, "PdfArchive", orig_pdfarchive)
-
-    @unittest.expectedFailure
     def test_wildcard_import(self):
         local_scope = {}
         exec("from proteindf_tools import *", {}, local_scope)
