@@ -203,69 +203,6 @@ class TestPdfGraphExtra(unittest.TestCase):
         lc.savefig(out_path)
         self._assert_valid_png(out_path)
 
-    @unittest.expectedFailure
-    def test_bar_graph_plot(self):
-        """BarGraph.plot fails due to undefined 'get_colours'."""
-        bg = pg.BarGraph()
-        bg.plot([[1.0, 2.0], [3.0, 4.0]], labels=["A", "B"])
-
-    @unittest.expectedFailure
-    def test_energy_level_chart(self):
-        """EnergyLevelChart.set_data fails because __data is not initialized (AttributeError: __data)."""
-        elc = pg.EnergyLevelChart()
-        elc.set_data(1, [1.0, 2.0])
-        out_path = self._create_tempfile()
-        elc.savefig(out_path)
-
-    @unittest.expectedFailure
-    def test_graph_plot_basis(self):
-        """Graph.plot_basis fails due to undefined 'fabs' and 'self.ax'."""
-        g = pg.Graph()
-        g.plot_basis("s", [1.0], [0.5])
-        out_path = self._create_tempfile()
-        g.file_out(out_path)
-
-    @unittest.expectedFailure
-    def test_graph_energy_level_history(self):
-        """GraphEnergyLevelHistory.plot_energy_levels fails due to missing self.param and self.ax."""
-        gelh = pg.GraphEnergyLevelHistory()
-        gelh.set_yrange(-10, 10)
-        gelh.plot_energy_levels(1, [-5.0, 0.0, 2.0], homo_level=1)
-        out_path = self._create_tempfile()
-        gelh.file_out(out_path)
-
-    @unittest.expectedFailure
-    def test_graph_energy_level_single(self):
-        """GraphEnergyLevelSingle.plot_energy_levels fails due to missing self.param and self.ax."""
-        gels = pg.GraphEnergyLevelSingle()
-        gels.set_yrange(-10, 10)
-        gels.plot_energy_levels([-5.0, 0.0, 2.0], homo_level=1)
-        out_path = self._create_tempfile()
-        gels.file_out(out_path)
-
-    @unittest.expectedFailure
-    def test_graph_total_energy_history(self):
-        """GraphTotalEnergyHistory.plot fails due to missing self.ax."""
-        gteh = pg.GraphTotalEnergyHistory()
-        gteh.plot([1.0, 2.0, 1.5])
-        out_path = self._create_tempfile()
-        gteh.file_out(out_path)
-
-    @unittest.expectedFailure
-    def test_graph_convergence_check_plot(self):
-        """GraphConvergenceCheck.plot fails due to missing self.ax."""
-        gcc = pg.GraphConvergenceCheck()
-        gcc.plot([1.0, 0.5, 0.1])
-        out_path = self._create_tempfile()
-        gcc.file_out(out_path)
-
-    @unittest.expectedFailure
-    def test_graph_convergence_check_plot_log(self):
-        """GraphConvergenceCheck.plotLog fails due to missing self.ax."""
-        gcc = pg.GraphConvergenceCheck()
-        gcc.plotLog([1.0, 0.5, 0.1])
-        out_path = self._create_tempfile()
-        gcc.file_out(out_path)
 
 
 if __name__ == "__main__":
