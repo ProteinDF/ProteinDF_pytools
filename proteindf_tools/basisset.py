@@ -317,26 +317,16 @@ class ContractedGTO(list):
         shell_type_id=2, basis_id=3: dxx-yy
         shell_type_id=2, basis_id=4: dzz
         """
-        tbl = [0, 1, 4]
+        tbl = [0, 1, 4, 9]
+        if shell_type_id >= len(tbl):
+            raise ValueError(
+                "shell_type_id {} is not supported in get_basis_type".format(shell_type_id)
+            )
         index = tbl[shell_type_id] + basis_id
         return cls._orb_types[index]
 
     def expand(self):
-        """
-        Expand the case where shell_type is e.g. 'spd'.
-        """
-        answer = None
-        if (self.shell_type == 'spd'):
-            cgto_s = copy.deepcopy(self)
-            cgto_s.shell_type = 's'
-            cgto_p = copy.deepcopy(self)
-            cgto_p.shell_type = 'p'
-            cgto_d = copy.deepcopy(self)
-            cgto_d.shell_type = 'd'
-            answer = [cgto_s, cgto_p, cgto_d]
-        else:
-            answer = [self]
-        return answer
+        return [self]
 
     # ==================================================================
     # raw data
@@ -529,8 +519,6 @@ class BasisSet(list):
 
         for shell_type in ContractedGTO.get_supported_shell_types():
             num_of_CGTOs = self.get_num_of_CGTOs(shell_type)
-            if ((shell_type == 'spd') and (num_of_CGTOs == 0)):
-                continue
             output += " %d" % (num_of_CGTOs)
         output += "\n"
 

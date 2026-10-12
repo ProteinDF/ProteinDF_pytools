@@ -352,7 +352,8 @@ class Basis2(object):
             if name in self._data["basis_xc"]:
                 basis_xc = self._data["basis_xc"][name]
                 output += str(basis_j)
-                output += str(basis_xc)
+                xc_lines = str(basis_xc).splitlines(True)
+                output += "".join(xc_lines[1:])
                 output += "\n"
 
         return output

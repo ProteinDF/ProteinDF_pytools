@@ -124,7 +124,6 @@ class TestBasis2Additional(unittest.TestCase):
         finally:
             os.remove(path1)
 
-    @unittest.expectedFailure
     def test_basis2_roundtrip_with_auxiliary(self):
         # Basis2.get_basis2() outputs the basis set name for both basis_j and basis_xc,
         # but Basis2._load() only reads the name line once before expecting J then XC data,

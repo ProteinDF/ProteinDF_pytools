@@ -56,11 +56,10 @@ class TestContractedGTO(unittest.TestCase):
         self.assertEqual(ContractedGTO.get_basis_type(2, 3), "dxx-yy")
         self.assertEqual(ContractedGTO.get_basis_type(2, 4), "dzz")
 
-    @unittest.expectedFailure
     def test_get_basis_type_f_orbital(self):
-        # _orb_types contains f orbital names ('z3', etc.), but tbl=[0, 1, 4] lacks f index (3),
-        # causing IndexError: list index out of range.
         self.assertEqual(ContractedGTO.get_basis_type(3, 0), "z3")
+        with self.assertRaises(ValueError):
+            ContractedGTO.get_basis_type(4, 0)
 
     def test_normalize(self):
         # Normalized single primitive s GTO
@@ -88,16 +87,6 @@ class TestContractedGTO(unittest.TestCase):
         expanded = cgto.expand()
         self.assertEqual(len(expanded), 1)
         self.assertIs(expanded[0], cgto)
-
-    @unittest.expectedFailure
-    def test_expand_spd_shell(self):
-        # ContractedGTO.expand() contains branch for 'spd', but 'spd' is not registered
-        # in _shell_types, raising RuntimeError on initialization or assignment.
-        cgto = ContractedGTO("spd", 1)
-        cgto[0] = PrimitiveGTO(1.0, 1.0)
-        expanded = cgto.expand()
-        self.assertEqual(len(expanded), 3)
-        self.assertEqual([c.shell_type for c in expanded], ["s", "p", "d"])
 
     def test_raw_data_roundtrip(self):
         cgto = ContractedGTO("p", 2)
