@@ -123,7 +123,7 @@ def get_matrix(path, verbose=False):
         mat = mat.get_general_matrix()
     else:
         print("matrix file cannnot load.")
-        raise
+        raise ValueError("cannot load the file: {}".format(path))
 
     return mat
 
