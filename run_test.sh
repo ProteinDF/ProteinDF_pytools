@@ -49,6 +49,7 @@ UNITTESTS="\
   package \
   pdfgraph_base \
   pdfgraph_extra \
+  report \
   "
 
 for i in ${UNITTESTS}; do
