@@ -122,10 +122,9 @@ SPD 1 1.00
   1.0 1.0
 ****
 """
-        with self.assertRaises(Exception):
+        with self.assertRaises(RuntimeError):
             self.parser.parse(sample)
 
-    @unittest.expectedFailure
     def test_too_many_basis_blocks_same_atom(self):
         # 4th block for the same atom attempts sys.stderr.write, but sys is not imported
         # in basisset_parser.py, raising NameError: name 'sys' is not defined.
