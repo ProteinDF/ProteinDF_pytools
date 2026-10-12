@@ -80,26 +80,29 @@ class TestPdfParamH5(unittest.TestCase):
         self.assertEqual(p2.scf_acceleration, "damping")
         p2._close()
 
-    @unittest.expectedFailure
     def test_save_load_model_molecule(self):
-        """Verify that molecule structure is preserved across save_model and load_model.
-
-        Currently fails because PdfParam_H5._load_model comments out molecule restoration.
-        """
+        """Verify that molecule structure is preserved across save_model and load_model."""
         p = PdfParam_H5()
         p.open(self.h5_path)
         p.iterations = 0
-        p.num_of_atoms = 1
+        p.num_of_atoms = 2
         p.num_of_AOs = 1
         p.num_of_MOs = 1
 
         mol = bridge.AtomGroup()
-        atom = bridge.Atom()
-        atom.symbol = "H"
-        atom.name = "1"
-        atom.xyz = bridge.Position(0.0, 0.0, 0.0)
-        atom.charge = 1.0
-        mol.set_atom("1", atom)
+        atom_o = bridge.Atom()
+        atom_o.symbol = "O"
+        atom_o.name = "1"
+        atom_o.xyz = bridge.Position(0.0, 0.5, 1.0)
+        atom_o.charge = 8.0
+        mol.set_atom("1", atom_o)
+
+        atom_h = bridge.Atom()
+        atom_h.symbol = "H"
+        atom_h.name = "2"
+        atom_h.xyz = bridge.Position(0.0, -0.5, 2.0)
+        atom_h.charge = 1.0
+        mol.set_atom("2", atom_h)
         p.molecule = mol
 
         p.save_model()
@@ -107,40 +110,103 @@ class TestPdfParamH5(unittest.TestCase):
 
         p2 = PdfParam_H5()
         p2.open(self.h5_path)
-        self.assertEqual(p2.molecule.num_of_atoms(), 1)
-        atom_loaded = p2.molecule.get_atom("1")
-        self.assertIsNotNone(atom_loaded)
-        self.assertEqual(atom_loaded.symbol, "H")
+        self.assertEqual(p2.molecule.get_number_of_atoms(), 2)
+
+        atom1 = p2.molecule.get_atom("1")
+        self.assertIsNotNone(atom1)
+        self.assertEqual(atom1.symbol, "O")
+        self.assertEqual(atom1.name, "1")
+        self.assertAlmostEqual(atom1.xyz.x, 0.0)
+        self.assertAlmostEqual(atom1.xyz.y, 0.5)
+        self.assertAlmostEqual(atom1.xyz.z, 1.0)
+        self.assertAlmostEqual(atom1.charge, 8.0)
+
+        atom2 = p2.molecule.get_atom("2")
+        self.assertIsNotNone(atom2)
+        self.assertEqual(atom2.symbol, "H")
+        self.assertEqual(atom2.name, "2")
+        self.assertAlmostEqual(atom2.xyz.x, 0.0)
+        self.assertAlmostEqual(atom2.xyz.y, -0.5)
+        self.assertAlmostEqual(atom2.xyz.z, 2.0)
+        self.assertAlmostEqual(atom2.charge, 1.0)
         p2._close()
 
-    @unittest.expectedFailure
     def test_save_load_model_basisset(self):
-        """Verify that basis sets are preserved across save_model and load_model.
-
-        Currently fails because PdfParam_H5._load_model comments out basis set restoration.
-        """
+        """Verify that basis sets are preserved across save_model and load_model."""
         p = PdfParam_H5()
         p.open(self.h5_path)
         p.iterations = 0
-        p.num_of_atoms = 1
+        p.num_of_atoms = 2
         p.num_of_AOs = 1
         p.num_of_MOs = 1
 
-        bs = BasisSet()
-        bs.name = "sto-3g-H"
-        cgto = ContractedGTO("s", 1)
-        cgto[0] = PrimitiveGTO(3.42525, 0.15433)
-        bs.append(cgto)
-        p.set_basisset("H@1", bs)
+        bs_o = BasisSet()
+        bs_o.name = "sto-3g-O"
+        cgto_o_s = ContractedGTO("s", 2)
+        cgto_o_s.scale_factor = 1.1
+        cgto_o_s[0] = PrimitiveGTO(130.70932, 0.154328)
+        cgto_o_s[1] = PrimitiveGTO(23.80886, 0.535328)
+        bs_o.append(cgto_o_s)
+
+        cgto_o_p = ContractedGTO("p", 2)
+        cgto_o_p.scale_factor = 1.2
+        cgto_o_p[0] = PrimitiveGTO(5.03315, 0.444635)
+        cgto_o_p[1] = PrimitiveGTO(1.16959, 0.612101)
+        bs_o.append(cgto_o_p)
+        p.set_basisset("O@1", bs_o)
+
+        bs_h = BasisSet()
+        bs_h.name = "sto-3g-H"
+        cgto_h_s = ContractedGTO("s", 2)
+        cgto_h_s.scale_factor = 0.95
+        cgto_h_s[0] = PrimitiveGTO(3.42525, 0.15433)
+        cgto_h_s[1] = PrimitiveGTO(0.62391, 0.53533)
+        bs_h.append(cgto_h_s)
+        p.set_basisset("H@2", bs_h)
 
         p.save_model()
         p._close()
 
         p2 = PdfParam_H5()
         p2.open(self.h5_path)
-        self.assertIn("H@1", p2.get_basisset_atomlabels())
-        bs_loaded = p2.get_basisset("H@1")
-        self.assertEqual(bs_loaded.name, "sto-3g-H")
+        labels = p2.get_basisset_atomlabels()
+        self.assertIn("O@1", labels)
+        self.assertIn("H@2", labels)
+
+        bs_o_loaded = p2.get_basisset("O@1")
+        self.assertEqual(bs_o_loaded.name, "sto-3g-O")
+        self.assertEqual(len(bs_o_loaded), 2)
+
+        cgto0 = bs_o_loaded[0]
+        self.assertEqual(cgto0.shell_type, "s")
+        self.assertAlmostEqual(cgto0.scale_factor, 1.1)
+        self.assertEqual(len(cgto0), 2)
+        self.assertAlmostEqual(cgto0[0].exp, 130.70932)
+        self.assertAlmostEqual(cgto0[0].coef, 0.154328)
+        self.assertAlmostEqual(cgto0[1].exp, 23.80886)
+        self.assertAlmostEqual(cgto0[1].coef, 0.535328)
+
+        cgto1 = bs_o_loaded[1]
+        self.assertEqual(cgto1.shell_type, "p")
+        self.assertAlmostEqual(cgto1.scale_factor, 1.2)
+        self.assertEqual(len(cgto1), 2)
+        self.assertAlmostEqual(cgto1[0].exp, 5.03315)
+        self.assertAlmostEqual(cgto1[0].coef, 0.444635)
+        self.assertAlmostEqual(cgto1[1].exp, 1.16959)
+        self.assertAlmostEqual(cgto1[1].coef, 0.612101)
+
+        bs_h_loaded = p2.get_basisset("H@2")
+        self.assertEqual(bs_h_loaded.name, "sto-3g-H")
+        self.assertEqual(len(bs_h_loaded), 1)
+
+        cgto_h = bs_h_loaded[0]
+        self.assertEqual(cgto_h.shell_type, "s")
+        self.assertAlmostEqual(cgto_h.scale_factor, 0.95)
+        self.assertEqual(len(cgto_h), 2)
+        self.assertAlmostEqual(cgto_h[0].exp, 3.42525)
+        self.assertAlmostEqual(cgto_h[0].coef, 0.15433)
+        self.assertAlmostEqual(cgto_h[1].exp, 0.62391)
+        self.assertAlmostEqual(cgto_h[1].coef, 0.53533)
         p2._close()
 
     # -------------------------------------------------------------------------
