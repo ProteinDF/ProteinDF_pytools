@@ -295,7 +295,6 @@ class TestPdfParamModel(unittest.TestCase):
         param.num_of_atoms = 2
         self.assertIsNone(param.get_gradient_rms())
 
-    @unittest.expectedFailure
     def test_gradient_rms_computed_expected_failure(self):
         """get_gradient_rms fails with NameError: name 'math' is not defined.
 
@@ -355,7 +354,6 @@ class TestPdfParamModel(unittest.TestCase):
         # 1 element differs: (False ^ False ^ True ^ True -> False)
         self.assertFalse(param._check([1.0, 2.0, 3.0], [1.0, 2.0, 9.0], "odd list 1 diff"))
 
-    @unittest.expectedFailure
     def test_check_list_even_length_identical_expected_failure(self):
         """_check fails for identical even-length lists due to XOR accumulation bug.
 
@@ -369,7 +367,6 @@ class TestPdfParamModel(unittest.TestCase):
         param = PdfParamObject()
         self.assertTrue(param._check([1.0, 2.0], [1.0, 2.0], "even list identical"))
 
-    @unittest.expectedFailure
     def test_check_list_odd_length_two_diffs_expected_failure(self):
         """_check returns True for list with 2 differences due to XOR accumulation bug.
 
@@ -429,26 +426,42 @@ class TestPdfParamModel(unittest.TestCase):
         p2.set_total_energy(5, -100.0 + error_threshold * 2.0)
         self.assertFalse(p1.compare_energy(p2))
 
-    @unittest.expectedFailure
     def test_compare_pop_expected_failure(self):
-        """compare_pop fails with AttributeError: 'PdfParamObject' object has no attribute 'get_population'.
-
-        compare_pop calls self.get_population('mulliken', itr1), but get_population
-        is not defined on PdfParamObject.
-        Expected: True for matching population data
-        Actual: AttributeError: 'PdfParamObject' object has no attribute 'get_population'
-        """
         p1 = PdfParamObject()
         p1.num_of_atoms = 2
-        p1.iterations = 1
+        p1.set_mulliken_atom_population(0, 0.987)
+        p1.set_mulliken_atom_population(1, 1.013)
 
         p2 = PdfParamObject()
         p2.num_of_atoms = 2
-        p2.iterations = 1
+        p2.set_mulliken_atom_population(0, 0.987)
+        p2.set_mulliken_atom_population(1, 1.013)
 
         self.assertTrue(p1.compare_pop(p2))
 
-    @unittest.expectedFailure
+        # Different population values
+        p2.set_mulliken_atom_population(1, 2.0)
+        self.assertFalse(p1.compare_pop(p2))
+
+        # One None, one set
+        p2 = PdfParamObject()
+        p2.num_of_atoms = 2
+        p2.set_mulliken_atom_population(0, 0.987)
+        self.assertFalse(p1.compare_pop(p2))
+
+        # Both None for atom 1
+        p1 = PdfParamObject()
+        p1.num_of_atoms = 2
+        p1.set_mulliken_atom_population(0, 0.987)
+        p2 = PdfParamObject()
+        p2.num_of_atoms = 2
+        p2.set_mulliken_atom_population(0, 0.987)
+        self.assertTrue(p1.compare_pop(p2))
+
+        # Different num_of_atoms
+        p2.num_of_atoms = 3
+        self.assertFalse(p1.compare_pop(p2))
+
     def test_compare_grad_expected_failure(self):
         """compare_grad fails because get_gradient_rms raises NameError (missing math import).
 
