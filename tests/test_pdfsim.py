@@ -263,6 +263,64 @@ class TestPdfSim(unittest.TestCase):
             self.assertAlmostEqual(grad_mat[0][2], 18.0, places=4)
             self.assertAlmostEqual(rms, math.sqrt(392.0 / 3.0), places=4)
 
+            # numerical_grad の呼び出し前後で全原子の座標が保持されること
+            self.assertAlmostEqual(param.molecule["1"].xyz.x, 1.0, delta=1e-12)
+            self.assertAlmostEqual(param.molecule["1"].xyz.y, 2.0, delta=1e-12)
+            self.assertAlmostEqual(param.molecule["1"].xyz.z, 3.0, delta=1e-12)
+
+    def test_numerical_grad_preserves_molecule_coordinates(self):
+        """sp をモックした解析的エネルギーで numerical_grad を呼び、
+        呼び出し前後で pdfparam.molecule の全原子の座標が許容誤差 1e-12 で変わらないこと。"""
+        sim = PdfSim()
+        param = PdfParam()
+        mol = bridge.AtomGroup()
+
+        atom1 = bridge.Atom()
+        atom1.symbol = "H"
+        atom1.label = "1"
+        atom1.xyz.x = 1.0
+        atom1.xyz.y = 2.0
+        atom1.xyz.z = 3.0
+        mol.set_atom("1", atom1)
+
+        atom2 = bridge.Atom()
+        atom2.symbol = "O"
+        atom2.label = "2"
+        atom2.xyz.x = -1.5
+        atom2.xyz.y = 0.5
+        atom2.xyz.z = 2.5
+        mol.set_atom("2", atom2)
+
+        param.molecule = mol
+
+        def mock_sp(p, workdir):
+            energy = 0.0
+            for atom_id, atom in p.molecule.atoms():
+                energy += float(atom.xyz.x) ** 2 + float(atom.xyz.y) ** 2 + float(atom.xyz.z) ** 2
+            return (1, energy)
+
+        sim.sp = mock_sp
+
+        coords_before = {
+            atom_id: (float(atom.xyz.x), float(atom.xyz.y), float(atom.xyz.z))
+            for atom_id, atom in param.molecule.atoms()
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+                sim.numerical_grad(param, workdir=tmpdir, accuracy=1.0e-3, delta=0.001)
+
+        coords_after = {
+            atom_id: (float(atom.xyz.x), float(atom.xyz.y), float(atom.xyz.z))
+            for atom_id, atom in param.molecule.atoms()
+        }
+
+        self.assertEqual(set(coords_before.keys()), set(coords_after.keys()))
+        for atom_id in coords_before:
+            for c_before, c_after in zip(coords_before[atom_id], coords_after[atom_id]):
+                self.assertAlmostEqual(c_before, c_after, delta=1e-12)
+
     # ------------------------------------------------------------------
     # 6. opt と total_energy
     # ------------------------------------------------------------------

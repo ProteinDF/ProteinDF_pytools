@@ -209,50 +209,53 @@ class PdfSim(object):
         grad_mat = [[0.0, 0.0, 0.0] for x in range(num_of_atoms)]
         index = 0
         for atom_id, atom in molecule.atoms():
-            for direction in range(3):
-                logger.debug("start numerical grad for {}".format(
-                    direction_str[direction]))
-                h = delta
+            try:
+                for direction in range(3):
+                    logger.debug("start numerical grad for {}".format(
+                        direction_str[direction]))
+                    h = delta
 
-                delta_TE = 0.0
-                while True:
-                    atom1 = self._move(atom, direction, -h)
-                    atom2 = self._move(atom, direction, +h)
+                    delta_TE = 0.0
+                    while True:
+                        atom1 = self._move(atom, direction, -h)
+                        atom2 = self._move(atom, direction, +h)
 
-                    pdfparam1 = pdfparam
-                    pdfparam1.molecule[atom_id] = atom1
-                    workdir1 = os.path.join(
-                        workdir, "{}_d{}_h{}_1".format(atom_id, direction, h))
-                    (itr, total_energy1) = self.sp(pdfparam1, workdir1)
+                        pdfparam1 = pdfparam
+                        pdfparam1.molecule[atom_id] = atom1
+                        workdir1 = os.path.join(
+                            workdir, "{}_d{}_h{}_1".format(atom_id, direction, h))
+                        (itr, total_energy1) = self.sp(pdfparam1, workdir1)
 
-                    pdfparam2 = pdfparam
-                    pdfparam2.molecule[atom_id] = atom2
-                    workdir2 = os.path.join(
-                        workdir, "{}_d{}_h{}_2".format(atom_id, direction, h))
-                    (itr, total_energy2) = self.sp(pdfparam2, workdir2)
+                        pdfparam2 = pdfparam
+                        pdfparam2.molecule[atom_id] = atom2
+                        workdir2 = os.path.join(
+                            workdir, "{}_d{}_h{}_2".format(atom_id, direction, h))
+                        (itr, total_energy2) = self.sp(pdfparam2, workdir2)
 
-                    delta_TE = total_energy2 - total_energy1
-                    print("h={: e}, delta_TE={: e}, v={: e}".format(
-                        h, delta_TE, delta_TE / (2.0 * h)))
-                    if (math.fabs(delta_TE) < accuracy) or (h < 1.0E-2):
-                        logger.debug("numerical grad condition satisfied. value={} < {}".format(
-                            delta_TE, accuracy))
-                        break
+                        delta_TE = total_energy2 - total_energy1
+                        print("h={: e}, delta_TE={: e}, v={: e}".format(
+                            h, delta_TE, delta_TE / (2.0 * h)))
+                        if (math.fabs(delta_TE) < accuracy) or (h < 1.0E-2):
+                            logger.debug("numerical grad condition satisfied. value={} < {}".format(
+                                delta_TE, accuracy))
+                            break
 
-                    h *= 0.5
+                        h *= 0.5
+                        sys.stderr.flush()
+                        sys.stdout.flush()
+
+                    # one of x, y, z has finished
+                    value = delta_TE / (2.0 * h)
+                    grad_mat[index][direction] = float(value)
+                    logger.debug("gradient value [{}][{}] = {}".format(atom_id,
+                                                                       direction_str[direction],
+                                                                       value))
+                    # self._show_grad_mat(grad_mat)
+
                     sys.stderr.flush()
                     sys.stdout.flush()
-
-                # one of x, y, z has finished
-                value = delta_TE / (2.0 * h)
-                grad_mat[index][direction] = float(value)
-                logger.debug("gradient value [{}][{}] = {}".format(atom_id,
-                                                                   direction_str[direction],
-                                                                   value))
-                # self._show_grad_mat(grad_mat)
-
-                sys.stderr.flush()
-                sys.stdout.flush()
+            finally:
+                pdfparam.molecule[atom_id] = atom
             index += 1
 
         logger.info("=== grad (accuracy={}) ===".format(accuracy))
