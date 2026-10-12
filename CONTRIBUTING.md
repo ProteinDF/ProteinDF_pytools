@@ -51,7 +51,7 @@ TASKと作業ブランチの状況は`devtool/tasks.sh`(`--all`でマージ済�
 
 ## 完了の確認
 
-`proteindf_bridge`を入れたPython(`PDFTOOLS_PYTHON`、または`.git/check-venv/`)と、ProteinDF本体のソースのパス(`PDF_HOME`)を設定してから、次を実行する。`black`が入っていれば変更ファイルの整形も確認する。
+`devtool/setup-check-venv.sh`で`.git/check-venv/`を作り(初回のみ。`PDFTOOLS_PYTHON`で別のPythonも指定できる)、ProteinDF本体のソースのパス(`PDF_HOME`)を設定してから、次を実行する。`sitecustomize.py`のあるvenvは使わない(詳細は`CLAUDE.md`)。`black`が入っていれば変更ファイルの整形も確認する。
 
 ```bash
 devtool/check.sh   # 差分の空白エラー、変更ファイルの構文・black、run_test.shのdoctest・unittest

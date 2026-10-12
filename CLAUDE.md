@@ -31,5 +31,8 @@
 
 ## テスト環境についての注意(2026-10-12時点)
 
-- `devtool/check.sh`は`run_test.sh`のdoctest・unittestを、ブランチのworktreeのソースに対して実行する(`PYTHONPATH`で指定)。`proteindf_bridge`を入れたPythonを`PDFTOOLS_PYTHON`(または`.git/check-venv/`)で指定し、`PDF_HOME`にProteinDF本体のソースのパスを設定する。未設定の間はtestsがSKIPになる。
-- ローカルの場所(上記のパス)は、公開ファイルではなく環境変数や`.git/`内の設定に置く。
+- `devtool/check.sh`は`run_test.sh`のdoctest・unittestを、ブランチのworktreeのソースに対して実行する(`PYTHONPATH`で指定)。`PDF_HOME`にProteinDF本体のソースのパスを設定する。未設定の間はtestsがSKIPになる。
+- Pythonは`PDFTOOLS_PYTHON`、なければ`.git/check-venv/`のものを使う。`.git/check-venv/`は`devtool/setup-check-venv.sh`で作る。要件: Python 3.12、`numpy<2`(`proteindf_bridge`が`ndarray.tostring`・`numpy.fromstring`を使うため)、`h5py`、`matplotlib`、`proteindf_bridge`。
+- **`sitecustomize.py`のあるvenv(他リポジトリの回帰テスト用のvenvなど)を使わない。** 起動時に`proteindf_tools`の不具合を上書きするため、不具合が隠れてテストが通ってしまう。`devtool/setup-check-venv.sh`は、見つけると警告する。
+- `proteindf_bridge`(別リポジトリ)に既知の不具合がある: `Matrix.set_buffer`が代入の直後に`self.rows`を参照して`ValueError`になる(`test_pdfarchive_sqlite3.py`の`test_population_roundtrip`が`expectedFailure`)。
+- ローカルの場所は、公開ファイルではなく環境変数や`.git/`内の設定に置く。
