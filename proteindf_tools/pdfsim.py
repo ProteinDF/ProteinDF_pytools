@@ -167,7 +167,7 @@ class PdfSim(object):
             if not os.path.exists(opt_workdir):
                 os.mkdir(opt_workdir)
             else:
-                self._logger.info('already exist: {}'.format(opt_workdir))
+                logger.info('already exist: {}'.format(opt_workdir))
             (grad_mat, rms) = self.numerical_grad(
                 pdfparam, opt_workdir, accuracy)
 
@@ -182,9 +182,12 @@ class PdfSim(object):
             # update
             i = 0
             for atom_id, atom in pdfparam.molecule.atoms():
-                atom.shift_by(alpha * grad_mat[i][0],
-                              alpha * grad_mat[i][1],
-                              alpha * grad_mat[i][2])
+                atom.shift_by([
+                    -alpha * grad_mat[i][0],
+                    -alpha * grad_mat[i][1],
+                    -alpha * grad_mat[i][2],
+                ])
+                i += 1
 
             opt_cycle += 1
 
@@ -270,7 +273,7 @@ class PdfSim(object):
 
 
     def total_energy(self, pdfparam, workdir="."):
-        (itr, total_energy) = self.calc_pdf(pdfparam, workdir)
+        (itr, total_energy) = self.sp(pdfparam, workdir=workdir)
 
         return (itr, total_energy)
 
