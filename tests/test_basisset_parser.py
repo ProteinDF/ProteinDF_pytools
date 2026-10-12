@@ -122,7 +122,7 @@ SPD 1 1.00
   1.0 1.0
 ****
 """
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             self.parser.parse(sample)
 
     def test_too_many_basis_blocks_same_atom(self):
