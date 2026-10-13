@@ -263,7 +263,7 @@ class MakeBasis2(object):
 
     def _load_alias(self, path):
         self._alias = {}
-        re_alias = re.compile("^\s*(\S.*?)\s*=\s*(\S.*?)\s*$")
+        re_alias = re.compile(r"^\s*(\S.*?)\s*=\s*(\S.*?)\s*$")
 
         if path != None:
             with open(path, mode='r') as f:
@@ -338,7 +338,7 @@ class MakeBasis2(object):
         answer = {}
 
         re_bs = re.compile(
-            'new basisSet\("?(.+?)"?,\s*"(.+?)",\s*"?(.+?)"?,\s*"?\[(.+?)\]"?,\s*"?(.+?)"?,\s*"?(.+?)"?,\s*"?(.+?)"?,\s*"?(.+?)"?.*\)')
+            r'new basisSet\("?(.+?)"?,\s*"(.+?)",\s*"?(.+?)"?,\s*"?\[(.+?)\]"?,\s*"?(.+?)"?,\s*"?(.+?)"?,\s*"?(.+?)"?,\s*"?(.+?)"?.*\)')
         lines = re_bs.findall(html)
         for l in lines:
             url = l[0]
@@ -470,7 +470,7 @@ class MakeBasis2(object):
         name_old = copy.copy(name)
         name = name.rstrip()
         name = name.replace(' (DFT Orbital)', '')
-        name = re.sub(' \(Dunning.*\)', '', name)
+        name = re.sub(r' \(Dunning.*\)', '', name)
         name = name.replace(' + ', '+')
         name = re.sub(' +$', '', name)
         name = name.rstrip()
