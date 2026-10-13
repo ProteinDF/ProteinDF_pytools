@@ -126,7 +126,7 @@ def get_vector(path, verbose=False):
         vct.load(path)
     else:
         print("vector file cannnot load.")
-        raise
+        raise ValueError("cannot load the file: {}".format(path))
 
     return vct
 

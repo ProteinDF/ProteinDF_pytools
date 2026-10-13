@@ -497,7 +497,7 @@ def main():
         tmp.load(design_matrix_path)
         X = tmp.get_general_matrix()
     else:
-        raise
+        raise ValueError("cannot load the file: {}".format(design_matrix_path))
     X.resize(num_of_real_atoms, num_of_real_atoms)
 
     y = pdf.Vector()

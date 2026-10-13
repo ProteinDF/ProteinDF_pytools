@@ -16,7 +16,7 @@ try:
 
     release = _pkg_version("proteindf_tools")
 except Exception:
-    release = "2024.3.0"
+    release = "2026.10.0"
 version = release
 
 # -- General configuration -----------------------------------------------

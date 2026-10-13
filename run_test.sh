@@ -31,6 +31,27 @@ done
 # ======================================================================
 UNITTESTS="\
   basis2 \
+  matrix \
+  vector \
+  basisset \
+  basisset_parser \
+  pdfmath \
+  functions \
+  orbinfo \
+  pdfparam_basic \
+  pdfparam_model \
+  pdfparam_hdf5 \
+  pdfarchive_sqlite3 \
+  process \
+  pdfcommon \
+  gauparam \
+  poputils \
+  pdfsim \
+  package \
+  pdfgraph_base \
+  pdfgraph_extra \
+  report \
+  pdf_test_eri \
   "
 
 for i in ${UNITTESTS}; do

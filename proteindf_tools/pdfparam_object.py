@@ -11,6 +11,7 @@ import sys
 import os
 import pickle
 import copy
+import math
 
 import logging
 logger = logging.getLogger(__name__)
@@ -246,7 +247,7 @@ class PdfParamObject(object):
 
     # scf_acceleration/anderson/damping_factor
     def _get_scf_acceleration_anderson_damping_factor(self):
-        return self._data["scf_acceleration_anderson_damping_factor"]
+        return self._data.get("scf_acceleration_anderson_damping_factor", None)
 
     def _set_scf_acceleration_anderson_damping_factor(self, value):
         if value != None:
@@ -516,16 +517,15 @@ class PdfParamObject(object):
         return bridge.StrUtils.str_to_bool(self._data.get("level_shift", False))
 
     def _set_level_shift(self, value):
-        value = value.to_upper()
         v = False
-        if value == "YES" or value == "TRUE" or value == 1:
+        if str(value).upper() in ("YES", "TRUE", "1"):
             v = True
         self._data["level_shift"] = v
 
     level_shift = property(_get_level_shift, _set_level_shift)
 
     def _get_level_shift_start_iteration(self):
-        return self._data.get("level_shift_start_iterartion", 1)
+        return self._data.get("level_shift_start_iteration", 1)
 
     def _set_level_shift_start_iteration(self, value):
         self._data["level_shift_start_iteration"] = int(value)
@@ -545,14 +545,15 @@ class PdfParamObject(object):
     )
 
     # SCF converged
-    @property
-    def scf_converged(self):
+    def _get_scf_converged(self):
         self._data.setdefault("control", {})
         return self._data["control"].get("scf_converged", False)
 
     def _set_scf_converged(self, yn):
         self._data.setdefault("control", {})
         self._data["control"]["scf_converged"] = bool(yn)
+
+    scf_converged = property(_get_scf_converged, _set_scf_converged)
 
     # molecule
     def _get_molecule(self):
@@ -691,7 +692,7 @@ class PdfParamObject(object):
                 self._data[key][atom_label] = bs
             else:
                 print("unknown key: {}".format(key))
-                raise
+                raise ValueError("unknown key: {}".format(key))
 
         elif isinstance(basisset, BasisSet) == True:
             self._data[key][atom_label] = basisset
@@ -810,7 +811,7 @@ class PdfParamObject(object):
             output += "    method/rks/electrons = %d\n" % (self.num_of_electrons)
             output += "    method/rks/occlevel = %s\n" % (self.occupation_level)
         else:
-            raise
+            raise NotImplementedError("method not supported: {}".format(self.method))
         output += "    max_iteration = {0}\n".format(self.max_iterations)
         if self.orbital_independence_threshold != None:
             output += "    orbital_independence_threshold  = {0}\n".format(
@@ -920,7 +921,7 @@ class PdfParamObject(object):
                 label = ""
                 if len(atom.label) > 0:
                     label = "@{}".format(label)
-                    label = re.sub("\s+", "_", label)
+                    label = re.sub(r"\s+", "_", label)
 
                 charge = ""
                 if abs(atom.charge) > 1.0e-5:
@@ -1403,7 +1404,8 @@ class PdfParamObject(object):
             return raw_data
 
         odict["coordinates"] = get_coordinates(self.molecule)
-        del odict["molecule"]
+        if "molecule" in odict:
+            del odict["molecule"]
 
         return odict
 
@@ -1443,7 +1445,9 @@ class PdfParamObject(object):
         answer = answer & self.compare_energy(other)
 
         # check Total Energy
-        iterations = max(self.iterations, other.iterations)
+        itr_self = 0 if self.iterations is None else self.iterations
+        itr_other = 0 if other.iterations is None else other.iterations
+        iterations = max(itr_self, itr_other)
         for itr in range(1, iterations + 1):
             TE1 = self.get_total_energy(itr)
             TE2 = other.get_total_energy(itr)
@@ -1457,11 +1461,15 @@ class PdfParamObject(object):
             v = abs(val1 - val2)
             answer = v < threshold
         elif isinstance(val1, list) and isinstance(val2, list):
-            if len(val1) == len(val2):
+            if len(val1) != len(val2):
+                answer = False
+            else:
+                answer = True
                 for i in range(len(val1)):
-                    answer = answer ^ self._check(
+                    elem_ok = self._check(
                         val1[i], val2[i], "{0}[{1}]".format(msg, i), threshold
                     )
+                    answer = answer and elem_ok
         else:
             answer = val1 == val2
 
@@ -1494,8 +1502,10 @@ class PdfParamObject(object):
     def compare_energy(self, rhs, threshold=error_threshold):
         answer = True
 
-        TE_self = self.get_total_energy(self.iterations)
-        TE_other = rhs.get_total_energy(rhs.iterations)
+        itr_self = 0 if self.iterations is None else self.iterations
+        itr_other = 0 if rhs.iterations is None else rhs.iterations
+        TE_self = self.get_total_energy(itr_self)
+        TE_other = rhs.get_total_energy(itr_other)
         answer = answer & self._check(TE_self, TE_other, "TE", threshold)
 
         return answer
@@ -1506,24 +1516,13 @@ class PdfParamObject(object):
         answer = answer & self._check(
             self.num_of_atoms, rhs.num_of_atoms, "num of atoms"
         )
-        num_of_atoms = self.num_of_atoms
+        if not answer or self.num_of_atoms is None:
+            return answer
 
-        itr1 = self.iterations
-        itr2 = rhs.iterations
-        pop1 = self.get_population("mulliken", itr1)
-        pop2 = rhs.get_population("mulliken", itr2)
-
-        if isinstance(pop1, bridge.Matrix):
-            if isinstance(pop2, bridge.Matrix):
-                answer = answer & self._check(pop1.rows, pop2.rows, "pop rows")
-                answer = answer & self._check(pop1.cols, pop2.cols, "pop cols")
-                answer = answer & self._check(pop1, pop2, "pop matrix")
-            else:
-                logger.warning("type mismatch(rhs): POP not found")
-                answer = False
-        else:
-            logger.warning("type mismatch(lhs): POP not found")
-            answer = False
+        for atom_index in range(self.num_of_atoms):
+            pop1 = self.get_mulliken_atom_population(atom_index)
+            pop2 = rhs.get_mulliken_atom_population(atom_index)
+            answer = answer & self._check(pop1, pop2, "pop[%d]" % atom_index)
 
         return answer
 

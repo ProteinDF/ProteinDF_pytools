@@ -21,6 +21,7 @@
 
 from .process import Process
 from .pdfparam import PdfParam
+from .basis2 import Basis2
 
 import proteindf_bridge as bridge
 
@@ -150,7 +151,9 @@ def run_pdf(subcmd):
         sys.stderr.write("return code = {}".format(return_code))
         logger.critical("Failed to execute command: %s" % cmd)
         logger.critical("return code = {}".format(return_code))
-        raise
+        raise RuntimeError(
+            "Failed to execute command: {} (return code={})".format(cmd, return_code)
+        )
 
 
 def mpac2py(path):

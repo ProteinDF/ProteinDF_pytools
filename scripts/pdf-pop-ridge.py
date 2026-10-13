@@ -176,7 +176,7 @@ def main():
         tmp.load(design_matrix_path)
         X = tmp.get_general_matrix()
     else:
-        raise
+        raise ValueError("cannot load the file: {}".format(design_matrix_path))
     y = pdf.Vector()
     y.load(target_vector_path)
 

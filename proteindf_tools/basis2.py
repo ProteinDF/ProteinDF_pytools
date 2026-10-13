@@ -33,72 +33,39 @@ class Basis2(object):
     """
     read ProteinDF basis2 file
 
-    >>> bs2 = Basis2("data/basis2.sample")
+    >>> import os, tempfile
+    >>> sample = '''O-SAMPLE
+    ...  1 0 0 0 0 0 0 0 0 0 0
+    ...  1
+    ...      1.000000e+00  1.000000e+00
+    ... A-SAMPLE
+    ...  1 0 0 0 0 0 0 0 0 0 0
+    ...  1
+    ...      2.000000e+00  1.000000e+00
+    ...  1 0 0 0 0 0 0 0 0 0 0
+    ...  1
+    ...      3.000000e+00  1.000000e+00
+    ... '''
+    >>> with tempfile.NamedTemporaryFile("w", delete=False) as f:
+    ...     _ = f.write(sample)
+    ...     path = f.name
+    >>> bs2 = Basis2(path)
     >>> print(bs2.get_basis2())
-    O-CARBON (621/41) by FS
-     3 2 0 0 0 0 0 0 0 0 0
-     6
-         2.808064e+03  2.017830e-03
-         4.211383e+02  1.543320e-02
-         9.558662e+01  7.558155e-02
-         2.673900e+01  2.478282e-01
-         8.432827e+00  4.793725e-01
-         2.760582e+00  3.338344e-01
-     2
-         5.447004e+00 -7.784077e-02
-         4.792422e-01  5.689560e-01
+    O-SAMPLE
+     1 0 0 0 0 0 0 0 0 0 0
      1
-         1.461565e-01  1.000000e+00
-     4
-         1.813085e+01  1.585473e-02
-         4.099883e+00  9.568277e-02
-         1.185837e+00  3.049119e-01
-         3.685974e-01  4.935017e-01
-     1
-         1.097200e-01  1.000000e+00
+         1.000000e+00  1.000000e+00
     <BLANKLINE>
-    A-CARBON (7/2;7/2) by FS
-     7 2 0 0 0 0 0 0 0 0 0
+    A-SAMPLE
+     1 0 0 0 0 0 0 0 0 0 0
      1
-         3.467611e+02  1.000000e+00
+         2.000000e+00  1.000000e+00
+     1 0 0 0 0 0 0 0 0 0 0
      1
-         7.966888e+01  1.000000e+00
-     1
-         2.201073e+01  1.000000e+00
-     1
-         6.473901e+00  1.000000e+00
-     1
-         2.508147e+00  1.000000e+00
-     1
-         7.781041e-01  1.000000e+00
-     1
-         2.288027e-01  1.000000e+00
-     1
-         2.508147e+00  1.000000e+00
-     1
-         2.288027e-01  1.000000e+00
-    A-CARBON (7/2;7/2) by FS
-     7 2 0 0 0 0 0 0 0 0 0
-     1
-         1.160000e+02  1.000000e+00
-     1
-         2.655629e+01  1.000000e+00
-     1
-         7.336909e+00  1.000000e+00
-     1
-         2.157967e+00  1.000000e+00
-     1
-         8.360489e-01  1.000000e+00
-     1
-         2.593680e-01  1.000000e+00
-     1
-         7.626760e-02  1.000000e+00
-     1
-         8.360489e-01  1.000000e+00
-     1
-         7.626760e-02  1.000000e+00
+         3.000000e+00  1.000000e+00
     <BLANKLINE>
     <BLANKLINE>
+    >>> os.remove(path)
     """
 
     _shell_chars = list("spdfghijklmnopqr")
@@ -172,7 +139,7 @@ class Basis2(object):
                         name = None
                     else:
                         logger.critical("basisset name is not found: {}".format(name))
-                        raise
+                        raise ValueError("unknown basis set name: {}".format(name))
 
     def _load_basis(self, fh):
         basisset = None
@@ -352,7 +319,8 @@ class Basis2(object):
             if name in self._data["basis_xc"]:
                 basis_xc = self._data["basis_xc"][name]
                 output += str(basis_j)
-                output += str(basis_xc)
+                xc_lines = str(basis_xc).splitlines(True)
+                output += "".join(xc_lines[1:])
                 output += "\n"
 
         return output

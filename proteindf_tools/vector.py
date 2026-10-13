@@ -107,7 +107,7 @@ class Vector(bridge.Vector):
 
         fout = open(file_path, "wb")
         # write header
-        header_struct = "l"
+        header_struct = "=i"
         header = struct.pack(header_struct, size)
         fout.write(header)
 

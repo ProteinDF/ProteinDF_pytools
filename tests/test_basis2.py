@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import unittest
+import os
+import tempfile
 import textwrap
+import unittest
 
 from proteindf_tools.basis2 import Basis2
+from proteindf_tools.basisset import BasisSet, ContractedGTO, PrimitiveGTO
 
 
 class TestBasis2(unittest.TestCase):
@@ -68,6 +71,120 @@ class TestBasis2(unittest.TestCase):
         bs2 = Basis2()
         dzvp2 = bs2.get_basisset("O-DZVP2.C")
         self.assertEqual(str(dzvp2).strip(), expect)
+
+
+class TestBasis2Additional(unittest.TestCase):
+    def test_basis_set_get_basis2(self):
+        bs = BasisSet("O-TEST.H")
+        cgto_s = ContractedGTO("s", 2)
+        cgto_s[0] = PrimitiveGTO(50.0, 0.1)
+        cgto_s[1] = PrimitiveGTO(0.5, 0.9)
+        bs.append(cgto_s)
+
+        cgto_p = ContractedGTO("p", 1)
+        cgto_p[0] = PrimitiveGTO(1.5, 1.0)
+        bs.append(cgto_p)
+
+        basis2_str = bs.get_basis2()
+        lines = basis2_str.strip().splitlines()
+        self.assertEqual(lines[0], "O-TEST.H")
+        self.assertEqual(
+            lines[1].split(),
+            ["1", "1", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
+        )
+
+    def test_basis2_roundtrip_orbital(self):
+        sample = textwrap.dedent("""\
+        O-SAMPLE.H
+         1 1 0 0 0 0 0 0 0 0 0
+         2
+             5.000000e+01  1.000000e-01
+             5.000000e-01  9.000000e-01
+         1
+             1.500000e-01  1.000000e+00
+        """)
+        with tempfile.NamedTemporaryFile("w", delete=False) as f:
+            f.write(sample)
+            path1 = f.name
+        try:
+            bs2_first = Basis2(path1)
+            output_str = bs2_first.get_basis2()
+
+            with tempfile.NamedTemporaryFile("w", delete=False) as f2:
+                f2.write(output_str)
+                path2 = f2.name
+            try:
+                bs2_second = Basis2(path2)
+                self.assertEqual(
+                    bs2_first.get_basisset("O-SAMPLE.H"),
+                    bs2_second.get_basisset("O-SAMPLE.H"),
+                )
+            finally:
+                os.remove(path2)
+        finally:
+            os.remove(path1)
+
+    def test_basis2_roundtrip_with_auxiliary(self):
+        # Basis2.get_basis2() outputs the basis set name for both basis_j and basis_xc,
+        # but Basis2._load() only reads the name line once before expecting J then XC data,
+        # causing ValueError when re-parsing the output.
+        sample = textwrap.dedent("""\
+        A-SAMPLE.H
+         1 0 0 0
+         1
+             1.000000e+00
+         1 0 0 0
+         1
+             2.000000e+00
+        """)
+        with tempfile.NamedTemporaryFile("w", delete=False) as f:
+            f.write(sample)
+            path1 = f.name
+        try:
+            bs2_first = Basis2(path1)
+            output_str = bs2_first.get_basis2()
+
+            with tempfile.NamedTemporaryFile("w", delete=False) as f2:
+                f2.write(output_str)
+                path2 = f2.name
+            try:
+                bs2_second = Basis2(path2)
+                self.assertEqual(
+                    bs2_first.get_basisset_j("A-SAMPLE.H"),
+                    bs2_second.get_basisset_j("A-SAMPLE.H"),
+                )
+            finally:
+                os.remove(path2)
+        finally:
+            os.remove(path1)
+
+    @unittest.skipUnless(
+        os.environ.get("PDF_HOME")
+        and os.path.exists(os.path.join(os.environ.get("PDF_HOME", ""), "data/basis2")),
+        "PDF_HOME data/basis2 is not available",
+    )
+    def test_pdf_home_basis2_load(self):
+        bs2 = Basis2()
+        dzvp = bs2.get_basisset("O-DZVP.H")
+        self.assertTrue(len(dzvp) > 0)
+
+    def test_basis2_unknown_basis_name(self):
+        sample = textwrap.dedent("""\
+        X-SAMPLE.H
+         1 1 0 0 0 0 0 0 0 0 0
+         2
+             5.000000e+01  1.000000e-01
+             5.000000e-01  9.000000e-01
+        """)
+        with tempfile.NamedTemporaryFile("w", delete=False) as f:
+            f.write(sample)
+            path = f.name
+        try:
+            with self.assertRaises(ValueError) as ctx:
+                Basis2(path)
+            self.assertEqual(str(ctx.exception), "unknown basis set name: X-SAMPLE.H")
+        finally:
+            os.remove(path)
 
 
 if __name__ == "__main__":

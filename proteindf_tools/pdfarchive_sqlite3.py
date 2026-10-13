@@ -26,6 +26,7 @@ import sqlite3
 
 import proteindf_bridge as bridge
 from .pdfparam import PdfParam
+from .basisset import BasisSet, ContractedGTO, PrimitiveGTO
 from . import pdfcommon as pdf
 
 
@@ -46,9 +47,9 @@ class PdfArchive_Sqlite3(object):
         self._pdf_id = "0"
         self._db = bridge.DbManager(db_path)
         user_version = self._db.get_user_version()
-        if user_version > PdfArchive._format_version:
+        if user_version > PdfArchive_Sqlite3._format_version:
             self._logger.warning('DB format version is later: code=%d < db=%d' % (
-                PdfArchive._format_version, user_version))
+                PdfArchive_Sqlite3._format_version, user_version))
         self._create_tables()
         self._read_db()
 
@@ -558,7 +559,7 @@ class PdfArchive_Sqlite3(object):
         """
         answer = None
         v = self.get_occupations(runtype)
-        for i in range(len(v) - 1, 0, -1):
+        for i in range(len(v) - 1, -1, -1):
             if v[i] > 0.0:
                 answer = i
                 break
