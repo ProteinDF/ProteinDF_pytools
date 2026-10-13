@@ -295,12 +295,8 @@ class TestPdfParamModel(unittest.TestCase):
         param.num_of_atoms = 2
         self.assertIsNone(param.get_gradient_rms())
 
-    def test_gradient_rms_computed_expected_failure(self):
-        """get_gradient_rms fails with NameError: name 'math' is not defined.
-
-        Expected: sqrt((0.01^2 + 0.02^2 + 0.03^2 + 0.01^2 + 0.02^2 + 0.03^2) / (3 * 2))
-        Actual: NameError: name 'math' is not defined in pdfparam_object.py:791
-        """
+    def test_gradient_rms_computed(self):
+        """get_gradient_rms computes the root-mean-square of gradient vectors."""
         param = PdfParamObject()
         param.num_of_atoms = 2
         param.set_gradient(0, 0.01, 0.02, 0.03)
@@ -354,29 +350,13 @@ class TestPdfParamModel(unittest.TestCase):
         # 1 element differs: (False ^ False ^ True ^ True -> False)
         self.assertFalse(param._check([1.0, 2.0, 3.0], [1.0, 2.0, 9.0], "odd list 1 diff"))
 
-    def test_check_list_even_length_identical_expected_failure(self):
-        """_check fails for identical even-length lists due to XOR accumulation bug.
-
-        In _check, `answer = answer ^ self._check(...)` starts with answer = False.
-        For a list of length 2 where both elements match:
-          i=0: False ^ True = True
-          i=1: True ^ True = False
-        Expected: True
-        Actual: False
-        """
+    def test_check_list_even_length_identical(self):
+        """_check returns True for identical even-length lists."""
         param = PdfParamObject()
         self.assertTrue(param._check([1.0, 2.0], [1.0, 2.0], "even list identical"))
 
-    def test_check_list_odd_length_two_diffs_expected_failure(self):
-        """_check returns True for list with 2 differences due to XOR accumulation bug.
-
-        In _check with length 3 and 2 elements differing:
-          i=0: False ^ True = True (matched)
-          i=1: True ^ False = True (mismatched)
-          i=2: True ^ False = True (mismatched)
-        Expected: False (they do not match)
-        Actual: True
-        """
+    def test_check_list_odd_length_two_diffs(self):
+        """_check returns False for odd-length lists with two differences."""
         param = PdfParamObject()
         self.assertFalse(param._check([1.0, 2.0, 3.0], [1.0, 9.0, 9.0], "odd list 2 diffs"))
 
@@ -426,7 +406,7 @@ class TestPdfParamModel(unittest.TestCase):
         p2.set_total_energy(5, -100.0 + error_threshold * 2.0)
         self.assertFalse(p1.compare_energy(p2))
 
-    def test_compare_pop_expected_failure(self):
+    def test_compare_pop(self):
         p1 = PdfParamObject()
         p1.num_of_atoms = 2
         p1.set_mulliken_atom_population(0, 0.987)
@@ -462,12 +442,8 @@ class TestPdfParamModel(unittest.TestCase):
         p2.num_of_atoms = 3
         self.assertFalse(p1.compare_pop(p2))
 
-    def test_compare_grad_expected_failure(self):
-        """compare_grad fails because get_gradient_rms raises NameError (missing math import).
-
-        Expected: True for matching gradients
-        Actual: NameError: name 'math' is not defined in get_gradient_rms
-        """
+    def test_compare_grad(self):
+        """compare_grad returns True for matching gradient vectors."""
         p1 = PdfParamObject()
         p1.num_of_atoms = 1
         p1.set_gradient(0, 0.01, 0.02, 0.03)

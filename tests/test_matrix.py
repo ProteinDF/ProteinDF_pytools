@@ -140,9 +140,7 @@ class TestMatrix(unittest.TestCase):
         self.assertIs(ret, False)
 
     def test_matrix_load_unknown_matrix_type(self):
-        # Matrix.load currently executes a bare 'raise' on unknown matrix_type,
-        # which raises 'RuntimeError: No active exception to reraise'.
-        # Expected behavior is raising ValueError (or returning False).
+        # Matrix.load raises ValueError on unknown matrix_type.
         hdr = struct.pack("<iii", 99, 2, 2)
         body = struct.pack("<4d", 1.0, 2.0, 3.0, 4.0)
         tmpfile = self._create_tempfile(content=hdr + body)

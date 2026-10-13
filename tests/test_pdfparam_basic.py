@@ -169,30 +169,30 @@ class TestPdfParamBasic(unittest.TestCase):
         param.level_shift_virtual_mo = "0.2"
         self.assertAlmostEqual(param.level_shift_virtual_mo, 0.2)
 
-    # 不具合検出テスト (expectedFailure)
+    # プロパティ・setter
     def test_scf_converged_setter(self):
-        """scf_converged プロパティに setter が定義されておらず AttributeError となる。"""
+        """scf_converged に値を設定でき、読み戻せる。"""
         param = PdfParam()
         self.assertFalse(param.scf_converged)
         param.scf_converged = True
         self.assertTrue(param.scf_converged)
 
     def test_level_shift_setter(self):
-        """_set_level_shift で value.to_upper() を呼んでおり AttributeError となる。"""
+        """level_shift に文字列を設定でき、真偽値として読み戻せる。"""
         param = PdfParam()
         self.assertFalse(param.level_shift)
         param.level_shift = "yes"
         self.assertTrue(param.level_shift)
 
     def test_level_shift_start_iteration_setter(self):
-        """getter のキー名誤字 ('level_shift_start_iterartion') により setter の値が反映されない。"""
+        """level_shift_start_iteration に値を設定でき、読み戻せる。"""
         param = PdfParam()
         self.assertEqual(param.level_shift_start_iteration, 1)
         param.level_shift_start_iteration = 5
         self.assertEqual(param.level_shift_start_iteration, 5)
 
     def test_scf_acceleration_anderson_damping_factor_default(self):
-        """初期状態で KeyError ('scf_acceleration_anderson_damping_factor') が送出される。"""
+        """scf_acceleration_anderson_damping_factor の初期値として None が取得できる。"""
         param = PdfParam()
         self.assertIsNone(param.scf_acceleration_anderson_damping_factor)
 
@@ -292,13 +292,13 @@ class TestPdfParamBasic(unittest.TestCase):
         self.assertNotEqual(p1, p3)
 
     def test_get_raw_data_uninitialized_molecule(self):
-        """molecule 未設定の空 PdfParam で get_raw_data() を呼ぶと KeyError('molecule') となる。"""
+        """molecule 未設定の空 PdfParam から get_raw_data() で辞書を取得できる。"""
         param = PdfParam()
         raw = param.get_raw_data()
         self.assertIsInstance(raw, dict)
 
     def test_equality_default_objects(self):
-        """デフォルト状態の PdfParam 同士の比較で int(iteration) が NoneType のため TypeError となる。"""
+        """デフォルト状態の PdfParam 同士を等値比較できる。"""
         p1 = PdfParam()
         p2 = PdfParam()
         self.assertEqual(p1, p2)
