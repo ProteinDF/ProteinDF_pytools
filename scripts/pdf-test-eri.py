@@ -33,7 +33,6 @@ import subprocess
 import argparse
 
 import proteindf_bridge as bridge
-import proteindf_tools as pdf
 
 # parameters
 PDF_INDEX_FILE = 'pdfindex.mpac'
@@ -54,6 +53,7 @@ def make_orbinfo_table(pdfparam_path):
                     'stdout': subprocess.PIPE,
                     'stderr': subprocess.STDOUT,
                     'close_fds': True,
+                    'universal_newlines': True,
                     }
     try:
         proc = subprocess.Popen(args, **subproc_args)
@@ -65,11 +65,11 @@ def make_orbinfo_table(pdfparam_path):
         line = stdouterr.readline()
         if not line:
             break
-        print line.rstrip()
+        print(line.rstrip())
     ret = proc.wait()
     #sys.stdout.write('%s retrun code: %d\n' % (args[0], ret))
 
-    orbinfo = load_mpac(orb_info_path)
+    orbinfo = bridge.load_msgpack(orb_info_path)
     return orbinfo
 
 
@@ -105,7 +105,7 @@ def gau2pdf_corresponding_index(orb, basis_type_id):
 
 
 def get_pdf_eri_list(pdfparam_path, pdf_eri_indeces_path):
-    re_eri_val = re.compile('^.*=\s*(\S+)')
+    re_eri_val = re.compile(r'^.*=\s*(\S+)')
 
     PDF_HOME = os.environ['PDF_HOME']
     cmd = '%s/bin/pdf-eri' % (PDF_HOME)
@@ -116,6 +116,7 @@ def get_pdf_eri_list(pdfparam_path, pdf_eri_indeces_path):
                     'stdout': subprocess.PIPE,
                     'stderr': subprocess.STDOUT,
                     'close_fds': True,
+                    'universal_newlines': True,
                     }
     try:
         proc = subprocess.Popen(args, **subproc_args)
@@ -164,7 +165,7 @@ def main():
                         nargs=1,
                         help='ProteinDF parameter file')
     parser.add_argument('-t', '--threshold',
-                        nargs=1,
+                        type=float,
                         action='store',
                         default=1.0E-5)
     parser.add_argument('-v', '--verbose',
@@ -180,7 +181,7 @@ def main():
     # ERI check
     error_count = 0
     total_count = 0
-    eri_data = load_mpac(eri_mpac_file)
+    eri_data = bridge.load_msgpack(eri_mpac_file)
 
     num_of_tests = len(eri_data)
 
