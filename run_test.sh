@@ -51,6 +51,7 @@ UNITTESTS="\
   pdfgraph_base \
   pdfgraph_extra \
   report \
+  pdf_test_eri \
   "
 
 for i in ${UNITTESTS}; do
