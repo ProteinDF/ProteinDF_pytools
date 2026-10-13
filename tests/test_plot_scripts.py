@@ -6,6 +6,7 @@ import os
 import sys
 import tempfile
 import unittest
+import unittest.mock as mock
 
 os.environ["MPLBACKEND"] = "Agg"
 import matplotlib.pyplot as plt
@@ -105,12 +106,8 @@ class TestPlotScripts(unittest.TestCase):
         self.assertTrue(os.path.exists(out_png))
         self.assertGreater(os.path.getsize(out_png), 0)
 
-    # scripts/pdf-plot-gvalues.py:104:
-    # pdf.run_pdf(args1) raises FileNotFoundError: [Errno 2] No such file or directory: 'pdf'
-    # (Attempting to run ProteinDF executable 'pdf component ...' which is unavailable)
-    @unittest.expectedFailure
     def test_plot_gvalues(self):
-        """pdf-plot-gvalues.py generates a PNG file from synthetic HDF5 results."""
+        """pdf-plot-gvalues.py generates a PNG file with mocked external component command."""
         h5_path = os.path.join(self.tmpdir.name, "pdfresults.h5")
         out_png = os.path.join(self.tmpdir.name, "g-values.png")
         csv_path = os.path.join(self.tmpdir.name, "g-values.csv")
@@ -130,9 +127,27 @@ class TestPlotScripts(unittest.TestCase):
         p.save_TEs(Vector([-100.0]))
         p._close()
 
+        called_cmds = []
+
+        def fake_run_pdf(args):
+            called_cmds.append(list(args))
+            vtr = Vector([0.1, 0.2, 0.3, 0.4, 0.5])
+            vtr.save("g-values.vtr")
+
         mod = _load_script("pdf-plot-gvalues.py")
         sys.argv = ["pdf-plot-gvalues.py", "-d", h5_path, "-o", out_png, "--csv", csv_path]
-        mod.main()
+        with mock.patch("proteindf_tools.run_pdf", side_effect=fake_run_pdf):
+            mod.main()
+
+        self.assertEqual(len(called_cmds), 1)
+        cmd = called_cmds[0]
+        self.assertIn("component", cmd)
+        self.assertIn("-i", cmd)
+        self.assertEqual(cmd[cmd.index("-i") + 1], 1)
+        self.assertIn("-S", cmd)
+        self.assertEqual(cmd[cmd.index("-S") + 1], "CSC.mat")
+        self.assertIn("-g", cmd)
+        self.assertEqual(cmd[cmd.index("-g") + 1], "g-values.vtr")
 
         self.assertTrue(os.path.exists(out_png))
         self.assertGreater(os.path.getsize(out_png), 0)
@@ -140,11 +155,13 @@ class TestPlotScripts(unittest.TestCase):
     # scripts/pdf-plot-pop.py:82:
     # make_pop_data_diff(pop_vtr1, pop_vtr2, data_path)
     # raises UnboundLocalError: cannot access local variable 'pop_vtr1' where it is not associated with a value
-    # (The script attempts to load population data from external files pop.mulliken.<run_type><itr>.vtr
-    # returned by pdfparam.get_pop_mulliken_path() instead of reading from HDF5 archive)
+    # Cause: The script accepts --h5 for an HDF5 result file, but attempts to read population data
+    # from external .vtr files (pop.mulliken.<run_type><itr>.vtr via pdfparam.get_pop_mulliken_path())
+    # instead of reading from the HDF5 archive (e.g. via pdfparam.get_pop_mulliken_atom()).
+    # When external files do not exist, pop_vtr1 is left unbound and UnboundLocalError is raised.
     @unittest.expectedFailure
     def test_plot_pop(self):
-        """pdf-plot-pop.py generates a PNG file from synthetic HDF5 results."""
+        """pdf-plot-pop.py generates a PNG file from population data in an HDF5 file."""
         h5_path = os.path.join(self.tmpdir.name, "pdfresults.h5")
         out_png = os.path.join(self.tmpdir.name, "pop.png")
 
@@ -152,11 +169,16 @@ class TestPlotScripts(unittest.TestCase):
         p.open(h5_path)
         p.method = "rks"
         p.iterations = 1
-        p.num_of_atoms = 1
-        p.num_of_AOs = 5
-        p.num_of_MOs = 5
+        p.num_of_atoms = 2
+        p.num_of_AOs = 4
+        p.num_of_MOs = 4
         p.save_model()
         p.save_TEs(Vector([-100.0]))
+
+        # Save population data into HDF5 at pop/mulliken/<run_type>_<iteration>
+        pop = Vector([0.45, -0.45])
+        h5path = p._get_h5path_pop_mulliken_atom("rks", 1)
+        p._write_vector(p._h5root, h5path, pop)
         p._close()
 
         mod = _load_script("pdf-plot-pop.py")
@@ -221,6 +243,21 @@ class TestPlotScripts(unittest.TestCase):
         sys.argv = ["pdf-plot-decaymat.py", "-d", db_path, mat_path, "-o", out_png]
         mod.main()
 
+        self.assertTrue(os.path.exists(out_png))
+        self.assertGreater(os.path.getsize(out_png), 0)
+
+    @unittest.skipUnless(
+        os.environ.get("PDF_HOME")
+        and os.path.exists(os.path.join(os.environ.get("PDF_HOME", ""), "data/basis2")),
+        "PDF_HOME data/basis2 is not available",
+    )
+    def test_plot_basisset(self):
+        """pdf-plot-basisset.py generates a PNG file when PDF_HOME data/basis2 is available."""
+        mod = _load_script("pdf-plot-basisset.py")
+        sys.argv = ["pdf-plot-basisset.py", "O-STO-3G.H"]
+        mod.main()
+
+        out_png = os.path.join(self.tmpdir.name, "basis_O-STO-3G.H.png")
         self.assertTrue(os.path.exists(out_png))
         self.assertGreater(os.path.getsize(out_png), 0)
 
