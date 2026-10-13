@@ -21,7 +21,6 @@
 
 import os
 import sys
-from types import *
 import argparse
 
 import proteindf_bridge as bridge
@@ -106,9 +105,9 @@ def elevel2dat(itr, eigvals, data_path):
     eigvals: energy level(bridge.Vector object)
     data_path: output path of data
     """
-    assert(isinstance(itr, IntType))
+    assert(isinstance(itr, int))
     assert(isinstance(eigvals, bridge.Vector))
-    assert(isinstance(data_path, StringType))
+    assert(isinstance(data_path, str))
 
     dat = open(data_path, 'w')
     for level, e in enumerate(eigvals):
