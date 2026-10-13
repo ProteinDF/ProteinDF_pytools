@@ -33,10 +33,10 @@ class BasisSetParser(object):
     """
     gaussian94 format text data (eg. ESML html) parser
     """
-    _re_atom_line = re.compile('\s*(\S+)\s+0')
-    _re_CGTO_line = re.compile('\s*(\S+)\s+(\S+)\s+(\S+)')
-    _re_PGTO_line1 = re.compile('\s*(\S+)\s+(\S+)')
-    _re_PGTO_line2 = re.compile('\s*(\S+)\s+(\S+)\s+(\S+)')
+    _re_atom_line = re.compile(r'\s*(\S+)\s+0')
+    _re_CGTO_line = re.compile(r'\s*(\S+)\s+(\S+)\s+(\S+)')
+    _re_PGTO_line1 = re.compile(r'\s*(\S+)\s+(\S+)')
+    _re_PGTO_line2 = re.compile(r'\s*(\S+)\s+(\S+)\s+(\S+)')
 
     def __init__(self):
         pass

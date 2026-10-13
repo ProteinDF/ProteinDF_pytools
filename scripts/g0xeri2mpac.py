@@ -65,7 +65,7 @@ def parse_gau_output(path):
     re_begin_dump_2e = re.compile('^.*Dumping Two-Electron integrals.*$')
     re_end_dump_2e = re.compile('^.*Leave Link  316.*$')
     re_dump_2e_int = re.compile(
-        '^.*I=\s*(\d+)\s+J=\s*(\d+)\s+K=\s*(\d+)\s+L=\s*(\d+)\s+Int=\s*(\S+)')
+        r'^.*I=\s*(\d+)\s+J=\s*(\d+)\s+K=\s*(\d+)\s+L=\s*(\d+)\s+Int=\s*(\S+)')
 
     integrals = []
 
