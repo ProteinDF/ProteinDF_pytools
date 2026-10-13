@@ -587,7 +587,6 @@ class DfMatrixGraph(DfGraph):
         # data label
         rows = self._matrix.rows
         cols = self._matrix.cols
-        print("should write values: {}".format(self.should_write_values))
         if self.should_write_values:
             for row in range(rows):
                 for col in range(cols):
