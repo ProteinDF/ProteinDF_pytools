@@ -8,7 +8,7 @@ from proteindf_tools.pdfmath import Math
 
 class TestPdfMath(unittest.TestCase):
     def test_dbfact_zero(self):
-        # 0!! is mathematically 1.0, but Math.dbfact(0) returns 2.0 due to implementation
+        # Math.dbfact(0) returns 1.0 (0!! is mathematically 1.0).
         self.assertEqual(Math.dbfact(0), 1.0)
 
     def test_dbfact_known_values(self):
@@ -56,8 +56,7 @@ class TestPdfMath(unittest.TestCase):
         self.assertEqual(Math.dbfact(-1.5), 1.0)  # int(-1.5) == -1 -> returns 1.0
 
     def test_dbfact_float_zero(self):
-        # For inputs whose truncated integer part is 0 (0.5, -0.5),
-        # 0!! should mathematically be 1.0, but Math.dbfact returns 2.0 due to the 0!! bug.
+        # For inputs whose truncated integer part is 0 (0.5, -0.5), Math.dbfact returns 1.0.
         self.assertEqual(Math.dbfact(0.5), 1.0)
         self.assertEqual(Math.dbfact(-0.5), 1.0)
 

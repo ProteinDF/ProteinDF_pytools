@@ -71,8 +71,7 @@ class TestPdfArchiveSqlite3(unittest.TestCase):
 
     # 1. 構築テスト (未パッチ状態)
     def test_init_without_patch(self):
-        # 現状の pdfarchive_sqlite3.py は __init__ で未定義の PdfArchive._format_version を参照するため
-        # NameError となる不具合がある。本来はパッチなしで正常に構築できることが期待される。
+        # パッチなしで PdfArchive_Sqlite3 を正常に初期化できる。
         # sitecustomize.py による外部パッチの影響を排除してテストする。
         if hasattr(pdfarchive_sqlite3, "PdfArchive"):
             delattr(pdfarchive_sqlite3, "PdfArchive")
@@ -139,8 +138,7 @@ class TestPdfArchiveSqlite3(unittest.TestCase):
             self.assertAlmostEqual(archive.get_gradient_rms(), expected_rms, places=6)
 
     def test_get_basisset(self):
-        # pdfarchive_sqlite3.py の get_basisset() は未インポートの BasisSet, ContractedGTO, PrimitiveGTO を
-        # 参照するため NameError となる。本来は保存された基底関数情報が取得できることが期待される。
+        # 保存された基底関数情報を取得できる。
         param = self._create_sample_param()
         with mock.patch.object(pdfarchive_sqlite3, "PdfArchive", PdfArchive_Sqlite3, create=True):
             archive = PdfArchive_Sqlite3(self.db_path, pdfparam=param)
@@ -195,8 +193,7 @@ class TestPdfArchiveSqlite3(unittest.TestCase):
             self.assertEqual(archive.get_HOMO_level("rks"), 1)
 
     def test_get_homo_level_single_occ(self):
-        # get_HOMO_level は range(len(v) - 1, 0, -1) で走査するため、index 0 の占有軌道が探索されず
-        # 占有軌道が index 0 のみの場合に None を返す不具合がある。本来は 0 が返るべき。
+        # 占有軌道が index 0 のみの場合でも HOMO level (0) を正しく取得できる。
         with mock.patch.object(pdfarchive_sqlite3, "PdfArchive", PdfArchive_Sqlite3, create=True):
             archive = PdfArchive_Sqlite3(self.db_path)
             occ = bridge.Vector([2.0, 0.0])
