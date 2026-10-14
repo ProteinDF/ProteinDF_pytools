@@ -67,15 +67,21 @@ def main():
     run_type = "rks"
     itr = pdfparam.iterations
 
-    pop_vtr_path1 = pdfparam.get_pop_mulliken_path(run_type, itr)
-    if os.path.exists(pop_vtr_path1):
-        pop_vtr1 = pdf.Vector()
-        pop_vtr1.load(pop_vtr_path1)
+    pop_vtr1 = pdfparam.get_pop_mulliken_atom(run_type, itr)
+    if pop_vtr1 is None or len(pop_vtr1) == 0:
+        raise ValueError(
+            "Population data (Mulliken) for iteration {} not found in {}".format(
+                itr, pdfparam_h5_path
+            )
+        )
 
-    pop_vtr_path2 = pdfparam.get_pop_mulliken_path(run_type, 1)
-    if os.path.exists(pop_vtr_path2):
-        pop_vtr2 = pdf.Vector()
-        pop_vtr2.load(pop_vtr_path2)
+    pop_vtr2 = pdfparam.get_pop_mulliken_atom(run_type, 1)
+    if pop_vtr2 is None or len(pop_vtr2) == 0:
+        raise ValueError(
+            "Population data (Mulliken) for iteration 1 not found in {}".format(
+                pdfparam_h5_path
+            )
+        )
 
     data_path = "pop.mulliken.txt"
     # make_pop_data(pop_vtr, data_path)
