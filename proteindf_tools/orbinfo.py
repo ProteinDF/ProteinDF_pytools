@@ -34,39 +34,68 @@ class OrbInfo(object):
         self._orb_info = []
         self._atoms = []
         self._basissets = {}
-        # if isinstance(obj, PdfArchive):
-        #     self._setup_by_db(obj)
         if isinstance(obj, PdfParam):
             self._setup_by_param(obj)
+        elif hasattr(obj, "get_molecule") and hasattr(obj, "get_basisset_name") and hasattr(obj, "get_basisset"):
+            self._setup_by_db(obj)
 
-    # def _setup_by_db(self, db):
-    #     assert(isinstance(db, PdfArchive))
+    def _setup_by_db(self, db):
+        mol = db.get_molecule()
+        # make atom and basisset list
+        atom_index = 0
+        for key, atom in mol.atoms():
+            basisset_name = ""
+            # Candidates for basis set name lookup:
+            # 1. _get_atom_label(atom): matches symbol@label (standard convention in OrbInfo)
+            # 2. symbol@key: in PdfArchive_Sqlite3, atom_id is stored as key (e.g. '0', '1')
+            # 3. symbol@name: get_molecule() reconstructs atoms where DB 'label' is mapped to atom.name
+            # 4. symbol: default element symbol without specific label (e.g. 'H', 'C')
+            candidates = []
+            cand1 = self._get_atom_label(atom)
+            if cand1:
+                candidates.append(cand1)
+            if key is not None:
+                cand2 = "{symbol}@{key}".format(symbol=atom.symbol, key=key)
+                if cand2 not in candidates:
+                    candidates.append(cand2)
+            if getattr(atom, "name", None) and atom.name != "None":
+                cand3 = "{symbol}@{name}".format(symbol=atom.symbol, name=atom.name)
+                if cand3 not in candidates:
+                    candidates.append(cand3)
+            if atom.symbol not in candidates:
+                candidates.append(atom.symbol)
 
-    #     mol = db.get_molecule()
-    #     # make atom and basisset list
-    #     atom_index = 0
-    #     for key, atom in mol.atoms():
-    #         atom_label = self._get_atom_label(atom)
-    #         basisset_name = db.get_basisset_name(atom_label)
-    #         if basisset_name not in self._basissets.keys():
-    #             basisset = db.get_basisset(basisset_name)
-    #             self._basissets[basisset_name] = basisset
+            for candidate in candidates:
+                basisset_name = db.get_basisset_name(candidate)
+                if basisset_name:
+                    break
 
-    #         basisset = self._basissets[basisset_name]
-    #         num_of_CGTOs = len(basisset)
-    #         for CGTO_index in range(num_of_CGTOs):
-    #             CGTO = basisset[CGTO_index]
-    #             shell_type = CGTO.shell_type
-    #             shell_type_id = ContractedGTO.get_shell_type_id(shell_type)
-    #             num_of_basis_type = shell_type_id * 2 + 1
-    #             for basis_type in range(num_of_basis_type):
-    #                 data = {'atom_index': atom_index,
-    #                         'basisset_name': basisset_name,
-    #                         'CGTO_index': CGTO_index,
-    #                         'basis_type': basis_type}
-    #                 self._orb_info.append(data)
-    #         self._atoms.append(copy.deepcopy(atom))
-    #         atom_index += 1
+            if not basisset_name:
+                raise ValueError(
+                    "Basis set not found for atom (key='{}', symbol='{}'). Tried candidates: {}".format(
+                        key, atom.symbol, candidates
+                    )
+                )
+
+            if basisset_name not in self._basissets.keys():
+                basisset = db.get_basisset(basisset_name)
+                self._basissets[basisset_name] = basisset
+
+            basisset = self._basissets[basisset_name]
+            num_of_CGTOs = len(basisset)
+            for CGTO_index in range(num_of_CGTOs):
+                CGTO = basisset[CGTO_index]
+                shell_type = CGTO.shell_type
+                shell_type_id = ContractedGTO.get_shell_type_id(shell_type)
+                num_of_basis_type = shell_type_id * 2 + 1
+                for basis_type in range(num_of_basis_type):
+                    data = {'atom_index': atom_index,
+                            'basisset_name': basisset_name,
+                            'CGTO_index': CGTO_index,
+                            'basis_type': basis_type}
+                    self._orb_info.append(data)
+            self._atoms.append(copy.deepcopy(atom))
+            atom_index += 1
 
     def _setup_by_param(self, param):
         assert(isinstance(param, PdfParam))

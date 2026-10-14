@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
+import tempfile
 import unittest
 
 import proteindf_bridge as bridge
 from proteindf_tools.basisset import BasisSet, ContractedGTO, PrimitiveGTO
 from proteindf_tools.orbinfo import OrbInfo
+from proteindf_tools.pdfarchive_sqlite3 import PdfArchive_Sqlite3
 from proteindf_tools.pdfparam import PdfParam
 
 
@@ -133,6 +136,59 @@ class TestOrbInfo(unittest.TestCase):
         self.assertIsNone(orb.get_atom(99))
         self.assertIsNone(orb.get_shell_type(99))
         self.assertIsNone(orb.get_basis_type(99))
+
+    def test_compare_with_pdfarchive_sqlite3(self):
+        """Compare OrbInfo built from PdfParam vs PdfArchive_Sqlite3."""
+        param = self._create_hetero_param()
+        param.num_of_atoms = 2
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as fp:
+            db_path = fp.name
+        try:
+            archive = PdfArchive_Sqlite3(db_path, pdfparam=param)
+            orb_param = OrbInfo(param)
+            orb_archive = OrbInfo(archive)
+
+            self.assertEqual(orb_archive.get_num_of_orbitals(), orb_param.get_num_of_orbitals())
+            for idx in range(orb_param.get_num_of_orbitals()):
+                with self.subTest(orb_index=idx):
+                    self.assertEqual(orb_archive.get_atom_id(idx), orb_param.get_atom_id(idx))
+                    self.assertEqual(orb_archive.get_shell_type(idx), orb_param.get_shell_type(idx))
+                    self.assertEqual(orb_archive.get_basis_type(idx), orb_param.get_basis_type(idx))
+        finally:
+            if os.path.exists(db_path):
+                os.remove(db_path)
+
+    def test_setup_by_db_missing_basisset_raises_value_error(self):
+        """OrbInfo raises ValueError when basis set is missing in PdfArchive."""
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as fp:
+            db_path = fp.name
+        try:
+            archive = PdfArchive_Sqlite3(db_path)
+            table_name = "coordinates"
+            archive._db.create_table(
+                table_name,
+                ["atom_id", "symbol", "x", "y", "z", "charge", "label"],
+                ["atom_id"],
+            )
+            archive._db.insert(
+                table_name,
+                {
+                    "atom_id": "0",
+                    "symbol": "H",
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "charge": 1.0,
+                    "label": "unregistered",
+                },
+            )
+            with self.assertRaises(ValueError) as ctx:
+                OrbInfo(archive)
+            self.assertIn("Basis set not found for atom", str(ctx.exception))
+            self.assertIn("unregistered", str(ctx.exception))
+        finally:
+            if os.path.exists(db_path):
+                os.remove(db_path)
 
     def test_empty_orbinfo(self):
         orb = OrbInfo()

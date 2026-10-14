@@ -203,12 +203,6 @@ class TestPlotScripts(unittest.TestCase):
         self.assertIn("Population data (Mulliken)", str(ctx.exception))
         self.assertIn("not found", str(ctx.exception))
 
-    # scripts/pdf-plot-decaymat.py:129:
-    # d = distance_mat.get(atom_i, atom_j)
-    # raises TypeError: '<' not supported between instances of 'NoneType' and 'NoneType'
-    # (OrbInfo.__init__ does not handle PdfArchive / PdfArchive_Sqlite3, leaving orbital info empty
-    # so orb_info.get_atom_id(i) returns None)
-    @unittest.expectedFailure
     def test_plot_decaymat(self):
         """pdf-plot-decaymat.py generates a PNG file from PdfArchive and Matrix."""
         db_path = os.path.join(self.tmpdir.name, "test.db")
