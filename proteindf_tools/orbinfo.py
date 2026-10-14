@@ -45,16 +45,38 @@ class OrbInfo(object):
         atom_index = 0
         for key, atom in mol.atoms():
             basisset_name = ""
-            for candidate in [
-                self._get_atom_label(atom),
-                "{symbol}@{key}".format(symbol=atom.symbol, key=key) if key is not None else "",
-                "{symbol}@{name}".format(symbol=atom.symbol, name=atom.name) if getattr(atom, "name", None) else "",
-                atom.symbol,
-            ]:
-                if candidate:
-                    basisset_name = db.get_basisset_name(candidate)
-                    if basisset_name:
-                        break
+            # Candidates for basis set name lookup:
+            # 1. _get_atom_label(atom): matches symbol@label (standard convention in OrbInfo)
+            # 2. symbol@key: in PdfArchive_Sqlite3, atom_id is stored as key (e.g. '0', '1')
+            # 3. symbol@name: get_molecule() reconstructs atoms where DB 'label' is mapped to atom.name
+            # 4. symbol: default element symbol without specific label (e.g. 'H', 'C')
+            candidates = []
+            cand1 = self._get_atom_label(atom)
+            if cand1:
+                candidates.append(cand1)
+            if key is not None:
+                cand2 = "{symbol}@{key}".format(symbol=atom.symbol, key=key)
+                if cand2 not in candidates:
+                    candidates.append(cand2)
+            if getattr(atom, "name", None) and atom.name != "None":
+                cand3 = "{symbol}@{name}".format(symbol=atom.symbol, name=atom.name)
+                if cand3 not in candidates:
+                    candidates.append(cand3)
+            if atom.symbol not in candidates:
+                candidates.append(atom.symbol)
+
+            for candidate in candidates:
+                basisset_name = db.get_basisset_name(candidate)
+                if basisset_name:
+                    break
+
+            if not basisset_name:
+                raise ValueError(
+                    "Basis set not found for atom (key='{}', symbol='{}'). Tried candidates: {}".format(
+                        key, atom.symbol, candidates
+                    )
+                )
+
             if basisset_name not in self._basissets.keys():
                 basisset = db.get_basisset(basisset_name)
                 self._basissets[basisset_name] = basisset

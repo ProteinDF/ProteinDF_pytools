@@ -158,6 +158,38 @@ class TestOrbInfo(unittest.TestCase):
             if os.path.exists(db_path):
                 os.remove(db_path)
 
+    def test_setup_by_db_missing_basisset_raises_value_error(self):
+        """OrbInfo raises ValueError when basis set is missing in PdfArchive."""
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as fp:
+            db_path = fp.name
+        try:
+            archive = PdfArchive_Sqlite3(db_path)
+            table_name = "coordinates"
+            archive._db.create_table(
+                table_name,
+                ["atom_id", "symbol", "x", "y", "z", "charge", "label"],
+                ["atom_id"],
+            )
+            archive._db.insert(
+                table_name,
+                {
+                    "atom_id": "0",
+                    "symbol": "H",
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "charge": 1.0,
+                    "label": "unregistered",
+                },
+            )
+            with self.assertRaises(ValueError) as ctx:
+                OrbInfo(archive)
+            self.assertIn("Basis set not found for atom", str(ctx.exception))
+            self.assertIn("unregistered", str(ctx.exception))
+        finally:
+            if os.path.exists(db_path):
+                os.remove(db_path)
+
     def test_empty_orbinfo(self):
         orb = OrbInfo()
         self.assertEqual(orb.get_num_of_orbitals(), 0)
