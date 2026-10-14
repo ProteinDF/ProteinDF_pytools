@@ -152,14 +152,6 @@ class TestPlotScripts(unittest.TestCase):
         self.assertTrue(os.path.exists(out_png))
         self.assertGreater(os.path.getsize(out_png), 0)
 
-    # scripts/pdf-plot-pop.py:82:
-    # make_pop_data_diff(pop_vtr1, pop_vtr2, data_path)
-    # raises UnboundLocalError: cannot access local variable 'pop_vtr1' where it is not associated with a value
-    # Cause: The script accepts --h5 for an HDF5 result file, but attempts to read population data
-    # from external .vtr files (pop.mulliken.<run_type><itr>.vtr via pdfparam.get_pop_mulliken_path())
-    # instead of reading from the HDF5 archive (e.g. via pdfparam.get_pop_mulliken_atom()).
-    # When external files do not exist, pop_vtr1 is left unbound and UnboundLocalError is raised.
-    @unittest.expectedFailure
     def test_plot_pop(self):
         """pdf-plot-pop.py generates a PNG file from population data in an HDF5 file."""
         h5_path = os.path.join(self.tmpdir.name, "pdfresults.h5")
@@ -187,6 +179,29 @@ class TestPlotScripts(unittest.TestCase):
 
         self.assertTrue(os.path.exists(out_png))
         self.assertGreater(os.path.getsize(out_png), 0)
+
+    def test_plot_pop_missing_data(self):
+        """pdf-plot-pop.py raises ValueError when population data is missing in HDF5."""
+        h5_path = os.path.join(self.tmpdir.name, "pdfresults_nopop.h5")
+        out_png = os.path.join(self.tmpdir.name, "pop_nopop.png")
+
+        p = PdfParam_H5()
+        p.open(h5_path)
+        p.method = "rks"
+        p.iterations = 1
+        p.num_of_atoms = 2
+        p.num_of_AOs = 4
+        p.num_of_MOs = 4
+        p.save_model()
+        p.save_TEs(Vector([-100.0]))
+        p._close()
+
+        mod = _load_script("pdf-plot-pop.py")
+        sys.argv = ["pdf-plot-pop.py", "--h5", h5_path, "-o", out_png]
+        with self.assertRaises(ValueError) as ctx:
+            mod.main()
+        self.assertIn("Population data (Mulliken)", str(ctx.exception))
+        self.assertIn("not found", str(ctx.exception))
 
     # scripts/pdf-plot-decaymat.py:129:
     # d = distance_mat.get(atom_i, atom_j)
