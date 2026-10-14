@@ -53,6 +53,7 @@ UNITTESTS="\
   report \
   pdf_test_eri \
   plot_elevel \
+  plot_scripts \
   "
 
 for i in ${UNITTESTS}; do
