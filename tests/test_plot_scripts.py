@@ -188,12 +188,6 @@ class TestPlotScripts(unittest.TestCase):
         self.assertTrue(os.path.exists(out_png))
         self.assertGreater(os.path.getsize(out_png), 0)
 
-    # scripts/pdf-plot-decaymat.py:129:
-    # d = distance_mat.get(atom_i, atom_j)
-    # raises TypeError: '<' not supported between instances of 'NoneType' and 'NoneType'
-    # (OrbInfo.__init__ does not handle PdfArchive / PdfArchive_Sqlite3, leaving orbital info empty
-    # so orb_info.get_atom_id(i) returns None)
-    @unittest.expectedFailure
     def test_plot_decaymat(self):
         """pdf-plot-decaymat.py generates a PNG file from PdfArchive and Matrix."""
         db_path = os.path.join(self.tmpdir.name, "test.db")

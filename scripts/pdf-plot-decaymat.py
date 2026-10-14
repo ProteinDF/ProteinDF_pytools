@@ -105,7 +105,7 @@ def distance_matrix(atomgroup, verbose=False):
     atomlist = atomgroup.get_atom_list()
     num_of_atoms = len(atomlist)
     if verbose:
-        sys.stderr.write("num of atoms: {}n".format(num_of_atoms))
+        sys.stderr.write("num of atoms: {}\n".format(num_of_atoms))
     mat = bridge.SymmetricMatrix(num_of_atoms)
 
     for i in range(num_of_atoms):
