@@ -82,16 +82,24 @@ def main():
     else:
         entry = pdf.PdfArchive(args.db)
 
+        records = entry._db.select(
+            'vectors', fields=['runtype'], where={'dtype': 'ENERGY_LEVEL'}
+        )
+        runtypes = sorted(set(r['runtype'] for r in records))
+        if len(runtypes) != 1:
+            raise ValueError(
+                'unsupported runtypes %s: UKS/ROKS are not supported' % runtypes
+            )
+        runtype = runtypes[0]
+
         itr = entry.iterations
-        HOMO_level = entry.get_HOMO_level('ALPHA')  # TODO
+        HOMO_level = entry.get_HOMO_level(runtype)
         data_path = 'tmp.dat'
 
-        eigvals = entry.get_energylevel('ALPHA', itr)  # TODO
+        eigvals = entry.get_energylevel(runtype, itr)
         if verbose:
-            print('load: %s' % (eigval_path))
             print('output: %s' % (output_path))
             print('HOMO: %d' % (HOMO_level))
-        eigvals.load(eigval_path)
         elevel2dat(itr, eigvals, data_path)
         plot_elevel_single(data_path, itr, HOMO_level, output_path)
 
@@ -132,8 +140,8 @@ def plot_elevel_single(data_path, itr, HOMO_level, output_path):
     graphV.is_draw_grid = False
     graphV.yticks = []
     graphV.ylabel = ''
-    graphV.ymin = 0.4
-    graphV.ymax = 1.6
+    graphV.ymin = itr - 0.6
+    graphV.ymax = itr + 0.6
     graphV.aspect = 3.0
 
     graphV.save(output_path)
