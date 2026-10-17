@@ -86,7 +86,9 @@ def main():
             'vectors', fields=['runtype'], where={'dtype': 'ENERGY_LEVEL'}
         )
         runtypes = sorted(set(r['runtype'] for r in records))
-        if len(runtypes) != 1:
+        if len(runtypes) == 0:
+            raise ValueError('ENERGY_LEVEL is not found in database')
+        elif len(runtypes) > 1:
             raise ValueError(
                 'unsupported runtypes %s: UKS/ROKS are not supported' % runtypes
             )
