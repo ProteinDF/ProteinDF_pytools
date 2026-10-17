@@ -158,10 +158,15 @@ class TestPdfPlotElevel(unittest.TestCase):
                 "argv",
                 ["pdf-plot-elevel.py", "-d", db_path, "-o", out_png],
             ):
-                with self.assertRaises(ValueError):
+                with self.assertRaises(ValueError) as cm:
                     pdf_plot_elevel.main()
         finally:
             os.chdir(orig_cwd)
+
+        msg = str(cm.exception)
+        self.assertIn("ENERGY_LEVEL", msg)
+        self.assertNotIn("UKS", msg)
+        self.assertNotIn("ROKS", msg)
 
     def test_plot_elevel_single_vertical_range(self):
         data_path = os.path.join(self.temp_dir, "test.dat")
