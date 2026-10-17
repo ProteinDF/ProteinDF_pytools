@@ -39,7 +39,6 @@ import logging.config
 def main():
     parser = argparse.ArgumentParser(description='archive ProteinDF results')
     parser.add_argument('-p', '--pdfparam',
-                        nargs=1,
                         dest='pdfparam_path',
                         default='pdfparam.mpac',
                         help='ProteinDF parameter file')
