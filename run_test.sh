@@ -55,6 +55,7 @@ UNITTESTS="\
   plot_elevel \
   plot_scripts \
   archive_scripts \
+  input_scripts \
   "
 
 for i in ${UNITTESTS}; do
