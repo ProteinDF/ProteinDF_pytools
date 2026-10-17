@@ -235,8 +235,14 @@ H   0.00000  -0.75700  -0.46900
         self.assertTrue(lines[1].startswith("H"))
         self.assertTrue(lines[2].startswith("H"))
 
-    def test_xyz2pdf_cli_option_slice_defect(self):
-        """Specifying -o or -t passes a string to args.output[0] causing 1-char slicing."""
+    @unittest.expectedFailure
+    def test_xyz2pdf_custom_output_option(self):
+        """xyz2pdf writes output to the path specified by -o option.
+
+        scripts/xyz2pdf.py:101: args.output[0] で文字列の1文字目だけが
+        ファイル名として扱われてしまう不具合があるため失敗する。
+        修正されたら外す。
+        """
         xyz_content = """1
 H
 H 0.0 0.0 0.0
@@ -245,11 +251,15 @@ H 0.0 0.0 0.0
         with open(xyz_path, "w") as f:
             f.write(xyz_content)
 
+        custom_out = os.path.join(self.tmpdir.name, "custom_output.inp")
         mod = _load_script("xyz2pdf.py")
-        # Passing an absolute path with -o causes args.output[0] to be '/', raising IsADirectoryError
-        sys.argv = ["xyz2pdf.py", xyz_path, "-o", "/custom_output_name"]
-        with self.assertRaises(IsADirectoryError):
-            mod.main()
+        sys.argv = ["xyz2pdf.py", xyz_path, "-o", custom_out]
+        mod.main()
+
+        self.assertTrue(os.path.exists(custom_out))
+        with open(custom_out, "r") as f:
+            content = f.read()
+        self.assertIn("geometry/cartesian/unit = angstrom", content)
 
     def test_xyz2pdf_empty_file(self):
         """xyz2pdf raises ValueError when loading an empty xyz file."""
@@ -300,11 +310,17 @@ class TestXyz2Gau(unittest.TestCase):
         sys.argv = self._orig_argv
         self.tmpdir.cleanup()
 
-    def test_xyz2gau_default_template_name_error(self):
-        """xyz2gau fails with NameError when using default template due to undefined variable."""
+    @unittest.expectedFailure
+    def test_xyz2gau_default_template(self):
+        """xyz2gau creates Gaussian input using default template.
+
+        scripts/xyz2gau.py:77: g09_templ_str が未定義(正しくは templ_str)のため
+        NameError が発生する。
+        修正されたら外す。
+        """
         xyz_content = """1
 Hydrogen
-H   0.0 0.0 0.0
+H   0.00000 0.00000 0.00000
 """
         xyz_path = os.path.join(self.tmpdir.name, "h.xyz")
         with open(xyz_path, "w") as f:
@@ -312,24 +328,49 @@ H   0.0 0.0 0.0
 
         mod = _load_script("xyz2gau.py")
         sys.argv = ["xyz2gau.py", xyz_path]
-        # In xyz2gau.py line 77: `tpl = env.from_string(g09_templ_str)` references undefined `g09_templ_str`
-        with self.assertRaises(NameError):
-            mod.main()
+        mod.main()
 
-    def test_xyz2gau_custom_template_also_hits_name_error(self):
-        """xyz2gau fails with NameError even with -t because line 77 runs before template check."""
+        out_path = "sample.gau"
+        self.assertTrue(os.path.exists(out_path))
+        with open(out_path, "r") as f:
+            content = f.read()
+        self.assertIn("H    0.00000  0.00000  0.00000", content)
+
+    @unittest.expectedFailure
+    def test_xyz2gau_custom_template(self):
+        """xyz2gau creates Gaussian input using custom template specified by -t.
+
+        scripts/xyz2gau.py:77: -t を指定した場合でも77行目の g09_templ_str 未定義により
+        NameError が発生する。
+        修正されたら外す。
+        """
         xyz_content = """1
 Hydrogen
-H   0.0 0.0 0.0
+H   0.00000 0.00000 0.00000
 """
         xyz_path = os.path.join(self.tmpdir.name, "h.xyz")
         with open(xyz_path, "w") as f:
             f.write(xyz_content)
 
+        tpl_content = """# custom gaussian template
+{%- for atom in atomlist %}
+{{ atom.symbol }} {{ atom.x }} {{ atom.y }} {{ atom.z }}
+{%- endfor %}
+"""
+        tpl_path = os.path.join(self.tmpdir.name, "custom.tpl")
+        with open(tpl_path, "w") as f:
+            f.write(tpl_content)
+
         mod = _load_script("xyz2gau.py")
-        sys.argv = ["xyz2gau.py", xyz_path, "-t", "custom.tpl"]
-        with self.assertRaises(NameError):
-            mod.main()
+        sys.argv = ["xyz2gau.py", xyz_path, "-t", tpl_path]
+        mod.main()
+
+        out_path = "sample.gau"
+        self.assertTrue(os.path.exists(out_path))
+        with open(out_path, "r") as f:
+            content = f.read()
+        self.assertIn("# custom gaussian template", content)
+        self.assertIn("H 0.0 0.0 0.0", content)
 
     def test_xyz2gau_empty_file(self):
         """xyz2gau raises ValueError on empty xyz file."""
@@ -387,8 +428,14 @@ class TestPdfSetCharges(unittest.TestCase):
         pdf.save_pdfparam(param, path)
         return param
 
-    def test_pdf_set_charges_count_name_error(self):
-        """pdf-set-charges.py fails with NameError because variable 'count' is undefined."""
+    @unittest.expectedFailure
+    def test_pdf_set_charges_normal(self):
+        """pdf-set-charges.py sets charges from CSV to atoms in pdfparam.
+
+        scripts/pdf-set-charges.py:123: count が初期化・定義されていないため
+        NameError が発生する。
+        修正されたら外す。
+        """
         param_path = os.path.join(self.tmpdir.name, "pdfparam.mpac")
         csv_path = os.path.join(self.tmpdir.name, "charges.csv")
         out_path = os.path.join(self.tmpdir.name, "new_pdfparam.mpac")
@@ -407,10 +454,14 @@ class TestPdfSetCharges(unittest.TestCase):
             "-o",
             out_path,
         ]
-        # line 123 in pdf-set-charges.py references undefined 'count'
         with redirect_stdout(io.StringIO()):
-            with self.assertRaises(NameError):
-                mod.main()
+            mod.main()
+
+        self.assertTrue(os.path.exists(out_path))
+        new_param = pdf.load_pdfparam(out_path)
+        atoms = new_param.molecule.get_atom_list()
+        self.assertAlmostEqual(atoms[0].charge, 0.4)
+        self.assertAlmostEqual(atoms[1].charge, -0.8)
 
     def test_pdf_set_charges_atom_count_mismatch(self):
         """pdf-set-charges.py fails with AssertionError if CSV rows < atom count."""
@@ -452,8 +503,15 @@ class TestPdfTransBasis(unittest.TestCase):
         sys.argv = self._orig_argv
         self.tmpdir.cleanup()
 
-    def test_pdf_trans_basis_attribute_error_on_gaussian94(self):
-        """pdf-trans-basis.py fails with AttributeError due to method name typo."""
+    @unittest.expectedFailure
+    def test_pdf_trans_basis_gaussian94_normal(self):
+        """pdf-trans-basis.py parses Gaussian94 basis set file.
+
+        scripts/pdf-trans-basis.py:73: _parse_block_gaussian94 が
+        _parse_block_aussian94 と誤記されており AttributeError が発生する
+        (また ContractedGTO 等の未定義もある)。
+        修正されたら外す。
+        """
         bs_content = """****
 H     0
 S   1   1.00
@@ -465,10 +523,10 @@ S   1   1.00
             f.write(bs_content)
 
         mod = _load_script("pdf-trans-basis.py")
-        sys.argv = ["pdf-trans-basis.py", bs_path]
-        # line 70 calls self._parse_block_gaussian94, but method is defined as _parse_block_aussian94
-        with self.assertRaises(AttributeError):
-            mod.main()
+        parser = mod.BasisSetParser()
+        parser.load(bs_path)
+
+        self.assertIn("H", parser._basissets)
 
     def test_pdf_trans_basis_nonexistent_file(self):
         """pdf-trans-basis.py does not fail and leaves basissets empty on nonexistent file."""
