@@ -33,6 +33,6 @@
 ## テスト環境についての注意(2026-10-12時点)
 
 - `devtool/check.sh`は`run_test.sh`のdoctest・unittestを、ブランチのworktreeのソースに対して実行する(`PYTHONPATH`で指定)。`PDF_HOME`にProteinDF本体のソースのパスを設定する。未設定の間はtestsがSKIPになる。
-- Pythonは`PDFTOOLS_PYTHON`、なければ`.git/check-venv/`のものを使う。`.git/check-venv/`は`devtool/setup-check-venv.sh`で作る。要件: Python 3.12、`numpy`(2.xでよい)、`h5py`、`matplotlib`、`proteindf_bridge` 2026.10.6以上(それより前は`Matrix.set_buffer`が壊れており、numpy 2でも動かない)。`proteindf_bridge`はPyPIにないので、`PDFTOOLS_BRIDGE_DIR`にソースのディレクトリかリリースのwheelを指定する。
+- Pythonは`PDFTOOLS_PYTHON`、なければ`.git/check-venv/`のものを使う。`.git/check-venv/`は`devtool/setup-check-venv.sh`で作る。要件: Python 3.12、`numpy`(2.xでよい)、`h5py`、`matplotlib`、`proteindf_bridge` 2026.10.14以上(2026.10.6以前は`Matrix.set_buffer`が壊れておりnumpy 2でも動かない。2026.10.7より前はmsgpackの整数キーを文字列として読むため、`pdfparam.mpac`の読み込みが失敗する)。`proteindf_bridge`はPyPIにないので、`PDFTOOLS_BRIDGE_DIR`にソースのディレクトリかリリースのwheelを指定する。
 - **`sitecustomize.py`のあるvenv(他リポジトリの回帰テスト用のvenvなど)を使わない。** 起動時に`proteindf_tools`の不具合を上書きするため、不具合が隠れてテストが通ってしまう。`devtool/setup-check-venv.sh`は、見つけると警告する。
 - ローカルの場所は、公開ファイルではなく環境変数や`.git/`内の設定に置く。
