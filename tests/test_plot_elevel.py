@@ -14,6 +14,7 @@ os.environ.setdefault("MPLBACKEND", "Agg")
 import matplotlib.pyplot as plt
 
 import proteindf_bridge as bridge
+from proteindf_tools.pdfarchive_sqlite3 import PdfArchive_Sqlite3
 import proteindf_tools.pdfgraph as pg
 import proteindf_tools.vector as vec
 
@@ -81,6 +82,143 @@ class TestPdfPlotElevel(unittest.TestCase):
             g.save(out_png)
 
         self.assertEqual(buf.getvalue(), "")
+
+    def _create_synth_db(self, db_path, iterations=3, runtypes=("RKS",), add_occ=True):
+        arc = PdfArchive_Sqlite3(db_path)
+        arc._db.insert("conditions", {"pdf_id": "0", "iterations": iterations})
+        for rt in runtypes:
+            elevel = vec.Vector(4)
+            for i in range(4):
+                elevel.set(i, -10.0 + i)
+            arc.set_energylevel(rt, iterations, elevel)
+            if add_occ:
+                occ = vec.Vector(4)
+                occ.set(0, 2.0)
+                occ.set(1, 2.0)
+                occ.set(2, 0.0)
+                occ.set(3, 0.0)
+                arc.set_occupations(rt, occ)
+        return arc
+
+    def test_plot_elevel_d_mode_single_runtype(self):
+        db_path = os.path.join(self.temp_dir, "synth.db")
+        self._create_synth_db(db_path, iterations=3, runtypes=["RKS"])
+        out_png = os.path.join(self.temp_dir, "out_d.png")
+
+        orig_cwd = os.getcwd()
+        try:
+            os.chdir(self.temp_dir)
+            with mock.patch.object(
+                sys,
+                "argv",
+                ["pdf-plot-elevel.py", "-d", db_path, "-o", out_png],
+            ):
+                pdf_plot_elevel.main()
+        finally:
+            os.chdir(orig_cwd)
+
+        self.assertTrue(os.path.isfile(out_png))
+        self.assertGreater(os.path.getsize(out_png), 0)
+        with open(out_png, "rb") as f:
+            self.assertEqual(f.read(8), PNG_SIGNATURE)
+
+    def test_plot_elevel_d_mode_multiple_runtypes(self):
+        db_path = os.path.join(self.temp_dir, "multi.db")
+        self._create_synth_db(db_path, iterations=3, runtypes=["UKS_ALPHA", "UKS_BETA"])
+        out_png = os.path.join(self.temp_dir, "out_multi.png")
+
+        orig_cwd = os.getcwd()
+        try:
+            os.chdir(self.temp_dir)
+            with mock.patch.object(
+                sys,
+                "argv",
+                ["pdf-plot-elevel.py", "-d", db_path, "-o", out_png],
+            ):
+                with self.assertRaises(ValueError) as cm:
+                    pdf_plot_elevel.main()
+        finally:
+            os.chdir(orig_cwd)
+
+        msg = str(cm.exception)
+        self.assertIn("UKS_ALPHA", msg)
+        self.assertIn("UKS_BETA", msg)
+        self.assertTrue("UKS" in msg or "ROKS" in msg)
+
+    def test_plot_elevel_d_mode_zero_runtypes(self):
+        db_path = os.path.join(self.temp_dir, "empty.db")
+        self._create_synth_db(db_path, iterations=3, runtypes=[])
+        out_png = os.path.join(self.temp_dir, "out_zero.png")
+
+        orig_cwd = os.getcwd()
+        try:
+            os.chdir(self.temp_dir)
+            with mock.patch.object(
+                sys,
+                "argv",
+                ["pdf-plot-elevel.py", "-d", db_path, "-o", out_png],
+            ):
+                with self.assertRaises(ValueError):
+                    pdf_plot_elevel.main()
+        finally:
+            os.chdir(orig_cwd)
+
+    def test_plot_elevel_single_vertical_range(self):
+        data_path = os.path.join(self.temp_dir, "test.dat")
+        with open(data_path, "w") as f:
+            f.write("1, 0, -10.0\n")
+        out_png = os.path.join(self.temp_dir, "range.png")
+
+        with mock.patch.object(pdf_plot_elevel.pdf, "DfEnergyLevelHistoryGraphV") as mock_graph_cls:
+            mock_inst = mock_graph_cls.return_value
+
+            # Iteration 1: matches existing 0.4 - 1.6
+            pdf_plot_elevel.plot_elevel_single(data_path, 1, 0, out_png)
+            self.assertAlmostEqual(mock_inst.ymin, 0.4)
+            self.assertAlmostEqual(mock_inst.ymax, 1.6)
+
+            # Iteration N (N != 1): vertical range must include N
+            pdf_plot_elevel.plot_elevel_single(data_path, 5, 0, out_png)
+            self.assertAlmostEqual(mock_inst.ymin, 4.4)
+            self.assertAlmostEqual(mock_inst.ymax, 5.6)
+            self.assertTrue(mock_inst.ymin <= 5 <= mock_inst.ymax)
+
+    def test_plot_elevel_d_mode_does_not_call_load(self):
+        db_path = os.path.join(self.temp_dir, "load_check.db")
+        self._create_synth_db(db_path, iterations=3, runtypes=["RKS"])
+        out_png = os.path.join(self.temp_dir, "out_load.png")
+
+        class FailingLoadVector(bridge.Vector):
+            def load(self, *args, **kwargs):
+                raise AssertionError("eigvals.load() must not be called in -d mode")
+
+        orig_get_energylevel = pdf_plot_elevel.pdf.PdfArchive.get_energylevel
+
+        def mock_get_energylevel(self, runtype, iteration):
+            vec_orig = orig_get_energylevel(self, runtype, iteration)
+            flv = FailingLoadVector(len(vec_orig))
+            for i in range(len(vec_orig)):
+                flv.set(i, vec_orig.get(i))
+            return flv
+
+        orig_cwd = os.getcwd()
+        try:
+            os.chdir(self.temp_dir)
+            with mock.patch.object(
+                pdf_plot_elevel.pdf.PdfArchive,
+                "get_energylevel",
+                mock_get_energylevel,
+            ):
+                with mock.patch.object(
+                    sys,
+                    "argv",
+                    ["pdf-plot-elevel.py", "-d", db_path, "-o", out_png],
+                ):
+                    pdf_plot_elevel.main()
+        finally:
+            os.chdir(orig_cwd)
+
+        self.assertTrue(os.path.isfile(out_png))
 
 
 if __name__ == "__main__":
