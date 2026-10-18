@@ -309,12 +309,11 @@ class TestPdfAtomIndex(unittest.TestCase):
         loaded = bridge.load_msgpack(out_file)
         self.assertEqual(loaded, [[0]])
 
-    @unittest.expectedFailure
     def test_atom_index_db_stdout(self):
         """Atom index is found using -d from database.
 
-        scripts/pdf-atom-index.py:59: -d option does not define pdfparam
-        (UnboundLocalError). Remove decorator once fixed.
+        scripts/pdf-atom-index.py:70: -d option does not define pdfparam
+        (UnboundLocalError).
         """
         sys.argv = ["pdf-atom-index.py", self.brd_path, "-d", self.db_path]
         out = io.StringIO()
@@ -484,12 +483,11 @@ class TestPdfEstimateAo(unittest.TestCase):
         output = out.getvalue().strip()
         self.assertEqual(output, "6")
 
-    @unittest.expectedFailure
     def test_estimate_ao_verbose_defect(self):
         """Estimating AOs with -v verbose option succeeds without ValueError.
 
         scripts/pdf-estimate-ao.py:36: print("reading: {}}".format(...)) has
-        an extra closing brace causing ValueError. Remove decorator once fixed.
+        an extra closing brace causing ValueError.
         """
         os.environ["PDF_HOME"] = self.tmpdir.name
         sys.argv = ["pdf-estimate-ao.py", self.mpac_path, "MINI", "-v"]
