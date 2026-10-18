@@ -33,7 +33,7 @@ def main():
 
     # reading
     if (verbose == True):
-        print("reading: {}}".format(mpac_file_path))
+        print("reading: {}".format(mpac_file_path))
         print("basisset: {}".format(basisset_name))
 
     # prepare atomgroup
