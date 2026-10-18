@@ -56,6 +56,7 @@ UNITTESTS="\
   plot_scripts \
   archive_scripts \
   input_scripts \
+  info_scripts \
   "
 
 for i in ${UNITTESTS}; do
