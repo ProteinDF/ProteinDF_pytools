@@ -19,7 +19,7 @@ class ESP_charge(object):
 
     def _load_ESPs(self, mpac_path):
         print('load: {}'.format(mpac_path))
-        data = bridge.load_msgmpac(mpac_path)
+        data = bridge.load_msgpack(mpac_path)
         if data != None:
             grids = []
             for p in data['grids']:
@@ -323,6 +323,10 @@ def main():
     atomlist = []
     if args.db:
         entry = pdf.PdfArchive(args.db)
+        atoms = entry.get_molecule().get_atom_list()
+        for atom in atoms:
+            if atom.symbol != 'X':
+                atomlist.append(atom)
     elif args.param:
         pdfparam = pdf.load_pdfparam(args.param)
         atoms = pdfparam.molecule.get_atom_list()

@@ -237,6 +237,8 @@ def set_atomlist(atom_charges, atomlist):
         atomlist[i].charge = q
         q_total += q
         print(atomlist[i])
+    if abs(q_total) < 1e-12:
+        q_total = 0.0
     print('charge={:.3f}'.format(q_total))
 
 
@@ -260,13 +262,13 @@ def main():
                         type=int,
                         nargs=1,
                         action='store',
-                        default=['1000'],
+                        default=[1000],
                         help="ridge alpha")
     parser.add_argument("-t", "--tolerance",
                         type=float,
                         nargs=1,
                         action='store',
-                        default=['0.0001'],
+                        default=[0.0001],
                         help="ridge alpha")
     parser.add_argument("--alpha",
                         type=float,
@@ -306,8 +308,8 @@ def main():
     output_csv_path = args.csv[0]
     use_scikit_learn = args.use_scikit_learn
     verbose = args.verbose
-    max_iter = args.max_iterations[0]
-    tol = args.tolerance[0]  # 0.0001
+    max_iter = int(args.max_iterations[0])
+    tol = float(args.tolerance[0])  # 0.0001
     alpha = float(args.alpha[0])
     if verbose:
         print("alpha={}".format(alpha))
@@ -316,6 +318,10 @@ def main():
     atomlist = []
     if args.db:
         entry = pdf.PdfArchive(args.db)
+        atoms = entry.get_molecule().get_atom_list()
+        for atom in atoms:
+            if atom.symbol != 'X':
+                atomlist.append(atom)
     elif args.param:
         pdfparam = pdf.load_pdfparam(args.param)
         atoms = pdfparam.molecule.get_atom_list()

@@ -9,7 +9,7 @@ import math
 import copy
 
 import proteindf_bridge as bridge
-import proteindf_pytools as pdf
+import proteindf_tools as pdf
 
 
 def load_charges(csv_path):
@@ -27,7 +27,7 @@ def load_charges(csv_path):
 
 def load_ESPs(mpac_path):
     # print('load: {}'.format(mpac_path))
-    data = bridge.load(mpac_path)
+    data = bridge.load_msgpack(mpac_path)
     if data != None:
         grids = []
         for p in data['grids']:
@@ -119,6 +119,10 @@ def main():
     atomlist = []
     if args.db:
         entry = pdf.PdfArchive(args.db)
+        atoms = entry.get_molecule().get_atom_list()
+        for atom in atoms:
+            if atom.symbol != 'X':
+                atomlist.append(atom)
     elif args.param:
         pdfparam = pdf.load_pdfparam(args.param)
         atoms = pdfparam.molecule.get_atom_list()
