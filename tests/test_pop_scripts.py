@@ -168,12 +168,15 @@ def _create_sample_system(tmpdir_path):
 class TestPdfPopRidge(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.TemporaryDirectory()
+        self._orig_cwd = os.getcwd()
+        os.chdir(self.tmpdir.name)
         self.sys_data = _create_sample_system(self.tmpdir.name)
         self.mod = _load_script("pdf-pop-ridge.py")
         self._orig_argv = sys.argv
 
     def tearDown(self):
         sys.argv = self._orig_argv
+        os.chdir(self._orig_cwd)
         self.tmpdir.cleanup()
 
     def test_ridge_param_success(self):
@@ -351,12 +354,15 @@ class TestPdfPopRidge(unittest.TestCase):
 class TestPdfPopLasso(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.TemporaryDirectory()
+        self._orig_cwd = os.getcwd()
+        os.chdir(self.tmpdir.name)
         self.sys_data = _create_sample_system(self.tmpdir.name)
         self.mod = _load_script("pdf-pop-lasso.py")
         self._orig_argv = sys.argv
 
     def tearDown(self):
         sys.argv = self._orig_argv
+        os.chdir(self._orig_cwd)
         self.tmpdir.cleanup()
 
     def test_lasso_fit_th_regularization(self):
@@ -547,12 +553,15 @@ class TestPdfPopLasso(unittest.TestCase):
 class TestPdfPopElasticNet(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.TemporaryDirectory()
+        self._orig_cwd = os.getcwd()
+        os.chdir(self.tmpdir.name)
         self.sys_data = _create_sample_system(self.tmpdir.name)
         self.mod = _load_script("pdf-pop-elasticnet.py")
         self._orig_argv = sys.argv
 
     def tearDown(self):
         sys.argv = self._orig_argv
+        os.chdir(self._orig_cwd)
         self.tmpdir.cleanup()
 
     def test_elasticnet_fit_th_regularization(self):
@@ -691,12 +700,15 @@ class TestPdfPopElasticNet(unittest.TestCase):
 class TestPdfPopClasso(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.TemporaryDirectory()
+        self._orig_cwd = os.getcwd()
+        os.chdir(self.tmpdir.name)
         self.sys_data = _create_sample_system(self.tmpdir.name)
         self.mod = _load_script("pdf-pop-classo.py")
         self._orig_argv = sys.argv
 
     def tearDown(self):
         sys.argv = self._orig_argv
+        os.chdir(self._orig_cwd)
         self.tmpdir.cleanup()
 
     def test_classo_param_success(self):
@@ -839,6 +851,8 @@ class TestPdfPopClasso(unittest.TestCase):
 class TestPdfPopRrms(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.TemporaryDirectory()
+        self._orig_cwd = os.getcwd()
+        os.chdir(self.tmpdir.name)
         self.sys_data = _create_sample_system(self.tmpdir.name)
         self._orig_argv = sys.argv
         self._orig_pytools = sys.modules.get("proteindf_pytools")
@@ -849,6 +863,7 @@ class TestPdfPopRrms(unittest.TestCase):
             sys.modules["proteindf_pytools"] = self._orig_pytools
         else:
             sys.modules.pop("proteindf_pytools", None)
+        os.chdir(self._orig_cwd)
         self.tmpdir.cleanup()
 
     def test_rrms_import_error(self):
@@ -978,12 +993,15 @@ class TestPdfPopRrms(unittest.TestCase):
 class TestPdfPopResp(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.TemporaryDirectory()
+        self._orig_cwd = os.getcwd()
+        os.chdir(self.tmpdir.name)
         self.sys_data = _create_sample_system(self.tmpdir.name)
         self.mod = _load_script("pdf-pop-resp.py")
         self._orig_argv = sys.argv
 
     def tearDown(self):
         sys.argv = self._orig_argv
+        os.chdir(self._orig_cwd)
         self.tmpdir.cleanup()
 
     def test_resp_param_success_hyperbolic(self):
