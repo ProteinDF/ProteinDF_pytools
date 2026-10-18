@@ -310,11 +310,7 @@ class TestPdfAtomIndex(unittest.TestCase):
         self.assertEqual(loaded, [[0]])
 
     def test_atom_index_db_stdout(self):
-        """Atom index is found using -d from database.
-
-        scripts/pdf-atom-index.py:70: -d option does not define pdfparam
-        (UnboundLocalError).
-        """
+        """Atom index is found using -d from database."""
         sys.argv = ["pdf-atom-index.py", self.brd_path, "-d", self.db_path]
         out = io.StringIO()
         with redirect_stdout(out):
@@ -484,11 +480,7 @@ class TestPdfEstimateAo(unittest.TestCase):
         self.assertEqual(output, "6")
 
     def test_estimate_ao_verbose_defect(self):
-        """Estimating AOs with -v verbose option succeeds without ValueError.
-
-        scripts/pdf-estimate-ao.py:36: print("reading: {}}".format(...)) has
-        an extra closing brace causing ValueError.
-        """
+        """Estimating AOs with -v verbose option succeeds."""
         os.environ["PDF_HOME"] = self.tmpdir.name
         sys.argv = ["pdf-estimate-ao.py", self.mpac_path, "MINI", "-v"]
         out = io.StringIO()
