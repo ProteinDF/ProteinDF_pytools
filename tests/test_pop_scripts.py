@@ -246,14 +246,8 @@ class TestPdfPopRidge(unittest.TestCase):
         self.assertLess(norm_strong, norm_weak)
         self.assertLess(norm_strong, 0.01)
 
-    @unittest.expectedFailure
     def test_ridge_db_success(self):
-        """Ridge regression calculates partial charges from database file.
-
-        proteindf_tools/poputils.py:18: PopUtils.get_atomlist_by_db が
-        コメントアウトされており AttributeError になるため失敗する。
-        修正されたら外す。
-        """
+        """Ridge regression calculates partial charges from database file."""
         sys.argv = [
             "pdf-pop-ridge.py",
             "-d",
@@ -422,14 +416,8 @@ class TestPdfPopLasso(unittest.TestCase):
             lines = [line.strip() for line in f if line.strip()]
         self.assertEqual(len(lines), 3)
 
-    @unittest.expectedFailure
     def test_lasso_param_default_m_fails(self):
-        """Lasso regression runs with default max_iterations.
-
-        scripts/pdf-pop-lasso.py:263: default=['1000'] が文字列型のため、
-        fit_TH の range(1, self._max_iter + 1) で TypeError になるため失敗する。
-        修正されたら外す。
-        """
+        """Lasso regression runs with default max_iterations."""
         sys.argv = [
             "pdf-pop-lasso.py",
             "-p",
@@ -472,14 +460,8 @@ class TestPdfPopLasso(unittest.TestCase):
         self.assertIn("use scikit-learn module", output)
         self.assertIn("RRMS=", output)
 
-    @unittest.expectedFailure
     def test_lasso_db_success(self):
-        """Lasso regression calculates partial charges from database file.
-
-        scripts/pdf-pop-lasso.py:318: args.db 指定時に atomlist が生成されず
-        IndexError になるため失敗する。
-        修正されたら外す。
-        """
+        """Lasso regression calculates partial charges from database file."""
         sys.argv = [
             "pdf-pop-lasso.py",
             "-d",
@@ -598,14 +580,8 @@ class TestPdfPopElasticNet(unittest.TestCase):
         norm_strong = sum(c * c for c in coef_strong)
         self.assertLess(norm_strong, norm_weak)
 
-    @unittest.expectedFailure
     def test_elasticnet_param_success(self):
-        """ElasticNet regression calculates partial charges and RRMS from param file.
-
-        scripts/pdf-pop-elasticnet.py:22: bridge.load_msgmpac (正しくは load_msgpack)
-        という誤ったメソッド名が呼ばれ AttributeError になるため失敗する。
-        修正されたら外す。
-        """
+        """ElasticNet regression calculates partial charges and RRMS from param file."""
         sys.argv = [
             "pdf-pop-elasticnet.py",
             "-p",
@@ -628,14 +604,8 @@ class TestPdfPopElasticNet(unittest.TestCase):
         self.assertIn("charge=-0.000", output)
         self.assertIn("RRMS=", output)
 
-    @unittest.expectedFailure
     def test_elasticnet_db_success(self):
-        """ElasticNet regression calculates partial charges from database file.
-
-        scripts/pdf-pop-elasticnet.py:325: args.db 指定時に atomlist が生成されず、
-        また line 22 の load_msgmpac 不具合のため失敗する。
-        修正されたら外す。
-        """
+        """ElasticNet regression calculates partial charges from database file."""
         sys.argv = [
             "pdf-pop-elasticnet.py",
             "-d",
@@ -783,14 +753,8 @@ class TestPdfPopClasso(unittest.TestCase):
         cl.fit(X, y, C, b)
         self.assertAlmostEqual(sum(cl.coef), 1.0, places=5)
 
-    @unittest.expectedFailure
     def test_classo_db_success(self):
-        """Constrained Lasso calculates partial charges from database file.
-
-        proteindf_tools/poputils.py:18: PopUtils.get_atomlist_by_db が
-        コメントアウトされており AttributeError になるため失敗する。
-        修正されたら外す。
-        """
+        """Constrained Lasso calculates partial charges from database file."""
         sys.argv = [
             "pdf-pop-classo.py",
             "-d",
@@ -887,13 +851,8 @@ class TestPdfPopRrms(unittest.TestCase):
             sys.modules.pop("proteindf_pytools", None)
         self.tmpdir.cleanup()
 
-    @unittest.expectedFailure
     def test_rrms_import_error(self):
-        """pdf-pop-rrms.py can be loaded without ModuleNotFoundError.
-
-        scripts/pdf-pop-rrms.py:12: import proteindf_pytools as pdf が誤り
-        (正しくは proteindf_tools)。修正されたら外す。
-        """
+        """pdf-pop-rrms.py can be loaded without ModuleNotFoundError."""
         sys.modules.pop("proteindf_pytools", None)
         sys.modules.pop("pdf_pop_rrms", None)
         mod = _load_script("pdf-pop-rrms.py")
@@ -928,14 +887,8 @@ class TestPdfPopRrms(unittest.TestCase):
         self.assertAlmostEqual(charges[1], -0.125)
         self.assertAlmostEqual(charges[2], -0.125)
 
-    @unittest.expectedFailure
     def test_rrms_param_success(self):
-        """RRMS is calculated from param file and charge csv.
-
-        scripts/pdf-pop-rrms.py:12: import 名の誤り、および line 30 の
-        bridge.load (正しくは load_msgpack) のため失敗する。
-        修正されたら外す。
-        """
+        """RRMS is calculated from param file and charge csv."""
         sys.modules["proteindf_pytools"] = pdf
         mod = _load_script("pdf-pop-rrms.py")
         sys.argv = [
@@ -952,14 +905,8 @@ class TestPdfPopRrms(unittest.TestCase):
             mod.main()
         self.assertIn("RRMS=", out.getvalue())
 
-    @unittest.expectedFailure
     def test_rrms_db_success(self):
-        """RRMS is calculated from database file.
-
-        scripts/pdf-pop-rrms.py:12: import 名の誤り、line 30 の bridge.load、
-        line 121 の atomlist 未設定のため失敗する。
-        修正されたら外す。
-        """
+        """RRMS is calculated from database file."""
         sys.modules["proteindf_pytools"] = pdf
         mod = _load_script("pdf-pop-rrms.py")
         sys.argv = [
@@ -1127,14 +1074,8 @@ class TestPdfPopResp(unittest.TestCase):
         self.assertAlmostEqual(coef_q[1], -0.125, delta=1e-4)
         self.assertAlmostEqual(coef_q[2], -0.125, delta=1e-4)
 
-    @unittest.expectedFailure
     def test_resp_db_success(self):
-        """RESP charges are calculated from database file.
-
-        scripts/pdf-pop-resp.py:223: args.db 指定時に atomlist が生成されず
-        IndexError になるため失敗する。
-        修正されたら外す。
-        """
+        """RESP charges are calculated from database file."""
         sys.argv = [
             "pdf-pop-resp.py",
             "-d",
