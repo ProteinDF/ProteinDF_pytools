@@ -3,7 +3,7 @@
 
 import math
 
-# from .pdfarchive import PdfArchive
+from .pdfarchive_sqlite3 import PdfArchive_Sqlite3 as PdfArchive
 from .pdfcommon import load_pdfparam
 import proteindf_bridge as bridge
 
@@ -14,11 +14,11 @@ logger = logging.getLogger(__name__)
 class PopUtils(object):
     '''Population Utilities
     '''
-    # @staticmethod
-    # def get_atomlist_by_db(db_path):
-    #     entry = PdfArchive(db_path)
-    #     molecule = entry.get_molecule
-    #     return PopUtils._get_atomlist(molecule)
+    @staticmethod
+    def get_atomlist_by_db(db_path):
+        entry = PdfArchive(db_path)
+        molecule = entry.get_molecule()
+        return PopUtils._get_atomlist(molecule)
 
     @staticmethod
     def get_atomlist_by_param(param_path):
@@ -54,6 +54,8 @@ class PopUtils(object):
             atomlist[i].charge = q
             q_total += q
             print(atomlist[i])
+        if abs(q_total) < 1e-12:
+            q_total = 0.0
         print('total charges: {: .3f}'.format(q_total))
 
 
