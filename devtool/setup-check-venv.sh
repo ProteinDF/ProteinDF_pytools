@@ -3,14 +3,15 @@
 #
 # Usage: devtool/setup-check-venv.sh [--recreate]
 #   PDFTOOLS_BRIDGE_DIR  source directory of ProteinDF_bridge (default: pip package "proteindf_bridge");
-#                        a wheel file also works. Needs proteindf_bridge >= 2026.10.14.
+#                        a wheel file also works. Needs proteindf_bridge >= 2026.10.16.
 #   PDFTOOLS_BASE_PYTHON Python 3.12 interpreter to use (default: python3.12 in PATH)
 #
 # Notes:
 #   - Do not reuse a virtualenv that has a sitecustomize.py: it can patch proteindf_tools at
 #     startup and hide bugs.
-#   - proteindf_bridge >= 2026.10.14 is needed: older releases do not work with numpy 2
-#     (2026.10.6 breaks Matrix/Vector set_buffer) or read msgpack int keys as strings (before 2026.10.7).
+#   - proteindf_bridge >= 2026.10.16 is needed: older releases do not support AtomGroup *=
+#     (before 2026.10.16), do not work with numpy 2 (2026.10.6 breaks Matrix/Vector set_buffer),
+#     or read msgpack int keys as strings (before 2026.10.7).
 set -euo pipefail
 
 recreate=0
