@@ -175,14 +175,8 @@ class TestPdfInfoGeom(unittest.TestCase):
         sys.argv = self._orig_argv
         self.tmpdir.cleanup()
 
-    @unittest.expectedFailure
     def test_info_geom_param_success(self):
-        """Coordinates of synthetic molecule are printed using -p.
-
-        scripts/pdf-info-geom.py:71: proteindf_bridge.rs.AtomGroup does not
-        support in-place multiplication (*=) with float, raising TypeError.
-        Remove decorator once fixed.
-        """
+        """Coordinates of synthetic molecule are printed using -p."""
         sys.argv = ["pdf-info-geom.py", "-p", self.mpac_path]
         out = io.StringIO()
         with redirect_stdout(out):
@@ -191,14 +185,8 @@ class TestPdfInfoGeom(unittest.TestCase):
         self.assertIn("O", output)
         self.assertIn("H", output)
 
-    @unittest.expectedFailure
     def test_info_geom_db_success(self):
-        """Coordinates of synthetic molecule are printed using -d.
-
-        scripts/pdf-info-geom.py:71: proteindf_bridge.rs.AtomGroup does not
-        support in-place multiplication (*=) with float, raising TypeError.
-        Remove decorator once fixed.
-        """
+        """Coordinates of synthetic molecule are printed using -d."""
         sys.argv = ["pdf-info-geom.py", "-d", self.db_path]
         out = io.StringIO()
         with redirect_stdout(out):
@@ -237,14 +225,8 @@ class TestPdfInfoXyz(unittest.TestCase):
         sys.argv = self._orig_argv
         self.tmpdir.cleanup()
 
-    @unittest.expectedFailure
     def test_info_xyz_param_success(self):
-        """XYZ format output is printed using -p.
-
-        scripts/pdf-info-xyz.py:73: proteindf_bridge.rs.AtomGroup does not
-        support in-place multiplication (*=) with float, raising TypeError.
-        Remove decorator once fixed.
-        """
+        """XYZ format output is printed using -p."""
         sys.argv = ["pdf-info-xyz.py", "-p", self.mpac_path]
         out = io.StringIO()
         with redirect_stdout(out):
@@ -252,17 +234,11 @@ class TestPdfInfoXyz(unittest.TestCase):
         lines = out.getvalue().strip().splitlines()
         self.assertGreaterEqual(len(lines), 3)
         self.assertEqual(lines[0].strip(), "3")
-        self.assertTrue(any(line.startswith("O") for line in lines[2:]))
-        self.assertTrue(any(line.startswith("H") for line in lines[2:]))
+        self.assertTrue(any(line.strip().startswith("O") for line in lines[2:]))
+        self.assertTrue(any(line.strip().startswith("H") for line in lines[2:]))
 
-    @unittest.expectedFailure
     def test_info_xyz_db_success(self):
-        """XYZ format output is printed using -d.
-
-        scripts/pdf-info-xyz.py:73: proteindf_bridge.rs.AtomGroup does not
-        support in-place multiplication (*=) with float, raising TypeError.
-        Remove decorator once fixed.
-        """
+        """XYZ format output is printed using -d."""
         sys.argv = ["pdf-info-xyz.py", "-d", self.db_path]
         out = io.StringIO()
         with redirect_stdout(out):
@@ -270,8 +246,8 @@ class TestPdfInfoXyz(unittest.TestCase):
         lines = out.getvalue().strip().splitlines()
         self.assertGreaterEqual(len(lines), 3)
         self.assertEqual(lines[0].strip(), "3")
-        self.assertTrue(any(line.startswith("O") for line in lines[2:]))
-        self.assertTrue(any(line.startswith("H") for line in lines[2:]))
+        self.assertTrue(any(line.strip().startswith("O") for line in lines[2:]))
+        self.assertTrue(any(line.strip().startswith("H") for line in lines[2:]))
 
     def test_info_xyz_no_options_fails(self):
         """Omitting required options raises SystemExit."""
@@ -315,14 +291,8 @@ class TestPdfAtomIndex(unittest.TestCase):
         sys.argv = self._orig_argv
         self.tmpdir.cleanup()
 
-    @unittest.expectedFailure
     def test_atom_index_param_stdout(self):
-        """Atom index is found and output to stdout using -p.
-
-        scripts/pdf-atom-index.py:64: proteindf_bridge.rs.AtomGroup does not
-        support in-place multiplication (*=) with float, raising TypeError.
-        Remove decorator once fixed.
-        """
+        """Atom index is found and output to stdout using -p."""
         sys.argv = ["pdf-atom-index.py", self.brd_path, "-p", self.mpac_path]
         out = io.StringIO()
         with redirect_stdout(out):
@@ -330,14 +300,8 @@ class TestPdfAtomIndex(unittest.TestCase):
         output = out.getvalue().strip()
         self.assertIn("0", output)
 
-    @unittest.expectedFailure
     def test_atom_index_param_output_file(self):
-        """Atom index is found and saved to msgpack file specified by -o.
-
-        scripts/pdf-atom-index.py:64: proteindf_bridge.rs.AtomGroup does not
-        support in-place multiplication (*=) with float, raising TypeError.
-        Remove decorator once fixed.
-        """
+        """Atom index is found and saved to msgpack file specified by -o."""
         out_file = os.path.join(self.tmpdir.name, "indices.mpac")
         sys.argv = ["pdf-atom-index.py", self.brd_path, "-p", self.mpac_path, "-o", out_file]
         self.mod.main()
@@ -349,9 +313,8 @@ class TestPdfAtomIndex(unittest.TestCase):
     def test_atom_index_db_stdout(self):
         """Atom index is found using -d from database.
 
-        scripts/pdf-atom-index.py:59: -d option does not define pdfparam,
-        and line 64 raises TypeError on AtomGroup *= float.
-        Remove decorator once fixed.
+        scripts/pdf-atom-index.py:59: -d option does not define pdfparam
+        (UnboundLocalError). Remove decorator once fixed.
         """
         sys.argv = ["pdf-atom-index.py", self.brd_path, "-d", self.db_path]
         out = io.StringIO()
@@ -360,14 +323,8 @@ class TestPdfAtomIndex(unittest.TestCase):
         output = out.getvalue().strip()
         self.assertIn("0", output)
 
-    @unittest.expectedFailure
     def test_atom_index_atom_not_found(self):
-        """Querying an atom not present in the system returns index -1.
-
-        scripts/pdf-atom-index.py:64: proteindf_bridge.rs.AtomGroup does not
-        support in-place multiplication (*=) with float, raising TypeError.
-        Remove decorator once fixed.
-        """
+        """Querying an atom not present in the system returns index -1."""
         missing_mol = bridge.AtomGroup()
         grp = bridge.AtomGroup()
         unknown_atom = bridge.Atom(
