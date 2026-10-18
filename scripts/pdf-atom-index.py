@@ -5,15 +5,16 @@ import argparse
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
+from proteindf_tools.pdfparam_object import PdfParamObject
 
-def find_atom_index(pdfparam, atomgroup):
+def find_atom_index(molecule, atomgroup):
     answer = set()
     for subgrp_key, subgrp in atomgroup.groups():
-        subgrp_atoms = find_atom_index(pdfparam, subgrp)
+        subgrp_atoms = find_atom_index(molecule, subgrp)
         answer = answer | subgrp_atoms
     for atom_key, atom in atomgroup.atoms():
-        index = pdfparam.find_atom_index(atom)
-        answer.add(index)
+        index, found = PdfParamObject._find_atom_index(molecule, atom)
+        answer.add(index if found else -1)
 
     return answer
 
@@ -66,7 +67,7 @@ def main():
 
     output_data = []
     for subgrp_key, subgrp in find_atoms.groups():
-        index_list = list(find_atom_index(pdfparam, subgrp))
+        index_list = list(find_atom_index(atomgroup, subgrp))
         output_data.append(index_list)
     if len(output_path) > 0:
         bridge.save_msgpack(output_data, output_path)
