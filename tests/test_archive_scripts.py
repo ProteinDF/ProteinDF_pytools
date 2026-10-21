@@ -29,9 +29,12 @@ except ImportError:
     rich_logging_mock = mock.MagicMock()
     rich_logging_mock.RichHandler = FakeRichHandler
     rich_mock.logging = rich_logging_mock
+    rich_progress_mock = mock.MagicMock()
+    rich_progress_mock.track = lambda seq, *args, **kwargs: seq
+    rich_mock.progress = rich_progress_mock
     sys.modules["rich"] = rich_mock
     sys.modules["rich.logging"] = rich_logging_mock
-    sys.modules["rich.progress"] = mock.MagicMock()
+    sys.modules["rich.progress"] = rich_progress_mock
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
@@ -114,10 +117,12 @@ def _create_synthetic_files(param):
         mat_c.set(1, 1, 1.0)
         mat_c.save(param.get_c_mat_path("rks", itr))
 
-        mat_p = Matrix(2, 2)
+        mat_p = SymmetricMatrix(2)
+        mat_p.set(0, 0, 1.0)
         mat_p.save(param.get_density_matrix_path("rks", itr))
 
-        mat_f = Matrix(2, 2)
+        mat_f = SymmetricMatrix(2)
+        mat_f.set(0, 0, 0.5)
         mat_f.save(param.get_f_mat_path("rks", itr))
 
     s_mat = SymmetricMatrix(2)
@@ -224,6 +229,19 @@ class TestArchiveScripts(unittest.TestCase):
         tes = h5.get_TEs()
         self.assertAlmostEqual(tes[0], -0.5)
         self.assertAlmostEqual(tes[1], -1.0)
+        for itr in range(1, h5.iterations + 1):
+            c = h5.get_c_matrix("rks", itr)
+            self.assertIsInstance(c, Matrix)
+            self.assertEqual(c.rows, 2)
+            self.assertEqual(c.cols, 2)
+            p = h5.get_density_matrix("rks", itr)
+            self.assertIsInstance(p, SymmetricMatrix)
+            self.assertEqual(p.rows, 2)
+            self.assertEqual(p.cols, 2)
+            f = h5.get_f_matrix("rks", itr)
+            self.assertIsInstance(f, SymmetricMatrix)
+            self.assertEqual(f.rows, 2)
+            self.assertEqual(f.cols, 2)
         h5._close()
 
     def test_pdf_archive_h5_default_param(self):
@@ -242,6 +260,19 @@ class TestArchiveScripts(unittest.TestCase):
         h5 = PdfParam_H5()
         h5.open(h5_path)
         self.assertEqual(h5.iterations, 2)
+        for itr in range(1, h5.iterations + 1):
+            c = h5.get_c_matrix("rks", itr)
+            self.assertIsInstance(c, Matrix)
+            self.assertEqual(c.rows, 2)
+            self.assertEqual(c.cols, 2)
+            p = h5.get_density_matrix("rks", itr)
+            self.assertIsInstance(p, SymmetricMatrix)
+            self.assertEqual(p.rows, 2)
+            self.assertEqual(p.cols, 2)
+            f = h5.get_f_matrix("rks", itr)
+            self.assertIsInstance(f, SymmetricMatrix)
+            self.assertEqual(f.rows, 2)
+            self.assertEqual(f.cols, 2)
         h5._close()
 
     def test_pdf_archive_h5_nonexistent_param(self):
