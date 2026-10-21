@@ -58,6 +58,7 @@ UNITTESTS="\
   input_scripts \
   info_scripts \
   pop_scripts \
+  report_run_scripts \
   "
 
 for i in ${UNITTESTS}; do
