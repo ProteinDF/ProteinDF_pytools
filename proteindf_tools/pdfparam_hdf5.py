@@ -426,10 +426,19 @@ class PdfParam_H5(PdfParamObject):
         """
         answer = None
         occ = self.get_occ_vector(run_type)
-        for i in range(len(occ) - 1, -1, -1):
-            if occ[i] > 0.0:
-                answer = i
-                break
+        if occ is None and run_type == "roks":
+            for rt in ["roks_open", "roks_closed"]:
+                occ = self.get_occ_vector(rt)
+                if occ is not None:
+                    for i in range(len(occ) - 1, -1, -1):
+                        if occ[i] > 0.0:
+                            return i
+            return None
+        if occ is not None:
+            for i in range(len(occ) - 1, -1, -1):
+                if occ[i] > 0.0:
+                    answer = i
+                    break
         return answer
 
 

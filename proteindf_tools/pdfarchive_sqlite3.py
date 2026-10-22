@@ -559,10 +559,19 @@ class PdfArchive_Sqlite3(object):
         """
         answer = None
         v = self.get_occupations(runtype)
-        for i in range(len(v) - 1, -1, -1):
-            if v[i] > 0.0:
-                answer = i
-                break
+        if v is None and runtype == "roks":
+            for rt in ["roks_open", "roks_closed"]:
+                v = self.get_occupations(rt)
+                if v is not None:
+                    for i in range(len(v) - 1, -1, -1):
+                        if v[i] > 0.0:
+                            return i
+            return None
+        if v is not None:
+            for i in range(len(v) - 1, -1, -1):
+                if v[i] > 0.0:
+                    answer = i
+                    break
         return answer
 
     def get_total_energy(self, iteration):

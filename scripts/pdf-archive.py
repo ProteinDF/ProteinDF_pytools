@@ -143,7 +143,7 @@ class Pdf2Db(object):
         for itr in range(1, iterations + 1):
             v = pdf.Vector()
             # energy level
-            for runtype in pdfparam.run_types():
+            for runtype in pdfparam.orbital_run_types():
                 path = pdfparam.get_energy_level_path(runtype, itr)
                 self._logger.debug('load %s' % (path))
                 if v.is_loadable(path):
@@ -186,7 +186,7 @@ class Pdf2Db(object):
 
         m = pdf.Matrix()
         for itr in range(start_itr, iterations + 1):
-            for runtype in pdfparam.run_types():
+            for runtype in pdfparam.orbital_run_types():
                 path = pdfparam.get_c_mat_path(runtype, itr)
                 self._logger.debug('load %s' % (path))
                 if m.is_loadable(path):

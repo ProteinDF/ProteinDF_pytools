@@ -30,7 +30,7 @@ class PdfReport(object):
 
         self._plot_convergence_check(iteration)
         
-        for run_type in self._pdfparam.run_types():
+        for run_type in self._pdfparam.orbital_run_types():
             logger.info("make report [run_type: {}]".format(run_type))
             self._plot_convergence_energy_level(run_type, iteration)
 

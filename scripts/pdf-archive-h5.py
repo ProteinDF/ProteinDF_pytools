@@ -76,18 +76,21 @@ def archive(pdfparam, entry):
     
     for run_type in pdfparam.run_types():
         logger.info('run_type: %s' % run_type)
-        
+
         logger.info("save occ")
         archive_occ(pdfparam, run_type, entry)
+
+        logger.info("save P")
+        archive_p(run_type, pdfparam, entry)
+
+    for run_type in pdfparam.orbital_run_types():
+        logger.info('orbital run_type: %s' % run_type)
 
         logger.info("save energy level")
         archive_energy_level(pdfparam, run_type, entry)
 
         logger.info("save C")
         archive_c(run_type, pdfparam, entry)
-
-        logger.info("save P")
-        archive_p(run_type, pdfparam, entry)
 
         logger.info("save F")
         archive_f(run_type, pdfparam, entry)
@@ -100,7 +103,7 @@ def archive_occ(pdfparam, run_type, entry):
     if occ.load(file_path):
         entry.save_occ(run_type, occ)
     else:
-        logger.warning('failed to load %s' % file_path)
+        logger.warning('failed to load occ (%s): %s' % (run_type, file_path))
 
 
 def archive_TEs(pdfparam, entry):
@@ -122,7 +125,7 @@ def archive_energy_level(pdfparam, run_type, entry):
         if e_level.load(e_level_path):
             entry.save_energy_level(run_type, itr, e_level)
         else:
-            logger.warning('failed to load %s' % e_level_path)
+            logger.warning('failed to load energy level (%s): %s' % (run_type, e_level_path))
 
 
 def archive_s(pdfparam, entry):
@@ -155,8 +158,10 @@ def archive_c(run_type, pdfparam, entry):
         logger.debug("save c({})".format(itr))
         filepath = pdfparam.get_c_mat_path(run_type, itr)
         c = pdf.Matrix()
-        c.load(filepath)
-        entry.save_c_matrix(run_type, itr, c)
+        if c.load(filepath):
+            entry.save_c_matrix(run_type, itr, c)
+        else:
+            logger.warning('failed to load C (%s): %s' % (run_type, filepath))
 
 
 def archive_p(run_type, pdfparam, entry):
@@ -165,8 +170,10 @@ def archive_p(run_type, pdfparam, entry):
         logger.debug("save p({})".format(itr))
         filepath = pdfparam.get_density_matrix_path(run_type, itr)
         p = pdf.SymmetricMatrix()
-        p.load(filepath)
-        entry.save_density_matrix(run_type, itr, p)
+        if p.load(filepath):
+            entry.save_density_matrix(run_type, itr, p)
+        else:
+            logger.warning('failed to load P (%s): %s' % (run_type, filepath))
 
 
 def archive_f(run_type, pdfparam, entry):
@@ -175,8 +182,10 @@ def archive_f(run_type, pdfparam, entry):
         logger.debug("save F({})".format(itr))
         filepath = pdfparam.get_f_mat_path(run_type, itr)
         f = pdf.SymmetricMatrix()
-        f.load(filepath)
-        entry.save_f_matrix(run_type, itr, f)
+        if f.load(filepath):
+            entry.save_f_matrix(run_type, itr, f)
+        else:
+            logger.warning('failed to load F (%s): %s' % (run_type, filepath))
 
 
 def main():
