@@ -559,6 +559,11 @@ class PdfArchive_Sqlite3(object):
         """
         answer = None
         v = self.get_occupations(runtype)
+        if v is None and runtype == "roks":
+            for rt in ["roks_open", "roks_closed"]:
+                v = self.get_occupations(rt)
+                if v is not None:
+                    break
         for i in range(len(v) - 1, -1, -1):
             if v[i] > 0.0:
                 answer = i

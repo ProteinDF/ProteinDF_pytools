@@ -60,6 +60,7 @@ UNITTESTS="\
   pop_scripts \
   report_run_scripts \
   tools_small \
+  roks_run_types \
   "
 
 for i in ${UNITTESTS}; do

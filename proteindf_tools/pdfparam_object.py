@@ -65,8 +65,19 @@ class PdfParamObject(object):
         elif self.method == "uks":
             run_types = ["uks_alpha", "uks_beta"]
         elif self.method == "roks":
-            run_types = ["roks_close", "roks_open"]
+            run_types = ["roks_closed", "roks_open"]
         return run_types
+
+    def orbital_run_types(self):
+        """ """
+        orbital_run_types = []
+        if self.method == "rks":
+            orbital_run_types = ["rks"]
+        elif self.method == "uks":
+            orbital_run_types = ["uks_alpha", "uks_beta"]
+        elif self.method == "roks":
+            orbital_run_types = ["roks"]
+        return orbital_run_types
 
     # step_control
 
