@@ -61,6 +61,7 @@ UNITTESTS="\
   report_run_scripts \
   tools_small \
   roks_run_types \
+  pdfparam_object \
   "
 
 for i in ${UNITTESTS}; do
