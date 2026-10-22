@@ -76,12 +76,15 @@ class TestPdfParamBasic(unittest.TestCase):
         param = PdfParam()
         param.method = "rks"
         self.assertEqual(param.run_types(), ["rks"])
+        self.assertEqual(param.orbital_run_types(), ["rks"])
 
         param.method = "uks"
         self.assertEqual(param.run_types(), ["uks_alpha", "uks_beta"])
+        self.assertEqual(param.orbital_run_types(), ["uks_alpha", "uks_beta"])
 
         param.method = "roks"
-        self.assertEqual(param.run_types(), ["roks_close", "roks_open"])
+        self.assertEqual(param.run_types(), ["roks_closed", "roks_open"])
+        self.assertEqual(param.orbital_run_types(), ["roks"])
 
     def test_iterations_and_max_iterations(self):
         param = PdfParam()
