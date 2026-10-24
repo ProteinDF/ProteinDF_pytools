@@ -68,8 +68,9 @@ def main():
 
     (yn, pdfcmd, pdfargs, ext) = get_cmd(arg_array)
     if yn == False:
-        sys.stderr.write("cannot command: {}".format(
+        sys.stderr.write("cannot command: {}\n".format(
             ' '.join(args.cmd + unknown)))
+        return 1
     subproc_cmd = " ".join([pdfcmd] + pdfargs)
 
     if debug:

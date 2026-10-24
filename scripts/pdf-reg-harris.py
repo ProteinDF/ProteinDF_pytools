@@ -44,7 +44,7 @@ def main():
     parser.add_argument('-o', '--output',
                         nargs=1,
                         dest='db_path',
-                        default='harris.mpac',
+                        default=['harris.mpac'],
                         help='update database file path')
     parser.add_argument('-p', '--param',
                         dest='param',

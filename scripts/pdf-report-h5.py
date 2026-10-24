@@ -105,9 +105,12 @@ def main():
     report = pdf.PdfReport(pdfparam=pdfparam, workdir=output_dir)
     if do_profile != None:
         import cProfile
-        cProfile.runctx("report()",
-                        globals(), locals(),
-                        report.report(iteration=iteration))
+        cProfile.runctx(
+            "report.report(iteration=iteration)",
+            globals(),
+            locals(),
+            filename=do_profile,
+        )
     else:
         report.report(iteration=iteration)
 
