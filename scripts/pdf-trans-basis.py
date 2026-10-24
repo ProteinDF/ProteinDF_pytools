@@ -70,7 +70,7 @@ class BasisSetParser(object):
             (atom, bs) = self._parse_block_gaussian94(atom_basis)
             self._basissets[atom] = bs
 
-    def _parse_block_aussian94(self, lines):
+    def _parse_block_gaussian94(self, lines):
         has_error = False
 
         # [atom] 0
@@ -87,18 +87,18 @@ class BasisSetParser(object):
             num_of_PGTOs = int(matchObj.group(2))
             CGTO_coef = float(matchObj.group(3))
             line_index += 1
-            cgto = ContractedGTO(type.lower(), num_of_PGTOs)
+            cgto = pdf.ContractedGTO(type.lower(), num_of_PGTOs)
 
             for pgto_index in range(num_of_PGTOs):
                 pgto_line = lines[line_index + pgto_index]
                 matchObj = self._re_PGTO_line.match(pgto_line)
                 exponent = float(matchObj.group(1))
                 coef = float(matchObj.group(2))
-                cgto[pgto_index] = PrimitiveGTO(exponent, coef)
+                cgto[pgto_index] = pdf.PrimitiveGTO(exponent, coef)
             line_index += num_of_PGTOs
             cgtos.append(cgto)
 
-        basisset = BasisSet('', len(cgtos))
+        basisset = pdf.BasisSet('', len(cgtos))
         for cgto_index in range(len(cgtos)):
             basisset[cgto_index] = cgtos[cgto_index]
 
