@@ -12,6 +12,7 @@ import os
 import pickle
 import copy
 import math
+import re
 
 import logging
 logger = logging.getLogger(__name__)
@@ -753,9 +754,7 @@ class PdfParamObject(object):
         answer = self._data.get("lo/satisfied", False)
 
         if not isinstance(answer, bool):
-            answer = str(answer).upper()
-        else:
-            answer = answer == "YES"
+            answer = str(answer).upper() == "YES"
             self._data["lo/satisfied"] = answer
         return answer
 
@@ -921,7 +920,7 @@ class PdfParamObject(object):
     def _get_input_geometry(self, atom_group=None):
         output = ""
         if atom_group == None:
-            output += self._get_geometry_input(self.molecule)
+            output += self._get_input_geometry(self.molecule)
         else:
             for key, group in atom_group.groups():
                 output_sub = self._get_input_geometry(group)
@@ -931,7 +930,7 @@ class PdfParamObject(object):
             for key, atom in atom_group.atoms():
                 label = ""
                 if len(atom.label) > 0:
-                    label = "@{}".format(label)
+                    label = "@{}".format(atom.label)
                     label = re.sub(r"\s+", "_", label)
 
                 charge = ""
@@ -1007,7 +1006,7 @@ class PdfParamObject(object):
 
                     atom_kind = atom_symbol
                     if len(atom_label) != 0:
-                        atom_kind = "%s@%s" % (atom_symbol, label)
+                        atom_kind = "%s@%s" % (atom_symbol, atom_label)
                     answer.add(atom_kind)
         return answer
 
