@@ -78,6 +78,7 @@ def main():
                         help="ProteinDF input template (Jinja2 format)")
     parser.add_argument("-o", "--output",
                         action="store",
+                        nargs=1,
                         default=["fl_Userinput"],
                         help="output path")
     parser.add_argument("-v", "--verbose",
