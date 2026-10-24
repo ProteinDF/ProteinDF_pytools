@@ -17,7 +17,7 @@ SCF(tight, maxcycle=500)
 
 0 1
 {%- for atom in atomlist %}
-{{ atom.symbol }}    {{ "% 8.5f"|format(atom.x) }} {{ "% 8.5f"|format(atom.y) }} {{ "% 8.5f"|format(atom.z) }}
+{{ atom.symbol }}   {{ "% 8.5f"|format(atom.x) }} {{ "% 8.5f"|format(atom.y) }} {{ "% 8.5f"|format(atom.z) }}
 {%- endfor %}
 """
 
@@ -27,10 +27,12 @@ def main():
     parser = argparse.ArgumentParser(description='make Gaussian input from xyz file.')
     parser.add_argument("-t", "--template",
                         action="store",
+                        nargs=1,
                         default=[""],
                         help="input template (Jinja2 format)")
     parser.add_argument("-o", "--output",
                         action="store",
+                        nargs=1,
                         default=["sample.gau"],
                         help="output path")
     parser.add_argument("-v", "--verbose",
@@ -74,7 +76,7 @@ def main():
 
     # make input
     env = Environment(loader=FileSystemLoader('./', encoding='utf8'))
-    tpl = env.from_string(g09_templ_str)
+    tpl = env.from_string(templ_str)
     if len(templ_path) > 0:
         tpl = env.get_template(templ_path)
     
