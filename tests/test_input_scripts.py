@@ -235,14 +235,8 @@ H   0.00000  -0.75700  -0.46900
         self.assertTrue(lines[1].startswith("H"))
         self.assertTrue(lines[2].startswith("H"))
 
-    @unittest.expectedFailure
     def test_xyz2pdf_custom_output_option(self):
-        """xyz2pdf writes output to the path specified by -o option.
-
-        scripts/xyz2pdf.py:101: args.output[0] で文字列の1文字目だけが
-        ファイル名として扱われてしまう不具合があるため失敗する。
-        修正されたら外す。
-        """
+        """xyz2pdf writes output to the path specified by -o option."""
         xyz_content = """1
 H
 H 0.0 0.0 0.0
@@ -310,14 +304,8 @@ class TestXyz2Gau(unittest.TestCase):
         sys.argv = self._orig_argv
         self.tmpdir.cleanup()
 
-    @unittest.expectedFailure
     def test_xyz2gau_default_template(self):
-        """xyz2gau creates Gaussian input using default template.
-
-        scripts/xyz2gau.py:77: g09_templ_str が未定義(正しくは templ_str)のため
-        NameError が発生する。
-        修正されたら外す。
-        """
+        """xyz2gau creates Gaussian input using default template."""
         xyz_content = """1
 Hydrogen
 H   0.00000 0.00000 0.00000
@@ -336,14 +324,8 @@ H   0.00000 0.00000 0.00000
             content = f.read()
         self.assertIn("H    0.00000  0.00000  0.00000", content)
 
-    @unittest.expectedFailure
     def test_xyz2gau_custom_template(self):
-        """xyz2gau creates Gaussian input using custom template specified by -t.
-
-        scripts/xyz2gau.py:77: -t を指定した場合でも77行目の g09_templ_str 未定義により
-        NameError が発生する。
-        修正されたら外す。
-        """
+        """xyz2gau creates Gaussian input using custom template specified by -t."""
         xyz_content = """1
 Hydrogen
 H   0.00000 0.00000 0.00000
@@ -428,14 +410,8 @@ class TestPdfSetCharges(unittest.TestCase):
         pdf.save_pdfparam(param, path)
         return param
 
-    @unittest.expectedFailure
     def test_pdf_set_charges_normal(self):
-        """pdf-set-charges.py sets charges from CSV to atoms in pdfparam.
-
-        scripts/pdf-set-charges.py:123: count が初期化・定義されていないため
-        NameError が発生する。
-        修正されたら外す。
-        """
+        """pdf-set-charges.py sets charges from CSV to atoms in pdfparam."""
         param_path = os.path.join(self.tmpdir.name, "pdfparam.mpac")
         csv_path = os.path.join(self.tmpdir.name, "charges.csv")
         out_path = os.path.join(self.tmpdir.name, "new_pdfparam.mpac")
@@ -503,15 +479,8 @@ class TestPdfTransBasis(unittest.TestCase):
         sys.argv = self._orig_argv
         self.tmpdir.cleanup()
 
-    @unittest.expectedFailure
     def test_pdf_trans_basis_gaussian94_normal(self):
-        """pdf-trans-basis.py parses Gaussian94 basis set file.
-
-        scripts/pdf-trans-basis.py:73: _parse_block_gaussian94 が
-        _parse_block_aussian94 と誤記されており AttributeError が発生する
-        (また ContractedGTO 等の未定義もある)。
-        修正されたら外す。
-        """
+        """pdf-trans-basis.py parses Gaussian94 basis set file."""
         bs_content = """****
 H     0
 S   1   1.00
