@@ -352,15 +352,8 @@ class TestPdfParamObject(unittest.TestCase):
         param._data["counterpoise"] = True
         self.assertEqual(param._pickup_atom_kinds(), {"H", "X"})
 
-    @unittest.expectedFailure
-    def test_pickup_atom_kinds_with_label_expected_failure(self):
-        """_pickup_atom_kinds collects atom kinds with labels formatted as symbol@label.
-
-        proteindf_tools/pdfparam_object.py:1009: atom.label が非空のとき
-        atom_kind = "%s@%s" % (atom_symbol, label) で未定義変数 label
-        (正しくは atom_label) を参照しているため NameError が発生する。
-        修正されたら外す。
-        """
+    def test_pickup_atom_kinds_with_label(self):
+        """_pickup_atom_kinds collects atom kinds with labels formatted as symbol@label."""
         param = self._create_h2_param(label1="1", label2="2")
         kinds = param._pickup_atom_kinds()
         self.assertEqual(kinds, {"H@1", "H@2"})
@@ -385,29 +378,14 @@ class TestPdfParamObject(unittest.TestCase):
         self.assertIn("H  0.000000  0.000000  0.000000", geom_str)
         self.assertIn("H  0.000000  0.000000  0.740000", geom_str)
 
-    @unittest.expectedFailure
-    def test_get_input_geometry_default_expected_failure(self):
-        """_get_input_geometry() with default atom_group=None returns formatted geometry.
-
-        proteindf_tools/pdfparam_object.py:912: atom_group=None のとき
-        self._get_geometry_input(self.molecule) を呼び出すが、
-        _get_geometry_input メソッドが未定義 (正しくは _get_input_geometry) のため
-        AttributeError が発生する。
-        修正されたら外す。
-        """
+    def test_get_input_geometry_default(self):
+        """_get_input_geometry() with default atom_group=None returns formatted geometry."""
         param = self._create_h2_param(label1="", label2="")
         geom_str = param._get_input_geometry()
         self.assertIn("H", geom_str)
 
-    @unittest.expectedFailure
-    def test_get_input_geometry_with_label_expected_failure(self):
-        """_get_input_geometry formats atom labels when label is non-empty.
-
-        proteindf_tools/pdfparam_object.py:926: atom.label が非空のとき
-        re.sub(r"\\s+", "_", label) を呼び出すが、モジュールで re が import
-        されていないため NameError が発生する。
-        修正されたら外す。
-        """
+    def test_get_input_geometry_with_label(self):
+        """_get_input_geometry formats atom labels when label is non-empty."""
         param = self._create_h2_param(label1="1", label2="2")
         geom_str = param._get_input_geometry(param.molecule)
         self.assertIn("H@1", geom_str)
@@ -442,15 +420,8 @@ class TestPdfParamObject(unittest.TestCase):
         self.assertFalse(param.lo_satisfied)
         self.assertFalse(param._get_lo_satisfied())
 
-    @unittest.expectedFailure
-    def test_lo_satisfied_true_expected_failure(self):
-        """lo_satisfied returns True when set to True.
-
-        proteindf_tools/pdfparam_object.py:756: isinstance(answer, bool) のとき
-        else 節で answer = answer == "YES" (True == "YES") が評価されて
-        False になってしまう不具合があるため失敗する。
-        修正されたら外す。
-        """
+    def test_lo_satisfied_true(self):
+        """lo_satisfied returns True when set to True."""
         param = PdfParamObject()
         param._data["lo/satisfied"] = True
         self.assertTrue(param.lo_satisfied)
