@@ -117,10 +117,12 @@ def main():
     # atom
     pdfparam = pdf.load_pdfparam(input_path)
     atoms = pdfparam.molecule.get_atom_list()
-    assert(len(charges) >= len(atoms))
+    assert(len(charges) >= len([atom for atom in atoms if atom.symbol != 'X']))
+    count = 0
     for atom in atoms:
         if atom.symbol != 'X':
             atom.charge = charges[count]
+            count += 1
     assert(len(charges) >= count)
 
     # output
