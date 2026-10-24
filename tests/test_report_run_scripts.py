@@ -364,15 +364,8 @@ class TestPdfReportH5(BaseScriptTestCase):
 
         self.assertTrue(os.path.exists(os.path.join(out_dir, "TE_hist.png")))
 
-    @unittest.expectedFailure
     def test_profile_option(self):
-        """pdf-report-h5.py with -p runs cProfile profiling.
-
-        scripts/pdf-report-h5.py:108: cProfile.runctx("report()", ...) で
-        PdfReport インスタンスを関数として呼び出そうとするため
-        TypeError: 'PdfReport' object is not callable が発生する。
-        修正されたら外す。
-        """
+        """pdf-report-h5.py with -p runs cProfile profiling."""
         out_dir = os.path.join(self.tmpdir.name, "report_h5_prof")
         stat_file = os.path.join(self.tmpdir.name, "pdf-report.stat")
         sys.argv = ["pdf-report-h5.py", self.h5, out_dir, "-p", stat_file]
@@ -381,6 +374,7 @@ class TestPdfReportH5(BaseScriptTestCase):
             self.mod.main()
 
         self.assertTrue(os.path.exists(stat_file))
+        self.assertGreater(os.path.getsize(stat_file), 0)
 
     def test_nonexistent_h5(self):
         """pdf-report-h5.py raises error or stops when HDF5 file does not exist."""
@@ -449,14 +443,8 @@ class TestPdfRegHarris(BaseScriptTestCase):
         self.assertEqual(dens_o["col"], 1)
         self.assertAlmostEqual(dens_o["data"][0], 1.25)
 
-    @unittest.expectedFailure
     def test_reg_harris_default_output(self):
-        """pdf-reg-harris.py without -o writes output to default harris.mpac.
-
-        scripts/pdf-reg-harris.py:57: args.db_path[0] でデフォルト文字列
-        'harris.mpac' の1文字目('h')がファイル名として扱われてしまう不具合があるため失敗する。
-        修正されたら外す。
-        """
+        """pdf-reg-harris.py without -o writes output to default harris.mpac."""
         sys.argv = ["pdf-reg-harris.py", self.dens_path, "O@O1", "-p", self.param_path]
         buf = io.StringIO()
         with redirect_stdout(buf):
@@ -547,15 +535,8 @@ class TestPdfCmd(BaseScriptTestCase):
             self.assertEqual(rc, 0)
             mock_process.assert_called_once_with(logfile_path="custom.log")
 
-    @unittest.expectedFailure
     def test_nonexistent_command(self):
-        """pdfcmd exits gracefully with non-zero exit code on nonexistent command.
-
-        scripts/pdfcmd.py:70-73: コマンドが見つからない場合(yn == False)に
-        処理を中断しないため、存在しないコマンドを実行しようとして
-        FileNotFoundError などの例外で異常終了する。
-        修正されたら外す。
-        """
+        """pdfcmd exits gracefully with non-zero exit code on nonexistent command."""
         sys.argv = ["pdfcmd.py", "nonexistent_subcmd"]
         buf = io.StringIO()
         with redirect_stderr(buf):
