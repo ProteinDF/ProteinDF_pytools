@@ -4,6 +4,8 @@
 import os
 import argparse
 import json
+import tempfile
+import warnings
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
@@ -30,10 +32,6 @@ def make_pop_data_diff(pop_vtr1, pop_vtr2, output_path):
 
 
 def get_atom_elements(pdfparam):
-    if hasattr(pdfparam, "molecule") and pdfparam.molecule is not None:
-        atoms = pdfparam.molecule.get_atom_list()
-        if len(atoms) > 0:
-            return [atom.symbol for atom in atoms]
     if hasattr(pdfparam, "_h5root") and pdfparam._h5root is not None:
         if "molecule/xyzc" in pdfparam._h5root:
             ds = pdfparam._h5root["molecule/xyzc"]
@@ -41,7 +39,16 @@ def get_atom_elements(pdfparam):
             for row in ds:
                 sym = row[0].decode("utf-8") if isinstance(row[0], bytes) else str(row[0])
                 elements.append(sym)
-            return elements
+            if len(elements) > 0:
+                return elements
+    if hasattr(pdfparam, "molecule") and pdfparam.molecule is not None:
+        atoms = pdfparam.molecule.get_atom_list()
+        if len(atoms) > 0:
+            warnings.warn(
+                "molecule/xyzc not found; falling back to pdfparam.molecule.get_atom_list()",
+                UserWarning,
+            )
+            return [atom.symbol for atom in atoms]
     raise ValueError("Molecule geometry / atom list not found in results file")
 
 
@@ -206,11 +213,16 @@ def main():
         )
         save_pop_diff_json(plot_data, json_path)
 
-        diff_values = [pop_vtr1[i] - pop_vtr2[i] for i in range(len(pop_vtr1))]
-        pop_graph = pdf.DfPopulationGraph()
-        pop_graph._x = [i + 1 for i in range(len(diff_values))]
-        pop_graph._y = diff_values
-        pop_graph.save(output_path)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as tmp:
+            tmp_path = tmp.name
+        try:
+            make_pop_data_diff(pop_vtr1, pop_vtr2, tmp_path)
+            pop_graph = pdf.DfPopulationGraph()
+            pop_graph.load_data(tmp_path)
+            pop_graph.save(output_path)
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
     else:
         data_path = "pop.mulliken.txt"
         # make_pop_data(pop_vtr, data_path)
