@@ -390,6 +390,90 @@ class TestPdfParamObject(unittest.TestCase):
         geom_str = param._get_input_geometry(param.molecule)
         self.assertIn("H@1", geom_str)
 
+    def test_get_input_geometry_with_dummy_atoms_x(self):
+        """_get_input_geometry outputs dummy atoms (X) with charge even if zero."""
+        param = PdfParam()
+        mol = bridge.AtomGroup()
+
+        h1 = bridge.Atom()
+        h1.symbol = "H"
+        h1.label = "1"
+        h1.name = "H1"
+        h1.path = "/mol/H1"
+        h1.xyz = [0.0, 0.0, 0.0]
+        h1.charge = 0.0
+        mol.set_atom("1", h1)
+
+        c1 = bridge.Atom()
+        c1.symbol = "C"
+        c1.label = ""
+        c1.name = "C1"
+        c1.path = "/mol/C1"
+        c1.xyz = [0.0, 0.0, 1.09]
+        c1.charge = 0.0
+        mol.set_atom("2", c1)
+
+        x1 = bridge.Atom()
+        x1.symbol = "X"
+        x1.label = "pt1"
+        x1.name = "X1"
+        x1.path = "/mol/X1"
+        x1.xyz = [1.0, 2.0, 3.0]
+        x1.charge = 0.5
+        mol.set_atom("3", x1)
+
+        x2 = bridge.Atom()
+        x2.symbol = "X"
+        x2.label = ""
+        x2.name = "X2"
+        x2.path = "/mol/X2"
+        x2.xyz = [-1.0, -2.0, -3.0]
+        x2.charge = -0.2
+        mol.set_atom("4", x2)
+
+        x3 = bridge.Atom()
+        x3.symbol = "X"
+        x3.label = "zero"
+        x3.name = "X3"
+        x3.path = "/mol/X3"
+        x3.xyz = [0.5, 0.5, 0.5]
+        x3.charge = 0.0
+        mol.set_atom("5", x3)
+
+        param.molecule = mol
+        geom_str = param._get_input_geometry()
+
+        # 1. Check each X atom line format and charge
+        self.assertIn("X@pt1  1.000000  2.000000  3.000000 0.5 // /3:X1", geom_str)
+        self.assertIn("X -1.000000 -2.000000 -3.000000 -0.2 // /4:X2", geom_str)
+        self.assertIn("X@zero  0.500000  0.500000  0.500000 0.0 // /5:X3", geom_str)
+
+        # 2. Re-read generated lines and verify dummy atom charge sum
+        element_atomic_numbers = {"H": 1, "C": 6}
+        x_charge_sum = 0.0
+        total_electrons_from_geom = 0.0
+        for line in geom_str.strip().split("\n"):
+            line = line.strip()
+            if not line or line.startswith("//") or line.startswith("#"):
+                continue
+            code_part = line.split("//")[0].strip()
+            tokens = code_part.split()
+            sym = tokens[0].split("@")[0]
+            if sym == "X":
+                charge = float(tokens[4])
+                x_charge_sum += charge
+                total_electrons_from_geom += charge
+            else:
+                total_electrons_from_geom += element_atomic_numbers[sym]
+
+        dummy_charge = param._get_charge_of_dummy_atoms(param.molecule)
+        self.assertAlmostEqual(x_charge_sum, dummy_charge)
+        self.assertAlmostEqual(x_charge_sum, 0.3)
+
+        # 3. Verify num_of_electrons matches total electrons counted from geometry
+        self.assertAlmostEqual(param.num_of_electrons, total_electrons_from_geom)
+        self.assertAlmostEqual(param.num_of_electrons, 7.3)
+
     # --------------------------------------------------------------------------
     # 4. 計算結果の取得
     # --------------------------------------------------------------------------
