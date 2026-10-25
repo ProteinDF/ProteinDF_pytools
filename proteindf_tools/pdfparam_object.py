@@ -933,10 +933,6 @@ class PdfParamObject(object):
                     label = "@{}".format(atom.label)
                     label = re.sub(r"\s+", "_", label)
 
-                charge = ""
-                if abs(atom.charge) > 1.0e-5:
-                    charge = str(atom.charge)
-
                 atom_symbol = atom.symbol
                 if atom_symbol != "X":
                     output += "{atom_symbol}{label} {x: f} {y: f} {z: 6f} // {path}:{name}\n".format(
@@ -955,7 +951,7 @@ class PdfParamObject(object):
                         x=atom.xyz.x,
                         y=atom.xyz.y,
                         z=atom.xyz.z,
-                        charge=charge,
+                        charge=str(atom.charge),
                         path=atom.path,
                         name=atom.name,
                     )
