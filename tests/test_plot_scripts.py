@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 import unittest.mock as mock
+import warnings
 
 os.environ["MPLBACKEND"] = "Agg"
 import matplotlib.pyplot as plt
@@ -266,6 +267,66 @@ class TestPlotScripts(unittest.TestCase):
             mod.make_pop_diff_plot_data(h5_path, 3, elements, pop_last, [1.0])
         with self.assertRaises(ValueError):
             mod.make_pop_diff_plot_data(h5_path, 3, ["C"], pop_last, pop_ref)
+
+    def test_get_atom_elements_prioritizes_xyzc(self):
+        """get_atom_elements prioritizes molecule/xyzc order over molecule.get_atom_list()."""
+        mod = _load_script("pdf-plot-pop.py")
+
+        class DummyMolecule:
+            def get_atom_list(self):
+                # Different order: C, H, O
+                return [
+                    bridge.Atom(symbol="C", position=bridge.Position(0.0, 0.0, 0.0), charge=6.0),
+                    bridge.Atom(symbol="H", position=bridge.Position(0.0, 0.0, 1.0), charge=1.0),
+                    bridge.Atom(symbol="O", position=bridge.Position(0.0, 0.0, 2.0), charge=8.0),
+                ]
+
+        class DummyParam:
+            def __init__(self):
+                self._h5root = {
+                    "molecule/xyzc": [
+                        [b"O", b"O1", 0.0, 0.0, 2.0, 8.0],
+                        [b"C", b"C1", 0.0, 0.0, 0.0, 6.0],
+                        [b"H", b"H1", 0.0, 0.0, 1.0, 1.0],
+                    ]
+                }
+                self.molecule = DummyMolecule()
+
+        param = DummyParam()
+        elements = mod.get_atom_elements(param)
+        self.assertEqual(elements, ["O", "C", "H"])
+
+        # Also verify in JSON dict generated via make_pop_diff_plot_data
+        data = mod.make_pop_diff_plot_data(
+            h5_path="dummy.h5",
+            last_iteration=2,
+            elements=elements,
+            pop_vtr_last=[0.5, 0.2, -0.7],
+            pop_vtr_ref=[0.1, 0.1, -0.2],
+        )
+        self.assertEqual([a["element"] for a in data["atoms"]], ["O", "C", "H"])
+
+    def test_get_atom_elements_fallback_warning(self):
+        """get_atom_elements falls back to get_atom_list() with warning when molecule/xyzc is missing."""
+        mod = _load_script("pdf-plot-pop.py")
+
+        class DummyMolecule:
+            def get_atom_list(self):
+                return [bridge.Atom(symbol="N", position=bridge.Position(0.0, 0.0, 0.0), charge=7.0)]
+
+        class DummyParam:
+            def __init__(self):
+                self._h5root = {}
+                self.molecule = DummyMolecule()
+
+        param = DummyParam()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            elements = mod.get_atom_elements(param)
+            self.assertEqual(elements, ["N"])
+            self.assertEqual(len(w), 1)
+            self.assertTrue(issubclass(w[-1].category, UserWarning))
+            self.assertIn("molecule/xyzc not found", str(w[-1].message))
 
     def test_plot_pop_json_cli(self):
         """pdf-plot-pop.py --json generates json directly and PNG without pop.mulliken.txt."""
