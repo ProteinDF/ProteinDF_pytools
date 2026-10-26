@@ -359,6 +359,10 @@ class TestPdfParamH5(unittest.TestCase):
         mat_p = SymmetricMatrix(arr_p)
         p.save_density_matrix("rks", 1, mat_p)
 
+        arr_p_in = np.array([[0.5, 0.2], [0.2, 0.5]], dtype=float)
+        mat_p_in = SymmetricMatrix(arr_p_in)
+        p.save_input_density_matrix("rks", 1, mat_p_in)
+
         arr_f = np.array([[-1.5, -0.2], [-0.2, -1.5]], dtype=float)
         mat_f = SymmetricMatrix(arr_f)
         p.save_f_matrix("rks", 1, mat_f)
@@ -373,6 +377,7 @@ class TestPdfParamH5(unittest.TestCase):
             ("h", mat_h, p2.get_h_matrix()),
             ("h2", mat_h2, p2.get_h2_matrix()),
             ("density", mat_p, p2.get_density_matrix("rks", 1)),
+            ("input_density", mat_p_in, p2.get_input_density_matrix("rks", 1)),
             ("f", mat_f, p2.get_f_matrix("rks", 1)),
         ]:
             self.assertIsInstance(loaded, SymmetricMatrix, msg=f"{name} should be SymmetricMatrix")
@@ -581,6 +586,30 @@ class TestPdfParamH5(unittest.TestCase):
             self.assertNotIn("pop/mulliken/rks_2", h5)
             for i, val in enumerate(vtr_data):
                 self.assertAlmostEqual(h5["pop/mulliken/rks_1"][i], val)
+
+    def test_save_input_density_matrix_structure(self):
+        """Verify save_input_density_matrix writes dataset to P_in/<run_type>_<N> with SY type."""
+        p = PdfParam_H5()
+        p.open(self.h5_path)
+        p.iterations = 0
+        p.num_of_atoms = 1
+        p.num_of_AOs = 2
+        p.num_of_MOs = 2
+        p.save_model()
+
+        arr = np.array([[1.0, 0.5], [0.5, 2.0]], dtype=float)
+        mat = SymmetricMatrix(arr)
+        p.save_input_density_matrix("rks", 1, mat)
+        p._close()
+
+        with h5py.File(self.h5_path, "r") as h5:
+            self.assertIn("P_in/rks_1", h5)
+            ds = h5["P_in/rks_1"]
+            self.assertEqual(ds.attrs["type"], "SY")
+            self.assertEqual(ds.attrs["row"], 2)
+            self.assertEqual(ds.attrs["col"], 2)
+            self.assertEqual(ds.attrs["iteration"], 1)
+            self.assertTrue(np.allclose(ds[:], mat.data))
 
 
 if __name__ == "__main__":

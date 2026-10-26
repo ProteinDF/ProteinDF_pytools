@@ -354,12 +354,14 @@ class TestPdfParamBasic(unittest.TestCase):
         self.assertEqual(param.get_f_mat_path("rks", 5), "/work/calc/f.rks5.mat")
         self.assertEqual(param.get_c_mat_path("rks", 5), "/work/calc/c.rks5.mat")
         self.assertEqual(param.get_density_matrix_path("rks", 5), "/work/calc/p.rks5.mat")
+        self.assertEqual(param.get_input_density_matrix_path("rks", 1), "/work/calc/~p.rks1.mat")
 
         # F, C, Density matrix (default itr=-1 uses param.iterations)
         param.iterations = 10
         self.assertEqual(param.get_f_mat_path("rks"), "/work/calc/f.rks10.mat")
         self.assertEqual(param.get_c_mat_path("rks"), "/work/calc/c.rks10.mat")
         self.assertEqual(param.get_density_matrix_path("rks"), "/work/calc/p.rks10.mat")
+        self.assertEqual(param.get_input_density_matrix_path("rks"), "/work/calc/~p.rks10.mat")
 
         # pop mulliken
         self.assertEqual(

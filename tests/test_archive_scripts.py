@@ -36,6 +36,7 @@ except ImportError:
     sys.modules["rich.logging"] = rich_logging_mock
     sys.modules["rich.progress"] = rich_progress_mock
 
+import numpy as np
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
 from proteindf_tools.basisset import BasisSet, ContractedGTO, PrimitiveGTO
@@ -342,6 +343,85 @@ class TestArchiveScripts(unittest.TestCase):
             # Called for iteration 1 and iteration 2
             mock_run_pdf.assert_any_call("pop-mulliken -i 1")
             mock_run_pdf.assert_any_call("pop-mulliken -i 2")
+
+    def test_pdf_archive_h5_input_density_matrix(self):
+        """pdf-archive-h5.py saves iteration 1 input density matrix P_in/rks_1."""
+        work_dir = os.path.join(self.tmpdir.name, "fl_Work")
+        os.makedirs(work_dir, exist_ok=True)
+        param = _create_sample_param(work_path=work_dir, iterations=2)
+        param._data.setdefault("control", {})["file_base_name"]["Ppq_matrix"] = "Ppq.%s.mat"
+        _create_synthetic_files(param)
+
+        # Write distinct input density matrix ~Ppq.rks1.mat
+        mat_p_in = SymmetricMatrix(2)
+        mat_p_in.set(0, 0, 3.14)
+        mat_p_in.set(1, 0, 1.41)
+        mat_p_in.set(1, 1, 2.71)
+        in_path = param.get_input_density_matrix_path("rks", 1)
+        self.assertTrue(os.path.basename(in_path).startswith("~Ppq"))
+        mat_p_in.save(in_path)
+
+        mpac_path = os.path.join(self.tmpdir.name, "param.mpac")
+        pdf.save_pdfparam(param, mpac_path)
+
+        h5_path = os.path.join(self.tmpdir.name, "archive_with_pin.h5")
+        mod = _load_script("pdf-archive-h5.py")
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path]
+        mod.main()
+
+        self.assertTrue(os.path.exists(h5_path))
+        import h5py
+
+        with h5py.File(h5_path, "r") as h5_raw:
+            self.assertIn("P_in/rks_1", h5_raw)
+            self.assertIn("P/rks_1", h5_raw)
+            self.assertIn("P/rks_2", h5_raw)
+            self.assertNotIn("P_in/rks_2", h5_raw)
+            self.assertTrue(np.allclose(h5_raw["P_in/rks_1"][:], mat_p_in.data))
+
+        h5 = PdfParam_H5()
+        h5.open(h5_path)
+        loaded_p_in = h5.get_input_density_matrix("rks", 1)
+        self.assertIsInstance(loaded_p_in, SymmetricMatrix)
+        self.assertTrue(np.allclose(loaded_p_in.data, mat_p_in.data))
+        for itr in range(1, h5.iterations + 1):
+            p = h5.get_density_matrix("rks", itr)
+            self.assertIsInstance(p, SymmetricMatrix)
+            self.assertEqual(p.rows, 2)
+        h5._close()
+
+    def test_pdf_archive_h5_input_density_matrix_missing(self):
+        """pdf-archive-h5.py continues with a warning when ~Ppq.rks1.mat is missing."""
+        work_dir = os.path.join(self.tmpdir.name, "fl_Work")
+        os.makedirs(work_dir, exist_ok=True)
+        param = _create_sample_param(work_path=work_dir, iterations=2)
+        param._data.setdefault("control", {})["file_base_name"]["Ppq_matrix"] = "Ppq.%s.mat"
+        _create_synthetic_files(param)
+
+        # Do not create ~Ppq.rks1.mat
+        in_path = param.get_input_density_matrix_path("rks", 1)
+        self.assertFalse(os.path.exists(in_path))
+
+        mpac_path = os.path.join(self.tmpdir.name, "param_no_pin.mpac")
+        pdf.save_pdfparam(param, mpac_path)
+
+        h5_path = os.path.join(self.tmpdir.name, "archive_no_pin.h5")
+        mod = _load_script("pdf-archive-h5.py")
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path]
+
+        with self.assertLogs(mod.logger, level="WARNING") as log:
+            mod.main()
+            self.assertTrue(
+                any("input P not found" in record.getMessage() for record in log.records)
+            )
+
+        self.assertTrue(os.path.exists(h5_path))
+        import h5py
+
+        with h5py.File(h5_path, "r") as h5_raw:
+            self.assertNotIn("P_in/rks_1", h5_raw)
+            self.assertIn("P/rks_1", h5_raw)
+            self.assertIn("P/rks_2", h5_raw)
 
     def test_pdf_archive_h5_default_param(self):
         """pdf-archive-h5.py without -p reads pdfparam.mpac in current working directory."""
