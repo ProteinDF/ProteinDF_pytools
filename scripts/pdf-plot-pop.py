@@ -4,11 +4,14 @@
 import os
 import argparse
 import json
+import subprocess
 import tempfile
 import warnings
 
+import h5py
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
+from proteindf_tools.pdfparam_hdf5 import export_pdfparam_mpac
 
 import logging
 
@@ -138,6 +141,194 @@ def save_pop_diff_json(plot_data, output_path):
         f.write("\n")
 
 
+def parse_mulliken_pop(output):
+    """Parse Gross atom population table from pdf-pop-mulliken output.
+
+    Parameters
+    ----------
+    output : str
+        Standard output of pdf-pop-mulliken.
+
+    Returns
+    -------
+    pdf.Vector or None
+        Vector of atomic charges (net charges).
+    """
+    lines = output.splitlines()
+    in_table = False
+    charges = []
+    for line in lines:
+        stripped = line.strip()
+        if "Gross atom population" in stripped:
+            in_table = True
+            continue
+        if in_table:
+            if not stripped:
+                if charges:
+                    break
+                continue
+            if stripped.startswith("index") or stripped.startswith("Mulliken"):
+                if stripped.startswith("Mulliken") and charges:
+                    break
+                continue
+            tokens = stripped.split()
+            if len(tokens) >= 4:
+                try:
+                    int(tokens[0])
+                    charges.append(float(tokens[3]))
+                except ValueError:
+                    if charges:
+                        break
+            elif len(tokens) == 3:
+                try:
+                    int(tokens[0])
+                    charges.append(float(tokens[2]))
+                except ValueError:
+                    if charges:
+                        break
+    if not charges:
+        return None
+    return pdf.Vector(charges)
+
+
+def compute_pop_mulliken(pdfparam, p_matrix, s_matrix):
+    """Compute Mulliken population using pdf-pop-mulliken.
+
+    Parameters
+    ----------
+    pdfparam : PdfParam_H5
+        ProteinDF parameter object.
+    p_matrix : Matrix or SymmetricMatrix
+        Density matrix.
+    s_matrix : SymmetricMatrix
+        Overlap matrix S.
+
+    Returns
+    -------
+    pdf.Vector
+        Vector of atomic Mulliken charges.
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        mpac_path = os.path.join(tmpdir, "pdfparam.mpac")
+        s_path = os.path.join(tmpdir, "S.mat")
+        p_path = os.path.join(tmpdir, "P.mat")
+
+        export_pdfparam_mpac(pdfparam, mpac_path)
+        s_matrix.save(s_path)
+        p_matrix.save(p_path)
+
+        cmd = ["pdf", "pop-mulliken", "-p", mpac_path, "-P", p_path, "-S", s_path]
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True)
+            if res.returncode != 0:
+                raise RuntimeError(
+                    "pop-mulliken failed with exit code {}: {}".format(
+                        res.returncode, res.stderr
+                    )
+                )
+        except Exception as e:
+            raise RuntimeError("failed to run pop-mulliken: {}".format(e))
+
+        pop = parse_mulliken_pop(res.stdout)
+        if pop is None:
+            raise RuntimeError("failed to parse Mulliken population from pop-mulliken output")
+        return pop
+
+
+def open_pdfparam_h5(filepath):
+    """Open HDF5 file with PdfParam_H5, falling back to read-only mode if not writable.
+
+    Parameters
+    ----------
+    filepath : str
+        Path to the HDF5 file.
+
+    Returns
+    -------
+    tuple of (PdfParam_H5, bool)
+        The opened PdfParam_H5 instance and a boolean flag indicating whether the file is writable.
+    """
+    pdfparam = pdf.PdfParam_H5()
+    if os.path.exists(filepath) and not os.access(filepath, os.W_OK):
+        pdfparam._state["h5filepath"] = filepath
+        pdfparam._h5file = h5py.File(filepath, "r")
+        pdfparam._h5root = pdfparam._h5file["/"]
+        pdfparam.load_model()
+        TEs = pdfparam.get_TEs()
+        if TEs is not None:
+            for itr in range(pdfparam.iterations):
+                pdfparam.set_total_energy(itr + 1, TEs[itr])
+        return pdfparam, False
+
+    try:
+        pdfparam.open(filepath)
+        return pdfparam, True
+    except (PermissionError, OSError):
+        pdfparam._state["h5filepath"] = filepath
+        pdfparam._h5file = h5py.File(filepath, "r")
+        pdfparam._h5root = pdfparam._h5file["/"]
+        pdfparam.load_model()
+        TEs = pdfparam.get_TEs()
+        if TEs is not None:
+            for itr in range(pdfparam.iterations):
+                pdfparam.set_total_energy(itr + 1, TEs[itr])
+        return pdfparam, False
+
+
+def save_pop_to_h5(pdfparam, run_type, iteration, pop, is_writable):
+    """Save population to HDF5 if writable, otherwise emit a warning.
+
+    Parameters
+    ----------
+    pdfparam : PdfParam_H5
+        ProteinDF parameter object.
+    run_type : str
+        Calculation run type (e.g. "rks").
+    iteration : int
+        Iteration number.
+    pop : pdf.Vector
+        Population vector.
+    is_writable : bool
+        Whether the file is writable.
+    """
+    if not is_writable:
+        warnings.warn(
+            "Cannot save population to {}: file is read-only".format(pdfparam.filepath),
+            UserWarning,
+        )
+        return
+    try:
+        pdfparam.save_pop_mulliken_atom(run_type, iteration, pop)
+        if hasattr(pdfparam, "_h5file") and pdfparam._h5file is not None:
+            pdfparam._h5file.flush()
+    except (PermissionError, OSError) as e:
+        warnings.warn(
+            "Failed to save population to {}: {}".format(pdfparam.filepath, e),
+            UserWarning,
+        )
+
+
+def get_density_matrix_safe(pdfparam, run_type, iteration):
+    try:
+        return pdfparam.get_density_matrix(run_type, iteration)
+    except Exception:
+        return None
+
+
+def get_input_density_matrix_safe(pdfparam, run_type, iteration):
+    try:
+        return pdfparam.get_input_density_matrix(run_type, iteration)
+    except Exception:
+        return None
+
+
+def get_s_matrix_safe(pdfparam):
+    try:
+        return pdfparam.get_s_matrix()
+    except Exception:
+        return None
+
+
 def main():
     # parse args
     parser = argparse.ArgumentParser(description='plot population')
@@ -178,27 +369,44 @@ def main():
             print("json path: {}".format(json_path))
 
     #
-    pdfparam = pdf.PdfParam_H5()
-    pdfparam.open(pdfparam_h5_path)
+    pdfparam, is_writable = open_pdfparam_h5(pdfparam_h5_path)
 
     run_type = "rks"
     itr = pdfparam.iterations
 
+    need_save_last = False
+    need_save_1 = False
+
     pop_vtr1 = pdfparam.get_pop_mulliken_atom(run_type, itr)
     if pop_vtr1 is None or len(pop_vtr1) == 0:
-        raise ValueError(
-            "Population data (Mulliken) for iteration {} not found in {}".format(
-                itr, pdfparam_h5_path
+        P_last = get_density_matrix_safe(pdfparam, run_type, itr)
+        S = get_s_matrix_safe(pdfparam)
+        if P_last is None or S is None:
+            raise ValueError(
+                "Population data (Mulliken) for iteration {} not found in {}".format(
+                    itr, pdfparam_h5_path
+                )
             )
-        )
+        pop_vtr1 = compute_pop_mulliken(pdfparam, P_last, S)
+        need_save_last = True
 
     pop_vtr2 = pdfparam.get_pop_mulliken_atom(run_type, 1)
     if pop_vtr2 is None or len(pop_vtr2) == 0:
-        raise ValueError(
-            "Population data (Mulliken) for iteration 1 not found in {}".format(
-                pdfparam_h5_path
+        P_in = get_input_density_matrix_safe(pdfparam, run_type, 1)
+        S = get_s_matrix_safe(pdfparam)
+        if P_in is None or S is None:
+            raise ValueError(
+                "Population data (Mulliken) for iteration 1 not found in {}".format(
+                    pdfparam_h5_path
+                )
             )
-        )
+        pop_vtr2 = compute_pop_mulliken(pdfparam, P_in, S)
+        need_save_1 = True
+
+    if need_save_last:
+        save_pop_to_h5(pdfparam, run_type, itr, pop_vtr1, is_writable)
+    if need_save_1:
+        save_pop_to_h5(pdfparam, run_type, 1, pop_vtr2, is_writable)
 
     if json_path:
         elements = get_atom_elements(pdfparam)
