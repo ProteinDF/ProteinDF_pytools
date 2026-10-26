@@ -245,104 +245,154 @@ class TestArchiveScripts(unittest.TestCase):
             self.assertEqual(f.cols, 2)
         h5._close()
 
-    def test_pdf_archive_h5_pop_mulliken_converged(self):
-        """pdf-archive-h5.py archives pop.mulliken.<run_type><N>.vtr for converged SCF and iteration 1."""
+    def test_pdf_archive_h5_pop_mulliken_default_no_pop(self):
+        """pdf-archive-h5.py does not calculate or archive Mulliken population by default."""
         param = _create_sample_param(work_path=self.tmpdir.name, iterations=2)
         _create_synthetic_files(param)
 
-        v_pop1 = Vector([0.10, -0.10])
-        v_pop1.save(param.get_pop_mulliken_path("rks", 1))
+        mpac_path = os.path.join(self.tmpdir.name, "pop_default.mpac")
+        pdf.save_pdfparam(param, mpac_path)
 
-        v_pop2 = Vector([0.35, -0.35])
-        v_pop2.save(param.get_pop_mulliken_path("rks", 2))
+        h5_path = os.path.join(self.tmpdir.name, "pop_default.h5")
+        mod = _load_script("pdf-archive-h5.py")
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path]
+
+        with mock.patch.object(mod.pdf, "run_pdf") as mock_run_pdf:
+            mod.main()
+            mock_run_pdf.assert_not_called()
+
+        self.assertTrue(os.path.exists(h5_path))
+        h5 = PdfParam_H5()
+        h5.open(h5_path)
+        self.assertIsNone(h5.get_pop_mulliken_atom("rks", 1))
+        self.assertIsNone(h5.get_pop_mulliken_atom("rks", 2))
+        h5._close()
+
+    def test_pdf_archive_h5_pop_mulliken_converged(self):
+        """pdf-archive-h5.py --pop calculates Mulliken population for converged solution only."""
+        param = _create_sample_param(work_path=self.tmpdir.name, iterations=2)
+        _create_synthetic_files(param)
 
         mpac_path = os.path.join(self.tmpdir.name, "pop_conv.mpac")
         pdf.save_pdfparam(param, mpac_path)
 
         h5_path = os.path.join(self.tmpdir.name, "pop_conv.h5")
         mod = _load_script("pdf-archive-h5.py")
-        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path]
-        mod.main()
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path, "--pop"]
+
+        dummy_output = (
+            " Mulliken Population\n"
+            " total atomic charge =    2.00\n"
+            "          Net charge =    0.00\n\n"
+            " Gross atom population\n"
+            "  index Atom    gross         net\n"
+            "      0   H       0.850000     0.150000\n"
+            "      1   H       1.150000    -0.150000\n\n"
+            " Mulliken population analysis (orbial population)\n"
+        )
+
+        def fake_run_pdf(cmd):
+            parts = cmd.split()
+            self.assertEqual(parts[0], "pop-mulliken")
+            self.assertIn("-p", parts)
+            self.assertIn("-P", parts)
+            self.assertIn("-S", parts)
+            self.assertNotIn("-i", parts)
+            p_file = parts[parts.index("-P") + 1]
+            s_file = parts[parts.index("-S") + 1]
+            mpac_file = parts[parts.index("-p") + 1]
+            self.assertTrue(os.path.exists(p_file))
+            self.assertTrue(os.path.exists(s_file))
+            self.assertTrue(os.path.exists(mpac_file))
+            sys.stdout.write(dummy_output)
+
+        with mock.patch.object(mod.pdf, "run_pdf", side_effect=fake_run_pdf) as mock_run_pdf:
+            mod.main()
+            self.assertEqual(mock_run_pdf.call_count, 1)
 
         self.assertTrue(os.path.exists(h5_path))
         h5 = PdfParam_H5()
         h5.open(h5_path)
-        # Verify iteration 1
-        pop_loaded1 = h5.get_pop_mulliken_atom("rks", 1)
-        self.assertIsInstance(pop_loaded1, Vector)
-        self.assertEqual(len(pop_loaded1), 2)
-        self.assertAlmostEqual(pop_loaded1[0], 0.10)
-        self.assertAlmostEqual(pop_loaded1[1], -0.10)
-
-        # Verify iteration 2 (last iteration)
+        # Iteration 1 must not be calculated
+        self.assertIsNone(h5.get_pop_mulliken_atom("rks", 1))
+        # Iteration 2 (converged) must be calculated and saved
         pop_loaded2 = h5.get_pop_mulliken_atom("rks", 2)
         self.assertIsInstance(pop_loaded2, Vector)
         self.assertEqual(len(pop_loaded2), 2)
-        self.assertAlmostEqual(pop_loaded2[0], 0.35)
-        self.assertAlmostEqual(pop_loaded2[1], -0.35)
+        self.assertAlmostEqual(pop_loaded2[0], 0.15)
+        self.assertAlmostEqual(pop_loaded2[1], -0.15)
         h5._close()
 
     def test_pdf_archive_h5_pop_mulliken_unconverged(self):
-        """pdf-archive-h5.py archives pop.mulliken for iteration 1 and iteration - 1 for unconverged SCF."""
+        """pdf-archive-h5.py --pop calculates pop for last iteration when unconverged."""
         param = _create_sample_param(work_path=self.tmpdir.name, iterations=3)
         param._set_scf_converged(False)
         _create_synthetic_files(param)
-
-        v_pop1 = Vector([0.05, -0.05])
-        v_pop1.save(param.get_pop_mulliken_path("rks", 1))
-
-        v_pop2 = Vector([0.20, -0.20])
-        # iterations=3 unconverged -> iteration 2 is used
-        v_pop2.save(param.get_pop_mulliken_path("rks", 2))
 
         mpac_path = os.path.join(self.tmpdir.name, "pop_unconv.mpac")
         pdf.save_pdfparam(param, mpac_path)
 
         h5_path = os.path.join(self.tmpdir.name, "pop_unconv.h5")
         mod = _load_script("pdf-archive-h5.py")
-        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path]
-        mod.main()
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path, "--pop"]
+
+        dummy_output = (
+            " Gross atom population\n"
+            "  index Atom    gross         net\n"
+            "      0   H       0.800000     0.200000\n"
+            "      1   H       1.200000    -0.200000\n"
+        )
+
+        def fake_run_pdf(cmd):
+            parts = cmd.split()
+            self.assertEqual(parts[0], "pop-mulliken")
+            self.assertIn("-p", parts)
+            self.assertIn("-P", parts)
+            self.assertIn("-S", parts)
+            self.assertNotIn("-i", parts)
+            sys.stdout.write(dummy_output)
+
+        with mock.patch.object(mod.pdf, "run_pdf", side_effect=fake_run_pdf) as mock_run_pdf:
+            mod.main()
+            self.assertEqual(mock_run_pdf.call_count, 1)
 
         self.assertTrue(os.path.exists(h5_path))
         h5 = PdfParam_H5()
         h5.open(h5_path)
-        # Verify iteration 1
-        pop_loaded1 = h5.get_pop_mulliken_atom("rks", 1)
-        self.assertIsInstance(pop_loaded1, Vector)
-        self.assertEqual(len(pop_loaded1), 2)
-        self.assertAlmostEqual(pop_loaded1[0], 0.05)
-        self.assertAlmostEqual(pop_loaded1[1], -0.05)
-
-        # Verify iteration 2 (last converged iteration)
+        self.assertIsNone(h5.get_pop_mulliken_atom("rks", 1))
+        # Iteration 2 (last iteration for unconverged) must be calculated
         pop_loaded2 = h5.get_pop_mulliken_atom("rks", 2)
         self.assertIsInstance(pop_loaded2, Vector)
         self.assertEqual(len(pop_loaded2), 2)
         self.assertAlmostEqual(pop_loaded2[0], 0.20)
         self.assertAlmostEqual(pop_loaded2[1], -0.20)
-
-        # iteration 3 should not exist
         self.assertIsNone(h5.get_pop_mulliken_atom("rks", 3))
         h5._close()
 
-    def test_pdf_archive_h5_pop_mulliken_calls_run_pdf_when_missing(self):
-        """pdf-archive-h5.py calls run_pdf to generate pop-mulliken when vtr is missing and C matrix exists."""
-        param = _create_sample_param(work_path=self.tmpdir.name, iterations=2)
-        _create_synthetic_files(param)
-
-        mpac_path = os.path.join(self.tmpdir.name, "pop_mock.mpac")
-        pdf.save_pdfparam(param, mpac_path)
-
-        h5_path = os.path.join(self.tmpdir.name, "pop_mock.h5")
+    def test_parse_mulliken_pop(self):
+        """parse_mulliken_pop extracts net charges from Gross atom population table."""
         mod = _load_script("pdf-archive-h5.py")
-        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path]
+        output = (
+            " Mulliken Population\n"
+            " total atomic charge =    8.00\n"
+            "          Net charge =    0.00\n\n"
+            " Gross atom population\n"
+            "  index Atom    gross         net\n"
+            "      0   O       8.345678    -0.345678\n"
+            "      1   H       0.827161     0.172839\n"
+            "      2   H       0.827161     0.172839\n\n"
+            " Mulliken population analysis (orbial population)\n"
+        )
+        vec = mod.parse_mulliken_pop(output)
+        self.assertIsInstance(vec, Vector)
+        self.assertEqual(len(vec), 3)
+        self.assertAlmostEqual(vec[0], -0.345678)
+        self.assertAlmostEqual(vec[1], 0.172839)
+        self.assertAlmostEqual(vec[2], 0.172839)
 
-        from unittest import mock
-
-        with mock.patch.object(mod.pdf, "run_pdf") as mock_run_pdf:
-            mod.main()
-            # Called for iteration 1 and iteration 2
-            mock_run_pdf.assert_any_call("pop-mulliken -i 1")
-            mock_run_pdf.assert_any_call("pop-mulliken -i 2")
+        # Invalid or empty output
+        self.assertIsNone(mod.parse_mulliken_pop(""))
+        self.assertIsNone(mod.parse_mulliken_pop("No population table here"))
 
     def test_pdf_archive_h5_input_density_matrix(self):
         """pdf-archive-h5.py saves iteration 1 input density matrix P_in/rks_1."""
