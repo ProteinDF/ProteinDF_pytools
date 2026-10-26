@@ -83,6 +83,9 @@ def archive(pdfparam, entry):
         logger.info("save P")
         archive_p(run_type, pdfparam, entry)
 
+        logger.info("save input P")
+        archive_input_p(run_type, pdfparam, entry)
+
         logger.info("save pop (Mulliken)")
         archive_pop_mulliken(pdfparam, run_type, entry)
 
@@ -215,6 +218,22 @@ def archive_p(run_type, pdfparam, entry):
             entry.save_density_matrix(run_type, itr, p)
         else:
             logger.warning('failed to load P (%s): %s' % (run_type, filepath))
+
+
+def archive_input_p(run_type, pdfparam, entry):
+    if pdfparam.iterations <= 0:
+        return
+    itr = 1
+    logger.debug("save input p({})".format(itr))
+    filepath = pdfparam.get_input_density_matrix_path(run_type, itr)
+    if not os.path.exists(filepath):
+        logger.warning('input P not found (%s): %s' % (run_type, filepath))
+        return
+    p = pdf.SymmetricMatrix()
+    if p.load(filepath):
+        entry.save_input_density_matrix(run_type, itr, p)
+    else:
+        logger.warning('failed to load input P (%s): %s' % (run_type, filepath))
 
 
 def archive_f(run_type, pdfparam, entry):
