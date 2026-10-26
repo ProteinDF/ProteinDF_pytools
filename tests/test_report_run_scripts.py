@@ -200,6 +200,38 @@ class TestPdfTest(BaseScriptTestCase):
                 self.mod.main()
         self.assertIn("file not found", str(cm.exception))
 
+    def test_energy_threshold_option(self):
+        """--energy-threshold controls total energy comparison tolerance."""
+        db_close = os.path.join(self.tmpdir.name, "result_close.db")
+        # Difference of 1.0e-5 is within default 1.0e-4 but exceeds 1.0e-6
+        _create_sample_db(db_close, te=-75.0 + 1.0e-5)
+
+        # Default threshold (1.0e-4) -> matches (exit 0)
+        sys.argv = ["pdf-test.py", self.db1, db_close]
+        buf = io.StringIO()
+        with redirect_stdout(buf), redirect_stderr(buf):
+            with self.assertRaises(SystemExit) as cm:
+                self.mod.main()
+        self.assertEqual(cm.exception.code, 0)
+
+        # Stricter threshold (1.0e-6) -> does not match (exit 1)
+        sys.argv = ["pdf-test.py", "--energy-threshold", "1e-6", self.db1, db_close]
+        buf = io.StringIO()
+        with redirect_stdout(buf), redirect_stderr(buf):
+            with self.assertRaises(SystemExit) as cm:
+                self.mod.main()
+        self.assertEqual(cm.exception.code, 1)
+
+    def test_energy_threshold_invalid_values(self):
+        """Invalid --energy-threshold values cause non-zero exit."""
+        for invalid_val in ["0", "-1.0", "-1e-4", "abc"]:
+            sys.argv = ["pdf-test.py", "--energy-threshold", invalid_val, self.db1, self.db2]
+            buf = io.StringIO()
+            with redirect_stdout(buf), redirect_stderr(buf):
+                with self.assertRaises(SystemExit) as cm:
+                    self.mod.main()
+            self.assertNotEqual(cm.exception.code, 0)
+
 
 # =============================================================================
 # 2. pdf-test-h5.py
@@ -259,6 +291,38 @@ class TestPdfTestH5(BaseScriptTestCase):
             with self.assertRaises(SystemExit) as cm:
                 self.mod.main()
         self.assertIn("file not found", str(cm.exception))
+
+    def test_energy_threshold_option(self):
+        """--energy-threshold controls total energy comparison tolerance in HDF5."""
+        h5_close = os.path.join(self.tmpdir.name, "result_close.h5")
+        # Difference of 1.0e-6 is within default 1.0e-5 but exceeds 1.0e-7
+        _create_sample_h5(h5_close, te=-75.0 + 1.0e-6)
+
+        # Default threshold (1.0e-5) -> matches (exit 0)
+        sys.argv = ["pdf-test-h5.py", self.h5_1, h5_close]
+        buf = io.StringIO()
+        with redirect_stdout(buf), redirect_stderr(buf):
+            with self.assertRaises(SystemExit) as cm:
+                self.mod.main()
+        self.assertEqual(cm.exception.code, 0)
+
+        # Stricter threshold (1.0e-7) -> does not match (exit 1)
+        sys.argv = ["pdf-test-h5.py", "--energy-threshold", "1e-7", self.h5_1, h5_close]
+        buf = io.StringIO()
+        with redirect_stdout(buf), redirect_stderr(buf):
+            with self.assertRaises(SystemExit) as cm:
+                self.mod.main()
+        self.assertEqual(cm.exception.code, 1)
+
+    def test_energy_threshold_invalid_values(self):
+        """Invalid --energy-threshold values cause non-zero exit in HDF5."""
+        for invalid_val in ["0", "-1.0", "-1e-5", "abc"]:
+            sys.argv = ["pdf-test-h5.py", "--energy-threshold", invalid_val, self.h5_1, self.h5_2]
+            buf = io.StringIO()
+            with redirect_stdout(buf), redirect_stderr(buf):
+                with self.assertRaises(SystemExit) as cm:
+                    self.mod.main()
+            self.assertNotEqual(cm.exception.code, 0)
 
 
 # =============================================================================

@@ -25,12 +25,23 @@ compare ProteinDF results
 
 import sys
 import os.path
+import math
 import argparse
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
 
 import logging
+
+
+def positive_float(value):
+    try:
+        fval = float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError('invalid float value: {!r}'.format(value))
+    if fval <= 0.0 or math.isnan(fval):
+        raise argparse.ArgumentTypeError('value must be positive: {!r}'.format(value))
+    return fval
 
 
 def get_OK_NG(yn):
@@ -70,6 +81,10 @@ def main():
                         action='store_true',
                         help='check gradient',
                         default=False)
+    parser.add_argument('--energy-threshold',
+                        type=positive_float,
+                        default=None,
+                        help='threshold for total energy comparison (default: 1.0e-4)')
     args = parser.parse_args()
 
     verbose = args.verbose
@@ -117,7 +132,10 @@ def main():
         answer = answer & judge
 
     if compare_energy:
-        judge = data1.compare_energy(data2)
+        if args.energy_threshold is not None:
+            judge = data1.compare_energy(data2, threshold=args.energy_threshold)
+        else:
+            judge = data1.compare_energy(data2)
         logger.info('check TE: {}'.format(get_OK_NG(judge)))
         answer = answer & judge
 
