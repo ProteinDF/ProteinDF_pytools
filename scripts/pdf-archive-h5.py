@@ -26,8 +26,7 @@ archive ProteinDF results.
 import os
 import sys
 import argparse
-import contextlib
-import io
+import subprocess
 import tempfile
 import traceback
 import rich.logging
@@ -188,16 +187,20 @@ def archive_pop_mulliken(pdfparam, run_type, entry):
         P.save(p_path)
 
         logger.info("calculate pop(Mulliken) data for iteration %d ..." % last_itr)
-        buf = io.StringIO()
+        cmd = ["pdf", "pop-mulliken", "-p", mpac_path, "-P", p_path, "-S", s_path]
         try:
-            with contextlib.redirect_stdout(buf):
-                pdf.run_pdf("pop-mulliken -p {} -P {} -S {}".format(mpac_path, p_path, s_path))
+            res = subprocess.run(cmd, capture_output=True, text=True)
+            if res.returncode != 0:
+                logger.warning(
+                    "failed to run pop-mulliken for iteration %d (exit %d): %s"
+                    % (last_itr, res.returncode, res.stderr)
+                )
+                return
         except Exception as e:
             logger.warning("failed to run pop-mulliken for iteration %d: %s" % (last_itr, e))
             return
 
-        output = buf.getvalue()
-        pop = parse_mulliken_pop(output)
+        pop = parse_mulliken_pop(res.stdout)
         if pop is not None:
             entry.save_pop_mulliken_atom(run_type, last_itr, pop)
         else:

@@ -257,9 +257,9 @@ class TestArchiveScripts(unittest.TestCase):
         mod = _load_script("pdf-archive-h5.py")
         sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path]
 
-        with mock.patch.object(mod.pdf, "run_pdf") as mock_run_pdf:
+        with mock.patch.object(mod.subprocess, "run") as mock_run:
             mod.main()
-            mock_run_pdf.assert_not_called()
+            mock_run.assert_not_called()
 
         self.assertTrue(os.path.exists(h5_path))
         h5 = PdfParam_H5()
@@ -291,24 +291,24 @@ class TestArchiveScripts(unittest.TestCase):
             " Mulliken population analysis (orbial population)\n"
         )
 
-        def fake_run_pdf(cmd):
-            parts = cmd.split()
-            self.assertEqual(parts[0], "pop-mulliken")
-            self.assertIn("-p", parts)
-            self.assertIn("-P", parts)
-            self.assertIn("-S", parts)
-            self.assertNotIn("-i", parts)
-            p_file = parts[parts.index("-P") + 1]
-            s_file = parts[parts.index("-S") + 1]
-            mpac_file = parts[parts.index("-p") + 1]
+        def fake_subprocess_run(cmd, capture_output=True, text=True):
+            self.assertEqual(cmd[0], "pdf")
+            self.assertEqual(cmd[1], "pop-mulliken")
+            self.assertIn("-p", cmd)
+            self.assertIn("-P", cmd)
+            self.assertIn("-S", cmd)
+            self.assertNotIn("-i", cmd)
+            p_file = cmd[cmd.index("-P") + 1]
+            s_file = cmd[cmd.index("-S") + 1]
+            mpac_file = cmd[cmd.index("-p") + 1]
             self.assertTrue(os.path.exists(p_file))
             self.assertTrue(os.path.exists(s_file))
             self.assertTrue(os.path.exists(mpac_file))
-            sys.stdout.write(dummy_output)
+            return mock.Mock(returncode=0, stdout=dummy_output, stderr="")
 
-        with mock.patch.object(mod.pdf, "run_pdf", side_effect=fake_run_pdf) as mock_run_pdf:
+        with mock.patch.object(mod.subprocess, "run", side_effect=fake_subprocess_run) as mock_run:
             mod.main()
-            self.assertEqual(mock_run_pdf.call_count, 1)
+            self.assertEqual(mock_run.call_count, 1)
 
         self.assertTrue(os.path.exists(h5_path))
         h5 = PdfParam_H5()
@@ -343,18 +343,18 @@ class TestArchiveScripts(unittest.TestCase):
             "      1   H       1.200000    -0.200000\n"
         )
 
-        def fake_run_pdf(cmd):
-            parts = cmd.split()
-            self.assertEqual(parts[0], "pop-mulliken")
-            self.assertIn("-p", parts)
-            self.assertIn("-P", parts)
-            self.assertIn("-S", parts)
-            self.assertNotIn("-i", parts)
-            sys.stdout.write(dummy_output)
+        def fake_subprocess_run(cmd, capture_output=True, text=True):
+            self.assertEqual(cmd[0], "pdf")
+            self.assertEqual(cmd[1], "pop-mulliken")
+            self.assertIn("-p", cmd)
+            self.assertIn("-P", cmd)
+            self.assertIn("-S", cmd)
+            self.assertNotIn("-i", cmd)
+            return mock.Mock(returncode=0, stdout=dummy_output, stderr="")
 
-        with mock.patch.object(mod.pdf, "run_pdf", side_effect=fake_run_pdf) as mock_run_pdf:
+        with mock.patch.object(mod.subprocess, "run", side_effect=fake_subprocess_run) as mock_run:
             mod.main()
-            self.assertEqual(mock_run_pdf.call_count, 1)
+            self.assertEqual(mock_run.call_count, 1)
 
         self.assertTrue(os.path.exists(h5_path))
         h5 = PdfParam_H5()
@@ -367,6 +367,32 @@ class TestArchiveScripts(unittest.TestCase):
         self.assertAlmostEqual(pop_loaded2[0], 0.20)
         self.assertAlmostEqual(pop_loaded2[1], -0.20)
         self.assertIsNone(h5.get_pop_mulliken_atom("rks", 3))
+        h5._close()
+
+    def test_pdf_archive_h5_pop_mulliken_failure_does_not_save(self):
+        """pdf-archive-h5.py does not save pop if pop-mulliken fails (non-zero exit)."""
+        param = _create_sample_param(work_path=self.tmpdir.name, iterations=2)
+        _create_synthetic_files(param)
+
+        mpac_path = os.path.join(self.tmpdir.name, "pop_fail.mpac")
+        pdf.save_pdfparam(param, mpac_path)
+
+        h5_path = os.path.join(self.tmpdir.name, "pop_fail.h5")
+        mod = _load_script("pdf-archive-h5.py")
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path, "--pop"]
+
+        with mock.patch.object(
+            mod.subprocess,
+            "run",
+            return_value=mock.Mock(returncode=1, stdout="", stderr="error"),
+        ) as mock_run:
+            mod.main()
+            self.assertEqual(mock_run.call_count, 1)
+
+        self.assertTrue(os.path.exists(h5_path))
+        h5 = PdfParam_H5()
+        h5.open(h5_path)
+        self.assertIsNone(h5.get_pop_mulliken_atom("rks", 2))
         h5._close()
 
     def test_parse_mulliken_pop(self):
