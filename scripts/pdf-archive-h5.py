@@ -99,21 +99,42 @@ def archive(pdfparam, entry):
         archive_f(run_type, pdfparam, entry)
 
 
-def archive_pop_mulliken(pdfparam, run_type, entry):
-    if pdfparam.scf_converged:
-        itr = pdfparam.iterations
-    else:
-        itr = pdfparam.iterations - 1
+def _archive_single_pop_mulliken(pdfparam, run_type, itr, entry):
+    if itr <= 0:
+        return
 
-    if itr > 0:
-        file_path = pdfparam.get_pop_mulliken_path(run_type, itr)
-        pop = pdf.Vector()
-        if pop.load(file_path):
-            entry.save_pop_mulliken_atom(run_type, itr, pop)
+    file_path = pdfparam.get_pop_mulliken_path(run_type, itr)
+    if not os.path.exists(file_path):
+        c_mat_path = pdfparam.get_c_mat_path(run_type, itr)
+        if os.path.exists(c_mat_path):
+            logger.info("calculate pop(Mulliken) data for iteration %d ..." % itr)
+            try:
+                pdf.run_pdf("pop-mulliken -i {}".format(itr))
+            except Exception as e:
+                logger.warning("failed to run pop-mulliken for iteration %d: %s" % (itr, e))
         else:
-            logger.warning("failed to load pop mulliken (%s): %s" % (run_type, file_path))
+            logger.info("not found C ({}), give up calculate pop data.".format(c_mat_path))
+
+    pop = pdf.Vector()
+    if pop.load(file_path):
+        entry.save_pop_mulliken_atom(run_type, itr, pop)
     else:
+        logger.warning("failed to load pop mulliken (%s, itr %d): %s" % (run_type, itr, file_path))
+
+
+def archive_pop_mulliken(pdfparam, run_type, entry):
+    if pdfparam.iterations <= 0:
         logger.debug("Since the SCF iteration == 0, the charge calculation is not performed.")
+        return
+
+    last_itr = pdfparam.iterations if pdfparam.scf_converged else pdfparam.iterations - 1
+
+    target_itrs = [1]
+    if last_itr > 0 and last_itr not in target_itrs:
+        target_itrs.append(last_itr)
+
+    for itr in target_itrs:
+        _archive_single_pop_mulliken(pdfparam, run_type, itr, entry)
 
 
 def archive_occ(pdfparam, run_type, entry):
