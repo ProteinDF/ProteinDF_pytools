@@ -306,6 +306,30 @@ class TestPdfParamH5(unittest.TestCase):
             self.assertAlmostEqual(pop[i], pop_loaded[i])
         p2._close()
 
+    def test_save_pop_mulliken_atom_api(self):
+        """Verify save_pop_mulliken_atom writes population vector directly."""
+        p = PdfParam_H5()
+        p.open(self.h5_path)
+        p.iterations = 1
+        p.num_of_atoms = 2
+        p.num_of_AOs = 4
+        p.num_of_MOs = 4
+        p.save_model()
+        p.save_TEs(Vector([-100.0]))
+
+        pop = Vector([0.60, -0.60])
+        p.save_pop_mulliken_atom("rks", 1, pop)
+        p._close()
+
+        p2 = PdfParam_H5()
+        p2.open(self.h5_path)
+        pop_loaded = p2.get_pop_mulliken_atom("rks", 1)
+        self.assertIsInstance(pop_loaded, Vector)
+        self.assertEqual(len(pop_loaded), 2)
+        for i in range(len(pop)):
+            self.assertAlmostEqual(pop[i], pop_loaded[i])
+        p2._close()
+
     # -------------------------------------------------------------------------
     # 3. matrix roundtrip
     # -------------------------------------------------------------------------

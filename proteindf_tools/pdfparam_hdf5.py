@@ -621,6 +621,17 @@ class PdfParam_H5(PdfParamObject):
     # --------------------------------------------------------------------------
     # population
     # --------------------------------------------------------------------------
+    def save_pop_mulliken_atom(self, run_type, iteration, pop, h5grp=None):
+        self._save_pop_mulliken_atom(run_type, iteration, pop, h5grp=h5grp)
+
+    def _save_pop_mulliken_atom(self, run_type, iteration, pop, h5grp=None):
+        assert(isinstance(pop, Vector))
+        if h5grp is None:
+            h5grp = self._h5root
+
+        h5path = self._get_h5path_pop_mulliken_atom(run_type, iteration)
+        self._set_vector(h5grp, h5path, pop)
+
     def get_pop_mulliken_atom(self, run_type, iteration):
         h5path = self._get_h5path_pop_mulliken_atom(run_type, iteration)
         return self._get_vector(self._h5root, h5path)
