@@ -16,7 +16,7 @@ them with `-h` / `--help` for the full list of options.
 
 | Script | Description |
 | --- | --- |
-| `pdf-archive.py` | archive ProteinDF results |
+| `pdf-archive.py` | archive ProteinDF results (非推奨: `pdf-archive-h5.py` を使う) |
 | `pdf-archive-h5.py` | archive ProteinDF results (HDF5) |
 | `pdf-report.py` | make a ProteinDF report |
 | `pdf-report-h5.py` | make a ProteinDF report (HDF5) |

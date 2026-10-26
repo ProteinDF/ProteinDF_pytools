@@ -9,7 +9,7 @@ import sys
 import tempfile
 import unittest
 import unittest.mock as mock
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 
 # Mock rich if it is not available in the test environment
 try:
@@ -169,8 +169,14 @@ class TestArchiveScripts(unittest.TestCase):
         db_path = os.path.join(self.tmpdir.name, "result.db")
         mod = _load_script("pdf-archive.py")
         sys.argv = ["pdf-archive.py", "-p", mpac_path, "-o", db_path]
-        mod.main()
+        err_buf = io.StringIO()
+        with redirect_stderr(err_buf):
+            mod.main()
 
+        self.assertIn(
+            "pdf-archive.py is deprecated and will be removed. Use pdf-archive-h5.py (HDF5) instead.",
+            err_buf.getvalue(),
+        )
         self.assertTrue(os.path.exists(db_path))
         archive = PdfArchive_Sqlite3(db_path)
         self.assertEqual(archive.iterations, 2)
@@ -187,8 +193,14 @@ class TestArchiveScripts(unittest.TestCase):
         db_path = os.path.join(self.tmpdir.name, "result_default.db")
         mod = _load_script("pdf-archive.py")
         sys.argv = ["pdf-archive.py", "-o", db_path]
-        mod.main()
+        err_buf = io.StringIO()
+        with redirect_stderr(err_buf):
+            mod.main()
 
+        self.assertIn(
+            "pdf-archive.py is deprecated and will be removed. Use pdf-archive-h5.py (HDF5) instead.",
+            err_buf.getvalue(),
+        )
         self.assertTrue(os.path.exists(db_path))
         archive = PdfArchive_Sqlite3(db_path)
         self.assertEqual(archive.iterations, 2)
@@ -199,11 +211,32 @@ class TestArchiveScripts(unittest.TestCase):
         mod = _load_script("pdf-archive.py")
         sys.argv = ["pdf-archive.py", "-p", "nonexistent.mpac", "-o", db_path]
         buf = io.StringIO()
-        with redirect_stdout(buf):
+        err_buf = io.StringIO()
+        with redirect_stdout(buf), redirect_stderr(err_buf):
             mod.main()
 
+        self.assertIn(
+            "pdf-archive.py is deprecated and will be removed. Use pdf-archive-h5.py (HDF5) instead.",
+            err_buf.getvalue(),
+        )
         self.assertFalse(os.path.exists(db_path))
         self.assertIn("FileNotFoundError", buf.getvalue())
+
+    def test_pdf_archive_help_shows_warning(self):
+        """pdf-archive.py -h outputs deprecation warning to stderr before help message."""
+        mod = _load_script("pdf-archive.py")
+        sys.argv = ["pdf-archive.py", "-h"]
+        buf = io.StringIO()
+        err_buf = io.StringIO()
+        with redirect_stdout(buf), redirect_stderr(err_buf):
+            with self.assertRaises(SystemExit) as cm:
+                mod.main()
+            self.assertEqual(cm.exception.code, 0)
+
+        self.assertIn(
+            "pdf-archive.py is deprecated and will be removed. Use pdf-archive-h5.py (HDF5) instead.",
+            err_buf.getvalue(),
+        )
 
     # -------------------------------------------------------------------------
     # 2. pdf-archive-h5.py tests
