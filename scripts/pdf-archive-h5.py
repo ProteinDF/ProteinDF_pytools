@@ -26,6 +26,8 @@ archive ProteinDF results.
 import os
 import sys
 import argparse
+import subprocess
+import tempfile
 import traceback
 import rich.logging
 import rich.progress
@@ -60,7 +62,7 @@ def setup_logger(is_debug=False, output_file='pdf-archive-h5.log'):
 
 
 
-def archive(pdfparam, entry):
+def archive(pdfparam, entry, calc_pop=False):
     logger.info("save model")
     entry.save_model()
 
@@ -73,7 +75,7 @@ def archive(pdfparam, entry):
     logger.info("save h")
     archive_h(pdfparam, entry)
     archive_h2(pdfparam, entry)
-    
+
     for run_type in pdfparam.run_types():
         logger.info('run_type: %s' % run_type)
 
@@ -86,8 +88,9 @@ def archive(pdfparam, entry):
         logger.info("save input P")
         archive_input_p(run_type, pdfparam, entry)
 
-        logger.info("save pop (Mulliken)")
-        archive_pop_mulliken(pdfparam, run_type, entry)
+        if calc_pop:
+            logger.info("save pop (Mulliken)")
+            archive_pop_mulliken(pdfparam, run_type, entry)
 
     for run_type in pdfparam.orbital_run_types():
         logger.info('orbital run_type: %s' % run_type)
@@ -102,27 +105,54 @@ def archive(pdfparam, entry):
         archive_f(run_type, pdfparam, entry)
 
 
-def _archive_single_pop_mulliken(pdfparam, run_type, itr, entry):
-    if itr <= 0:
-        return
+def parse_mulliken_pop(output):
+    """Parse Gross atom population table from pdf-pop-mulliken output.
 
-    file_path = pdfparam.get_pop_mulliken_path(run_type, itr)
-    if not os.path.exists(file_path):
-        c_mat_path = pdfparam.get_c_mat_path(run_type, itr)
-        if os.path.exists(c_mat_path):
-            logger.info("calculate pop(Mulliken) data for iteration %d ..." % itr)
-            try:
-                pdf.run_pdf("pop-mulliken -i {}".format(itr))
-            except Exception as e:
-                logger.warning("failed to run pop-mulliken for iteration %d: %s" % (itr, e))
-        else:
-            logger.info("not found C ({}), give up calculate pop data.".format(c_mat_path))
+    Parameters
+    ----------
+    output : str
+        Standard output of pdf-pop-mulliken.
 
-    pop = pdf.Vector()
-    if pop.load(file_path):
-        entry.save_pop_mulliken_atom(run_type, itr, pop)
-    else:
-        logger.warning("failed to load pop mulliken (%s, itr %d): %s" % (run_type, itr, file_path))
+    Returns
+    -------
+    pdf.Vector or None
+        Vector of atomic charges (net charges).
+    """
+    lines = output.splitlines()
+    in_table = False
+    charges = []
+    for line in lines:
+        stripped = line.strip()
+        if "Gross atom population" in stripped:
+            in_table = True
+            continue
+        if in_table:
+            if not stripped:
+                if charges:
+                    break
+                continue
+            if stripped.startswith("index") or stripped.startswith("Mulliken"):
+                if stripped.startswith("Mulliken") and charges:
+                    break
+                continue
+            tokens = stripped.split()
+            if len(tokens) >= 4:
+                try:
+                    int(tokens[0])
+                    charges.append(float(tokens[3]))
+                except ValueError:
+                    if charges:
+                        break
+            elif len(tokens) == 3:
+                try:
+                    int(tokens[0])
+                    charges.append(float(tokens[2]))
+                except ValueError:
+                    if charges:
+                        break
+    if not charges:
+        return None
+    return pdf.Vector(charges)
 
 
 def archive_pop_mulliken(pdfparam, run_type, entry):
@@ -131,13 +161,52 @@ def archive_pop_mulliken(pdfparam, run_type, entry):
         return
 
     last_itr = pdfparam.iterations if pdfparam.scf_converged else pdfparam.iterations - 1
+    if last_itr <= 0:
+        return
 
-    target_itrs = [1]
-    if last_itr > 0 and last_itr not in target_itrs:
-        target_itrs.append(last_itr)
+    S = entry.get_s_matrix()
+    if S is None:
+        logger.warning("failed to load S from archive for Mulliken population")
+        return
 
-    for itr in target_itrs:
-        _archive_single_pop_mulliken(pdfparam, run_type, itr, entry)
+    P = entry.get_density_matrix(run_type, last_itr)
+    if P is None:
+        logger.warning(
+            "failed to load P (%s, itr %d) from archive for Mulliken population"
+            % (run_type, last_itr)
+        )
+        return
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        mpac_path = os.path.join(tmpdir, "pdfparam.mpac")
+        s_path = os.path.join(tmpdir, "S.mat")
+        p_path = os.path.join(tmpdir, "P.mat")
+
+        entry.export_pdfparam_mpac(mpac_path)
+        S.save(s_path)
+        P.save(p_path)
+
+        logger.info("calculate pop(Mulliken) data for iteration %d ..." % last_itr)
+        cmd = ["pdf", "pop-mulliken", "-p", mpac_path, "-P", p_path, "-S", s_path]
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True)
+            if res.returncode != 0:
+                logger.warning(
+                    "failed to run pop-mulliken for iteration %d (exit %d): %s"
+                    % (last_itr, res.returncode, res.stderr)
+                )
+                return
+        except Exception as e:
+            logger.warning("failed to run pop-mulliken for iteration %d: %s" % (last_itr, e))
+            return
+
+        pop = parse_mulliken_pop(res.stdout)
+        if pop is not None:
+            entry.save_pop_mulliken_atom(run_type, last_itr, pop)
+        else:
+            logger.warning(
+                "failed to parse pop mulliken from output (%s, itr %d)" % (run_type, last_itr)
+            )
 
 
 def archive_occ(pdfparam, run_type, entry):
@@ -264,6 +333,10 @@ def main():
                         action='store_true',
                         default=False,
                         help='overwrite output file')
+    parser.add_argument('--pop',
+                        action='store_true',
+                        default=False,
+                        help='calculate Mulliken population for converged solution')
     # parser.add_argument('-v', '--verbose',
     #                     action='store_true',
     #                     default=False)
@@ -277,6 +350,7 @@ def main():
     pdfparam_path = args.pdfparam_path
     output = args.output
     force_overwrite = args.force
+    calc_pop = args.pop
     # verbose = args.verbose
     is_debug = args.debug
     #is_little_endian = True
@@ -303,7 +377,7 @@ def main():
         entry.open(output)
 
         logger.debug("call archive")
-        archive(pdfparam, entry)
+        archive(pdfparam, entry, calc_pop=calc_pop)
 
     except:
         logger.exception("failed to archive")
