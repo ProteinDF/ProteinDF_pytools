@@ -83,6 +83,9 @@ def archive(pdfparam, entry):
         logger.info("save P")
         archive_p(run_type, pdfparam, entry)
 
+        logger.info("save pop (Mulliken)")
+        archive_pop_mulliken(pdfparam, run_type, entry)
+
     for run_type in pdfparam.orbital_run_types():
         logger.info('orbital run_type: %s' % run_type)
 
@@ -94,6 +97,23 @@ def archive(pdfparam, entry):
 
         logger.info("save F")
         archive_f(run_type, pdfparam, entry)
+
+
+def archive_pop_mulliken(pdfparam, run_type, entry):
+    if pdfparam.scf_converged:
+        itr = pdfparam.iterations
+    else:
+        itr = pdfparam.iterations - 1
+
+    if itr > 0:
+        file_path = pdfparam.get_pop_mulliken_path(run_type, itr)
+        pop = pdf.Vector()
+        if pop.load(file_path):
+            entry.save_pop_mulliken_atom(run_type, itr, pop)
+        else:
+            logger.warning("failed to load pop mulliken (%s): %s" % (run_type, file_path))
+    else:
+        logger.debug("Since the SCF iteration == 0, the charge calculation is not performed.")
 
 
 def archive_occ(pdfparam, run_type, entry):

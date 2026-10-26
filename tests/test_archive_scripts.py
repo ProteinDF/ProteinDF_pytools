@@ -244,6 +244,62 @@ class TestArchiveScripts(unittest.TestCase):
             self.assertEqual(f.cols, 2)
         h5._close()
 
+    def test_pdf_archive_h5_pop_mulliken_converged(self):
+        """pdf-archive-h5.py archives pop.mulliken.<run_type><N>.vtr for converged SCF."""
+        param = _create_sample_param(work_path=self.tmpdir.name, iterations=2)
+        _create_synthetic_files(param)
+
+        v_pop = Vector([0.35, -0.35])
+        v_pop.save(param.get_pop_mulliken_path("rks", 2))
+
+        mpac_path = os.path.join(self.tmpdir.name, "pop_conv.mpac")
+        pdf.save_pdfparam(param, mpac_path)
+
+        h5_path = os.path.join(self.tmpdir.name, "pop_conv.h5")
+        mod = _load_script("pdf-archive-h5.py")
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path]
+        mod.main()
+
+        self.assertTrue(os.path.exists(h5_path))
+        h5 = PdfParam_H5()
+        h5.open(h5_path)
+        pop_loaded = h5.get_pop_mulliken_atom("rks", 2)
+        self.assertIsInstance(pop_loaded, Vector)
+        self.assertEqual(len(pop_loaded), 2)
+        self.assertAlmostEqual(pop_loaded[0], 0.35)
+        self.assertAlmostEqual(pop_loaded[1], -0.35)
+        h5._close()
+
+    def test_pdf_archive_h5_pop_mulliken_unconverged(self):
+        """pdf-archive-h5.py archives pop.mulliken from iteration - 1 for unconverged SCF."""
+        param = _create_sample_param(work_path=self.tmpdir.name, iterations=3)
+        param._set_scf_converged(False)
+        _create_synthetic_files(param)
+
+        v_pop = Vector([0.20, -0.20])
+        # iterations=3 unconverged -> iteration 2 is used
+        v_pop.save(param.get_pop_mulliken_path("rks", 2))
+
+        mpac_path = os.path.join(self.tmpdir.name, "pop_unconv.mpac")
+        pdf.save_pdfparam(param, mpac_path)
+
+        h5_path = os.path.join(self.tmpdir.name, "pop_unconv.h5")
+        mod = _load_script("pdf-archive-h5.py")
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path]
+        mod.main()
+
+        self.assertTrue(os.path.exists(h5_path))
+        h5 = PdfParam_H5()
+        h5.open(h5_path)
+        pop_loaded = h5.get_pop_mulliken_atom("rks", 2)
+        self.assertIsInstance(pop_loaded, Vector)
+        self.assertEqual(len(pop_loaded), 2)
+        self.assertAlmostEqual(pop_loaded[0], 0.20)
+        self.assertAlmostEqual(pop_loaded[1], -0.20)
+        # iteration 3 should not exist
+        self.assertIsNone(h5.get_pop_mulliken_atom("rks", 3))
+        h5._close()
+
     def test_pdf_archive_h5_default_param(self):
         """pdf-archive-h5.py without -p reads pdfparam.mpac in current working directory."""
         param = _create_sample_param(work_path=self.tmpdir.name, iterations=2)
