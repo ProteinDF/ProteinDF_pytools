@@ -101,7 +101,7 @@ class PdfParam_H5(PdfParamObject):
             # self._write_sp_occ(h5, run_type)
             # self._write_sp_TEs(h5)
 
-            # self._write_sp_pop_mulliken_atom(h5, run_type, self.iterations)
+            self._write_sp_pop_mulliken_atom(h5, run_type, self.iterations)
 
 
     def save_standard(self, run_type, h5_path):
@@ -116,14 +116,12 @@ class PdfParam_H5(PdfParamObject):
                 self._save_density_matrix(h5, run_type, iteration)
                 self._save_energy_level(h5, run_type, iteration)
 
-            # if self.scf_converged:
-                # self._write_sp_pop_mulliken_atom(h5, run_type, self.iterations)
-            # else:
-            #     iteration = self.iterations -1
-            #     if iteration > 0:
-            #         self._write_sp_c_matrix(h5, run_type, iteration)
-            #         self._write_sp_density_matrix(h5, run_type, iteration)
-            #         # self._write_sp_pop_mulliken_atom(h5, run_type, iteration)
+            if self.scf_converged:
+                self._write_sp_pop_mulliken_atom(h5, run_type, self.iterations)
+            else:
+                iteration = self.iterations - 1
+                if iteration > 0:
+                    self._write_sp_pop_mulliken_atom(h5, run_type, iteration)
 
 
     def save_full(self, run_type, h5_path):
@@ -623,6 +621,17 @@ class PdfParam_H5(PdfParamObject):
     # --------------------------------------------------------------------------
     # population
     # --------------------------------------------------------------------------
+    def save_pop_mulliken_atom(self, run_type, iteration, pop, h5grp=None):
+        self._save_pop_mulliken_atom(run_type, iteration, pop, h5grp=h5grp)
+
+    def _save_pop_mulliken_atom(self, run_type, iteration, pop, h5grp=None):
+        assert(isinstance(pop, Vector))
+        if h5grp is None:
+            h5grp = self._h5root
+
+        h5path = self._get_h5path_pop_mulliken_atom(run_type, iteration)
+        self._set_vector(h5grp, h5path, pop)
+
     def get_pop_mulliken_atom(self, run_type, iteration):
         h5path = self._get_h5path_pop_mulliken_atom(run_type, iteration)
         return self._get_vector(self._h5root, h5path)

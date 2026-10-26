@@ -4,6 +4,7 @@
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 try:
     import h5py
@@ -305,6 +306,30 @@ class TestPdfParamH5(unittest.TestCase):
             self.assertAlmostEqual(pop[i], pop_loaded[i])
         p2._close()
 
+    def test_save_pop_mulliken_atom_api(self):
+        """Verify save_pop_mulliken_atom writes population vector directly."""
+        p = PdfParam_H5()
+        p.open(self.h5_path)
+        p.iterations = 1
+        p.num_of_atoms = 2
+        p.num_of_AOs = 4
+        p.num_of_MOs = 4
+        p.save_model()
+        p.save_TEs(Vector([-100.0]))
+
+        pop = Vector([0.60, -0.60])
+        p.save_pop_mulliken_atom("rks", 1, pop)
+        p._close()
+
+        p2 = PdfParam_H5()
+        p2.open(self.h5_path)
+        pop_loaded = p2.get_pop_mulliken_atom("rks", 1)
+        self.assertIsInstance(pop_loaded, Vector)
+        self.assertEqual(len(pop_loaded), 2)
+        for i in range(len(pop)):
+            self.assertAlmostEqual(pop[i], pop_loaded[i])
+        p2._close()
+
     # -------------------------------------------------------------------------
     # 3. matrix roundtrip
     # -------------------------------------------------------------------------
@@ -459,6 +484,103 @@ class TestPdfParamH5(unittest.TestCase):
         # open() attempts TEs[itr] where TEs is None, raising TypeError
         with self.assertRaises(TypeError):
             p2.open(self.h5_path)
+
+    # -------------------------------------------------------------------------
+    # 5. save_basic / save_standard Mulliken population archive
+    # -------------------------------------------------------------------------
+    def test_save_basic_archive_pop_mulliken_with_vtr(self):
+        """Verify save_basic writes pop/mulliken/<run_type>_<iteration> when vtr exists."""
+        workdir = os.path.join(self.tmpdir.name, "fl_Work")
+        os.makedirs(workdir, exist_ok=True)
+        vtr_path = os.path.join(workdir, "pop.mulliken.rks2.vtr")
+        vtr_data = [0.15, -0.45, 0.30]
+        vtr = Vector(vtr_data)
+        vtr.save(vtr_path)
+
+        p = PdfParam_H5()
+        p.work_path = workdir
+        p.iterations = 2
+        p.num_of_atoms = 3
+        p.num_of_AOs = 3
+        p.num_of_MOs = 3
+        p.scf_converged = True
+        p.save_basic("rks", self.h5_path)
+
+        # Verify HDF5 dataset directly
+        with h5py.File(self.h5_path, "r") as h5:
+            self.assertIn("pop/mulliken/rks_2", h5)
+            self.assertEqual(len(h5["pop/mulliken/rks_2"]), len(vtr_data))
+            for i, val in enumerate(vtr_data):
+                self.assertAlmostEqual(h5["pop/mulliken/rks_2"][i], val)
+
+        # Verify reading via get_pop_mulliken_atom (requires TEs for open)
+        with h5py.File(self.h5_path, "a") as h5:
+            p._set_vector(h5, "TEs", Vector([-10.0, -10.5]))
+
+        p2 = PdfParam_H5()
+        p2.open(self.h5_path)
+        loaded = p2.get_pop_mulliken_atom("rks", 2)
+        self.assertIsInstance(loaded, Vector)
+        self.assertEqual(len(loaded), len(vtr_data))
+        for i, val in enumerate(vtr_data):
+            self.assertAlmostEqual(loaded[i], val)
+        p2._close()
+
+    def test_save_basic_without_vtr_calls_run_pdf(self):
+        """Verify save_basic invokes run_pdf when vtr is missing but C matrix exists."""
+        workdir = os.path.join(self.tmpdir.name, "fl_Work")
+        os.makedirs(workdir, exist_ok=True)
+
+        p = PdfParam_H5()
+        p.work_path = workdir
+        p.iterations = 2
+        p.num_of_atoms = 3
+        p.num_of_AOs = 3
+        p.num_of_MOs = 3
+        p.scf_converged = True
+        p._data.setdefault("control", {})["file_base_name"] = {"C_matrix": "c.%s.mat"}
+        c_path = p.get_c_mat_path("rks", 2)
+        with open(c_path, "w") as f:
+            f.write("dummy")
+
+        with mock.patch("proteindf_tools.pdfparam_hdf5.run_pdf") as mock_run_pdf:
+            p.save_basic("rks", self.h5_path)
+            mock_run_pdf.assert_called_once_with("pop-mulliken -i 2")
+
+        # Key should not be created if vtr still does not exist, but no error raised
+        with h5py.File(self.h5_path, "r") as h5:
+            self.assertNotIn("pop/mulliken/rks_2", h5)
+
+    def test_write_sp_pop_mulliken_atom_unconverged(self):
+        """Verify _write_sp_pop_mulliken_atom with previous iteration for unconverged SCF."""
+        workdir = os.path.join(self.tmpdir.name, "fl_Work")
+        os.makedirs(workdir, exist_ok=True)
+        # For unconverged SCF with iterations=2, iteration 1 is used
+        vtr_path = os.path.join(workdir, "pop.mulliken.rks1.vtr")
+        vtr_data = [0.10, -0.20, 0.10]
+        vtr = Vector(vtr_data)
+        vtr.save(vtr_path)
+
+        p = PdfParam_H5()
+        p.work_path = workdir
+        p.iterations = 2
+        p.num_of_atoms = 3
+        p.num_of_AOs = 3
+        p.num_of_MOs = 3
+        p.scf_converged = False
+
+        with h5py.File(self.h5_path, "w") as h5:
+            p._save_model(h5)
+            # Replicate save_standard branch for unconverged SCF
+            iteration = p.iterations - 1
+            if iteration > 0:
+                p._write_sp_pop_mulliken_atom(h5, "rks", iteration)
+
+        with h5py.File(self.h5_path, "r") as h5:
+            self.assertIn("pop/mulliken/rks_1", h5)
+            self.assertNotIn("pop/mulliken/rks_2", h5)
+            for i, val in enumerate(vtr_data):
+                self.assertAlmostEqual(h5["pop/mulliken/rks_1"][i], val)
 
 
 if __name__ == "__main__":
