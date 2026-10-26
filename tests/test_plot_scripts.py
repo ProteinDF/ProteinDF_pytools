@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
 from proteindf_tools.basisset import BasisSet, ContractedGTO, PrimitiveGTO
-from proteindf_tools.matrix import Matrix
+from proteindf_tools.matrix import Matrix, SymmetricMatrix
 from proteindf_tools.pdfarchive_sqlite3 import PdfArchive_Sqlite3
 from proteindf_tools.pdfparam import PdfParam
 from proteindf_tools.pdfparam_hdf5 import PdfParam_H5
@@ -204,6 +204,208 @@ class TestPlotScripts(unittest.TestCase):
             mod.main()
         self.assertIn("Population data (Mulliken)", str(ctx.exception))
         self.assertIn("not found", str(ctx.exception))
+
+    def test_plot_pop_cached_no_compute(self):
+        """(a) When population is already in HDF5, do not run pop-mulliken."""
+        h5_path = os.path.join(self.tmpdir.name, "pdfresults_cached.h5")
+        out_png = os.path.join(self.tmpdir.name, "pop.png")
+
+        p = PdfParam_H5()
+        p.open(h5_path)
+        p.method = "rks"
+        p.iterations = 2
+        p.num_of_atoms = 2
+        p.num_of_AOs = 4
+        p.num_of_MOs = 4
+        p.save_model()
+        p.save_TEs(Vector([-100.0, -100.5]))
+        p.save_pop_mulliken_atom("rks", 1, Vector([0.4, -0.4]))
+        p.save_pop_mulliken_atom("rks", 2, Vector([0.5, -0.5]))
+        p._close()
+
+        mod = _load_script("pdf-plot-pop.py")
+        sys.argv = ["pdf-plot-pop.py", "--h5", h5_path, "-o", out_png]
+
+        with mock.patch.object(mod.subprocess, "run") as mock_run:
+            mod.main()
+            mock_run.assert_not_called()
+
+        self.assertTrue(os.path.exists(out_png))
+        self.assertGreater(os.path.getsize(out_png), 0)
+
+    def test_plot_pop_compute_and_save(self):
+        """(b) When population is missing in HDF5, compute with pop-mulliken and save to HDF5."""
+        h5_path = os.path.join(self.tmpdir.name, "pdfresults_compute.h5")
+        out_png = os.path.join(self.tmpdir.name, "pop.png")
+
+        p = PdfParam_H5()
+        p.open(h5_path)
+        p.method = "rks"
+        p.iterations = 2
+        p.num_of_atoms = 2
+        p.num_of_AOs = 4
+        p.num_of_MOs = 4
+        p.save_model()
+        p.save_TEs(Vector([-100.0, -100.5]))
+
+        S = SymmetricMatrix(4)
+        for i in range(4):
+            S.set(i, i, 1.0)
+        p.save_s_matrix(S)
+
+        P_in = SymmetricMatrix(4)
+        P_in.set(0, 0, 1.0)
+        p.save_input_density_matrix("rks", 1, P_in)
+
+        P_last = SymmetricMatrix(4)
+        P_last.set(1, 1, 1.0)
+        p.save_density_matrix("rks", 2, P_last)
+        p._close()
+
+        dummy_output_itr1 = (
+            " *** Mulliken population analysis (Gross atom population) ***\n"
+            " index   atom         charge      net charge\n"
+            "      1   H       0.600000     0.400000\n"
+            "      2   H       1.400000    -0.400000\n"
+        )
+        dummy_output_itr2 = (
+            " *** Mulliken population analysis (Gross atom population) ***\n"
+            " index   atom         charge      net charge\n"
+            "      1   H       0.500000     0.500000\n"
+            "      2   H       1.500000    -0.500000\n"
+        )
+
+        def fake_subprocess_run(cmd, capture_output=True, text=True):
+            self.assertEqual(cmd[0], "pdf")
+            self.assertEqual(cmd[1], "pop-mulliken")
+            self.assertIn("-p", cmd)
+            self.assertIn("-P", cmd)
+            self.assertIn("-S", cmd)
+            self.assertNotIn("-i", cmd)
+            p_file = cmd[cmd.index("-P") + 1]
+            s_file = cmd[cmd.index("-S") + 1]
+            mpac_file = cmd[cmd.index("-p") + 1]
+            self.assertTrue(os.path.exists(p_file))
+            self.assertTrue(os.path.exists(s_file))
+            self.assertTrue(os.path.exists(mpac_file))
+
+            if fake_subprocess_run.call_count == 0:
+                fake_subprocess_run.call_count += 1
+                return mock.Mock(returncode=0, stdout=dummy_output_itr2, stderr="")
+            else:
+                fake_subprocess_run.call_count += 1
+                return mock.Mock(returncode=0, stdout=dummy_output_itr1, stderr="")
+
+        fake_subprocess_run.call_count = 0
+
+        mod = _load_script("pdf-plot-pop.py")
+        sys.argv = ["pdf-plot-pop.py", "--h5", h5_path, "-o", out_png]
+
+        with mock.patch.object(mod.subprocess, "run", side_effect=fake_subprocess_run) as mock_run:
+            mod.main()
+            self.assertEqual(mock_run.call_count, 2)
+
+        self.assertTrue(os.path.exists(out_png))
+        self.assertGreater(os.path.getsize(out_png), 0)
+
+        # Verify saved population in HDF5
+        p_check = PdfParam_H5()
+        p_check.open(h5_path)
+        pop1 = p_check.get_pop_mulliken_atom("rks", 1)
+        pop2 = p_check.get_pop_mulliken_atom("rks", 2)
+        p_check._close()
+
+        self.assertIsNotNone(pop1)
+        self.assertAlmostEqual(pop1[0], 0.4)
+        self.assertAlmostEqual(pop1[1], -0.4)
+
+        self.assertIsNotNone(pop2)
+        self.assertAlmostEqual(pop2[0], 0.5)
+        self.assertAlmostEqual(pop2[1], -0.5)
+
+    def test_plot_pop_readonly_fallback(self):
+        """(c) When HDF5 is read-only, emit warning but plot successfully using in-memory data."""
+        h5_path = os.path.join(self.tmpdir.name, "pdfresults_readonly.h5")
+        out_png = os.path.join(self.tmpdir.name, "pop.png")
+
+        p = PdfParam_H5()
+        p.open(h5_path)
+        p.method = "rks"
+        p.iterations = 2
+        p.num_of_atoms = 2
+        p.num_of_AOs = 4
+        p.num_of_MOs = 4
+        p.save_model()
+        p.save_TEs(Vector([-100.0, -100.5]))
+
+        S = SymmetricMatrix(4)
+        for i in range(4):
+            S.set(i, i, 1.0)
+        p.save_s_matrix(S)
+
+        P_in = SymmetricMatrix(4)
+        P_in.set(0, 0, 1.0)
+        p.save_input_density_matrix("rks", 1, P_in)
+
+        P_last = SymmetricMatrix(4)
+        P_last.set(1, 1, 1.0)
+        p.save_density_matrix("rks", 2, P_last)
+        p._close()
+
+        # Set read-only permissions
+        os.chmod(h5_path, 0o444)
+
+        dummy_output_itr1 = (
+            " *** Mulliken population analysis (Gross atom population) ***\n"
+            " index   atom         charge      net charge\n"
+            "      1   H       0.600000     0.400000\n"
+            "      2   H       1.400000    -0.400000\n"
+        )
+        dummy_output_itr2 = (
+            " *** Mulliken population analysis (Gross atom population) ***\n"
+            " index   atom         charge      net charge\n"
+            "      1   H       0.500000     0.500000\n"
+            "      2   H       1.500000    -0.500000\n"
+        )
+
+        def fake_subprocess_run(cmd, capture_output=True, text=True):
+            if fake_subprocess_run.call_count == 0:
+                fake_subprocess_run.call_count += 1
+                return mock.Mock(returncode=0, stdout=dummy_output_itr2, stderr="")
+            else:
+                fake_subprocess_run.call_count += 1
+                return mock.Mock(returncode=0, stdout=dummy_output_itr1, stderr="")
+
+        fake_subprocess_run.call_count = 0
+
+        mod = _load_script("pdf-plot-pop.py")
+        sys.argv = ["pdf-plot-pop.py", "--h5", h5_path, "-o", out_png]
+
+        try:
+            with mock.patch.object(mod.subprocess, "run", side_effect=fake_subprocess_run):
+                with warnings.catch_warnings(record=True) as warn_list:
+                    warnings.simplefilter("always")
+                    mod.main()
+
+            # Ensure warning was emitted
+            self.assertTrue(any("read-only" in str(w.message) for w in warn_list))
+
+            # PNG should be generated successfully
+            self.assertTrue(os.path.exists(out_png))
+            self.assertGreater(os.path.getsize(out_png), 0)
+
+            # Population was NOT saved to HDF5
+            p_check = PdfParam_H5()
+            p_check._state["h5filepath"] = h5_path
+            import h5py
+            p_check._h5file = h5py.File(h5_path, "r")
+            p_check._h5root = p_check._h5file["/"]
+            self.assertIsNone(p_check.get_pop_mulliken_atom("rks", 1))
+            self.assertIsNone(p_check.get_pop_mulliken_atom("rks", 2))
+            p_check._close()
+
+        finally:
+            os.chmod(h5_path, 0o644)
 
     def test_make_pop_diff_plot_data(self):
         """make_pop_diff_plot_data builds pdf-plot/1 schema dict with 1-based indices and diff values."""
