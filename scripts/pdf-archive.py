@@ -21,6 +21,10 @@
 
 """
 archive ProteinDF results.
+
+.. deprecated::
+    pdf-archive.py is deprecated and will be removed.
+    Use pdf-archive-h5.py (HDF5) instead.
 """
 
 import os
@@ -37,6 +41,10 @@ import logging.config
 
 
 def main():
+    sys.stderr.write(
+        "pdf-archive.py is deprecated and will be removed. Use pdf-archive-h5.py (HDF5) instead.\n"
+    )
+    sys.stderr.flush()
     parser = argparse.ArgumentParser(description='archive ProteinDF results')
     parser.add_argument('-p', '--pdfparam',
                         dest='pdfparam_path',
