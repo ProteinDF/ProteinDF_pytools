@@ -1097,6 +1097,21 @@ class PdfParamObject(object):
         filename = filename.replace("%s", "{}{}".format(runtype, itr))
         return os.path.join(self.work_path, filename)
 
+    def get_input_density_matrix_path(self, run_type="rks", iteration=-1, **kwargs):
+        """
+        return input density matrix path
+        """
+        runtype = kwargs.get("runtype", run_type)
+        itr = kwargs.get("itr", iteration)
+        if itr == -1:
+            itr = self.iterations
+
+        filename = self._get_file_base_name("Ppq_matrix")
+        if len(filename) == 0:
+            return ""
+        filename = "~" + filename.replace("%s", "{}{}".format(runtype, itr))
+        return os.path.join(self.work_path, filename)
+
     def get_clo_mat_path(self, runtype="rks", itr=-1):
         """
         return localized matrix (C_lo) path

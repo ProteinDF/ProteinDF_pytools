@@ -558,6 +558,27 @@ class PdfParam_H5(PdfParamObject):
 
 
     # --------------------------------------------------------------------------
+    # input density matrix
+    # --------------------------------------------------------------------------
+    def get_input_density_matrix(self, run_type, iteration, h5grp=None):
+        if h5grp is None:
+            h5grp = self._h5root
+        h5path = self._get_h5path_input_density_matrix(run_type, iteration)
+
+        P = self._get_matrix(h5grp, h5path)
+        return P
+
+
+    def save_input_density_matrix(self, run_type, iteration, P, h5grp=None):
+        assert(isinstance(P, SymmetricMatrix))
+        if h5grp is None:
+            h5grp = self._h5root
+
+        h5path = self._get_h5path_input_density_matrix(run_type, iteration)
+        self._set_matrix(h5grp, h5path, P, iteration=iteration)
+
+
+    # --------------------------------------------------------------------------
     # Kohn-SHam matrix
     # --------------------------------------------------------------------------
     def get_f_matrix(self, run_type, iteration, h5grp=None):
@@ -748,6 +769,11 @@ class PdfParam_H5(PdfParamObject):
     def _get_h5path_density_matrix(self, run_type, iteration):
         h5path = "P/{run_type}_{iteration}".format(run_type=run_type,
                                                    iteration=iteration)
+        return h5path
+
+    def _get_h5path_input_density_matrix(self, run_type, iteration):
+        h5path = "P_in/{run_type}_{iteration}".format(run_type=run_type,
+                                                      iteration=iteration)
         return h5path
 
     def _get_h5path_f_matrix(self, run_type, iteration):
