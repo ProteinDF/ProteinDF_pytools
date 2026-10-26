@@ -715,6 +715,204 @@ class TestPdfParamH5(unittest.TestCase):
         loaded2 = load_pdfparam(mpac_path2)
         self.assertEqual(loaded2.molecule.get_number_of_atoms(), 2)
 
+    # -------------------------------------------------------------------------
+    # 6. save_standard / save_full / save_debug
+    # -------------------------------------------------------------------------
+    def _setup_synthetic_param(self, iterations=2, scf_converged=True):
+        workdir = os.path.join(self.tmpdir.name, "fl_Work")
+        os.makedirs(workdir, exist_ok=True)
+
+        p = PdfParam_H5()
+        p.work_path = workdir
+        p.iterations = iterations
+        p.num_of_atoms = 1
+        p.num_of_AOs = 2
+        p.num_of_MOs = 2
+        p.scf_converged = scf_converged
+        p._data.setdefault("control", {})["file_base_name"] = {
+            "eigenvalues": "eigenvalues.%s.vtr",
+            "occupation_vtr": "occupation.%s.vtr",
+            "Spq_matrix": "Spq.mat",
+            "Hpq_matrix": "Hpq.mat",
+            "Hpq2_matrix": "Hpq2.mat",
+            "Fpq_matrix": "Fpq.%s.mat",
+            "C_matrix": "C.%s.mat",
+            "Ppq_matrix": "Ppq.%s.mat",
+        }
+
+        # molecule & basisset
+        mol = bridge.AtomGroup()
+        atom = bridge.Atom()
+        atom.symbol = "O"
+        atom.name = "1"
+        atom.xyz = bridge.Position(0.0, 0.0, 0.0)
+        atom.charge = 8.0
+        mol.set_atom("1", atom)
+        p.molecule = mol
+
+        bs = BasisSet()
+        bs.name = "sto-3g-O"
+        cgto = ContractedGTO("s", 1)
+        cgto.scale_factor = 1.0
+        cgto[0] = PrimitiveGTO(1.0, 1.0)
+        bs.append(cgto)
+        p.set_basisset("O@1", bs)
+
+        # S, h, h2
+        s_mat = SymmetricMatrix(np.array([[1.0, 0.2], [0.2, 1.0]], dtype=float))
+        s_mat.save(p.get_s_mat_path())
+
+        h_mat = SymmetricMatrix(np.array([[-2.0, 0.1], [0.1, -1.5]], dtype=float))
+        h_mat.save(p.get_h_mat_path())
+
+        h2_mat = SymmetricMatrix(np.array([[-0.1, 0.0], [0.0, -0.1]], dtype=float))
+        h2_mat.save(p.get_h2_mat_path())
+
+        # iteration data (C, P, energy_level, pop)
+        for itr in range(1, iterations + 1):
+            c_mat = Matrix(np.array([[0.8, -0.6], [0.6, 0.8]], dtype=float) * itr)
+            c_mat.save(p.get_c_mat_path("rks", itr))
+
+            p_mat = SymmetricMatrix(np.array([[1.2, 0.3], [0.3, 0.8]], dtype=float) * itr)
+            p_mat.save(p.get_density_matrix_path("rks", itr))
+
+            el = Vector([-0.5 * itr, 0.2 * itr])
+            el.save(p.get_energy_level_path("rks", itr))
+
+            vtr = Vector([0.1 * itr])
+            vtr.save(p.get_pop_mulliken_path("rks", itr))
+
+        return p
+
+    def test_save_standard_with_synthetic_data(self):
+        """Verify save_standard saves model, S, h, h2, C, P, energy_level, and Mulliken pop."""
+        p = self._setup_synthetic_param(iterations=2, scf_converged=True)
+        p.save_standard("rks", self.h5_path)
+
+        with h5py.File(self.h5_path, "r") as h5:
+            # Model data from save_basic must be retained (no overwrite deletion)
+            self.assertIn("molecule/xyzc", h5)
+            self.assertIn("basisset/name", h5)
+            self.assertIn("control/file_base_name", h5)
+            self.assertEqual(h5.attrs["num_of_atoms"], 1)
+
+            # s, h, h2 matrices
+            self.assertIn("s", h5)
+            self.assertEqual(h5["s"].attrs["type"], "SY")
+            self.assertEqual(h5["s"].attrs["row"], 2)
+            self.assertEqual(h5["s"].attrs["col"], 2)
+            self.assertTrue(np.allclose(h5["s"][:], [[1.0, 0.0], [0.2, 1.0]]))
+
+            self.assertIn("h", h5)
+            self.assertEqual(h5["h"].attrs["type"], "SY")
+            self.assertTrue(np.allclose(h5["h"][:], [[-2.0, 0.0], [0.1, -1.5]]))
+
+            self.assertIn("h2", h5)
+            self.assertEqual(h5["h2"].attrs["type"], "SY")
+            self.assertTrue(np.allclose(h5["h2"][:], [[-0.1, 0.0], [0.0, -0.1]]))
+
+            # Iteration matrices C, P and vector energy_level
+            for itr in (1, 2):
+                c_key = f"C/rks_{itr}"
+                self.assertIn(c_key, h5)
+                self.assertEqual(h5[c_key].attrs["type"], "GE")
+                self.assertEqual(h5[c_key].attrs["iteration"], itr)
+                expected_c = np.array([[0.8, -0.6], [0.6, 0.8]], dtype=float) * itr
+                self.assertTrue(np.allclose(h5[c_key][:], expected_c))
+
+                p_key = f"P/rks_{itr}"
+                self.assertIn(p_key, h5)
+                self.assertEqual(h5[p_key].attrs["type"], "SY")
+                self.assertEqual(h5[p_key].attrs["iteration"], itr)
+                expected_p = np.array([[1.2, 0.0], [0.3, 0.8]], dtype=float) * itr
+                self.assertTrue(np.allclose(h5[p_key][:], expected_p))
+
+                e_key = f"energy_level/rks_{itr}"
+                self.assertIn(e_key, h5)
+                self.assertEqual(h5[e_key].attrs["dim"], 2)
+                expected_e = [-0.5 * itr, 0.2 * itr]
+                self.assertTrue(np.allclose(h5[e_key][:], expected_e))
+
+            # Converged Mulliken population uses last iteration (2)
+            self.assertIn("pop/mulliken/rks_2", h5)
+            self.assertTrue(np.allclose(h5["pop/mulliken/rks_2"][:], [0.2]))
+
+    def test_save_standard_unconverged(self):
+        """Verify save_standard archives iteration - 1 Mulliken pop when unconverged."""
+        p = self._setup_synthetic_param(iterations=2, scf_converged=False)
+        p.save_standard("rks", self.h5_path)
+
+        with h5py.File(self.h5_path, "r") as h5:
+            # Model preserved
+            self.assertIn("molecule/xyzc", h5)
+            self.assertIn("basisset/name", h5)
+            # Matrices preserved
+            self.assertIn("s", h5)
+            self.assertIn("C/rks_1", h5)
+            self.assertIn("C/rks_2", h5)
+            # Mulliken: iteration 1 saved, iteration 2 NOT saved
+            self.assertIn("pop/mulliken/rks_1", h5)
+            self.assertNotIn("pop/mulliken/rks_2", h5)
+            self.assertTrue(np.allclose(h5["pop/mulliken/rks_1"][:], [0.1]))
+
+    def test_save_full_and_save_debug_same_as_save_standard(self):
+        """Verify save_full and save_debug produce identical datasets to save_standard."""
+        p = self._setup_synthetic_param(iterations=2, scf_converged=True)
+        std_path = os.path.join(self.tmpdir.name, "std.h5")
+        full_path = os.path.join(self.tmpdir.name, "full.h5")
+        debug_path = os.path.join(self.tmpdir.name, "debug.h5")
+
+        p.save_standard("rks", std_path)
+        p.save_full("rks", full_path)
+        p.save_debug("rks", debug_path)
+
+        def get_all_dataset_keys(path):
+            keys = []
+            with h5py.File(path, "r") as h:
+                def visitor(name, obj):
+                    if isinstance(obj, h5py.Dataset):
+                        keys.append(name)
+                h.visititems(visitor)
+            return sorted(keys)
+
+        std_keys = get_all_dataset_keys(std_path)
+        full_keys = get_all_dataset_keys(full_path)
+        debug_keys = get_all_dataset_keys(debug_path)
+
+        self.assertEqual(std_keys, full_keys)
+        self.assertEqual(std_keys, debug_keys)
+
+        with h5py.File(std_path, "r") as h_std, \
+             h5py.File(full_path, "r") as h_full, \
+             h5py.File(debug_path, "r") as h_dbg:
+            for k in std_keys:
+                d_std = h_std[k][:]
+                d_full = h_full[k][:]
+                d_dbg = h_dbg[k][:]
+                if d_std.dtype.kind in ("f", "c"):
+                    self.assertTrue(np.allclose(d_std, d_full))
+                    self.assertTrue(np.allclose(d_std, d_dbg))
+                else:
+                    self.assertTrue(np.array_equal(d_std, d_full))
+                    self.assertTrue(np.array_equal(d_std, d_dbg))
+
+    def test_save_standard_without_vtr_calls_run_pdf(self):
+        """Verify save_standard invokes run_pdf without error when vtr is missing."""
+        p = self._setup_synthetic_param(iterations=2, scf_converged=True)
+        # Remove vtr file so run_pdf is invoked
+        vtr_path = p.get_pop_mulliken_path("rks", 2)
+        if os.path.exists(vtr_path):
+            os.remove(vtr_path)
+
+        with mock.patch("proteindf_tools.pdfparam_hdf5.run_pdf") as mock_run_pdf:
+            p.save_standard("rks", self.h5_path)
+            mock_run_pdf.assert_called_once_with("pop-mulliken -i 2")
+
+        with h5py.File(self.h5_path, "r") as h5:
+            self.assertIn("molecule/xyzc", h5)
+            self.assertIn("s", h5)
+            self.assertNotIn("pop/mulliken/rks_2", h5)
+
 
 if __name__ == "__main__":
     unittest.main()

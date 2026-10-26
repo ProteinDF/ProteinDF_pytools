@@ -95,26 +95,56 @@ class PdfParam_H5(PdfParamObject):
     # --------------------------------------------------------------------------
     # public
     # --------------------------------------------------------------------------
+    def _save_basic_into(self, h5):
+        self._save_model(h5)
+        # self._write_sp_occ(h5, run_type)
+        # self._write_sp_TEs(h5)
+
     def save_basic(self, run_type, h5_path):
         with h5py.File(h5_path, 'w') as h5:
-            self._save_model(h5)
-            # self._write_sp_occ(h5, run_type)
-            # self._write_sp_TEs(h5)
-
+            self._save_basic_into(h5)
             self._write_sp_pop_mulliken_atom(h5, run_type, self.iterations)
 
-
     def save_standard(self, run_type, h5_path):
-        self.save_basic(run_type, h5_path)
-
         with h5py.File(h5_path, 'w') as h5:
-            self._save_s_matrix(h5)
-            self._save_h_matrix(h5)
-            self._save_h2_matrix(h5)
+            self._save_basic_into(h5)
+
+            file_path = self.get_s_mat_path()
+            if os.path.exists(file_path):
+                S = SymmetricMatrix()
+                if S.load(file_path):
+                    self.save_s_matrix(S, h5grp=h5)
+
+            file_path = self.get_h_mat_path()
+            if os.path.exists(file_path):
+                h = SymmetricMatrix()
+                if h.load(file_path):
+                    self.save_h_matrix(h, h5grp=h5)
+
+            file_path = self.get_h2_mat_path()
+            if os.path.exists(file_path):
+                h2 = SymmetricMatrix()
+                if h2.load(file_path):
+                    self.save_h2_matrix(h2, h5grp=h5)
+
             for iteration in range(1, self.iterations + 1):
-                self._save_c_matrix(h5, run_type, iteration)
-                self._save_density_matrix(h5, run_type, iteration)
-                self._save_energy_level(h5, run_type, iteration)
+                file_path = self.get_c_mat_path(run_type, iteration)
+                if os.path.exists(file_path):
+                    C = Matrix()
+                    if C.load(file_path):
+                        self.save_c_matrix(run_type, iteration, C, h5grp=h5)
+
+                file_path = self.get_density_matrix_path(run_type, iteration)
+                if os.path.exists(file_path):
+                    P = SymmetricMatrix()
+                    if P.load(file_path):
+                        self.save_density_matrix(run_type, iteration, P, h5grp=h5)
+
+                file_path = self.get_energy_level_path(run_type, iteration)
+                if os.path.exists(file_path):
+                    energy_level = Vector()
+                    if energy_level.load(file_path):
+                        self._save_energy_level(run_type, iteration, energy_level, h5grp=h5)
 
             if self.scf_converged:
                 self._write_sp_pop_mulliken_atom(h5, run_type, self.iterations)
