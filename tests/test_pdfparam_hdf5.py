@@ -17,7 +17,8 @@ except ImportError:
 import proteindf_bridge as bridge
 from proteindf_tools.basisset import BasisSet, ContractedGTO, PrimitiveGTO
 from proteindf_tools.matrix import Matrix, SymmetricMatrix
-from proteindf_tools.pdfparam_hdf5 import PdfParam_H5
+from proteindf_tools.pdfcommon import load_pdfparam
+from proteindf_tools.pdfparam_hdf5 import PdfParam_H5, export_pdfparam_mpac
 from proteindf_tools.vector import Vector
 
 
@@ -610,6 +611,109 @@ class TestPdfParamH5(unittest.TestCase):
             self.assertEqual(ds.attrs["col"], 2)
             self.assertEqual(ds.attrs["iteration"], 1)
             self.assertTrue(np.allclose(ds[:], mat.data))
+
+    def test_export_pdfparam_mpac_from_h5(self):
+        """Verify export_pdfparam_mpac exports valid mpac matching h5 molecule and basis set."""
+        p = PdfParam_H5()
+        p.open(self.h5_path)
+        p.iterations = 0
+        p.num_of_atoms = 2
+        p.num_of_AOs = 1
+        p.num_of_MOs = 1
+
+        mol = bridge.AtomGroup()
+        atom_o = bridge.Atom()
+        atom_o.symbol = "O"
+        atom_o.name = "1"
+        atom_o.xyz = bridge.Position(0.0, 0.5, 1.0)
+        atom_o.charge = 8.0
+        mol.set_atom("1", atom_o)
+
+        atom_h = bridge.Atom()
+        atom_h.symbol = "H"
+        atom_h.name = "2"
+        atom_h.xyz = bridge.Position(0.0, -0.5, 2.0)
+        atom_h.charge = 1.0
+        mol.set_atom("2", atom_h)
+        p.molecule = mol
+
+        bs_o = BasisSet()
+        bs_o.name = "sto-3g-O"
+        cgto_o = ContractedGTO("s", 2)
+        cgto_o.scale_factor = 1.1
+        cgto_o[0] = PrimitiveGTO(130.70932, 0.154328)
+        cgto_o[1] = PrimitiveGTO(23.80886, 0.535328)
+        bs_o.append(cgto_o)
+        p.set_basisset("O@1", bs_o)
+
+        bs_h = BasisSet()
+        bs_h.name = "sto-3g-H"
+        cgto_h = ContractedGTO("s", 1)
+        cgto_h.scale_factor = 1.0
+        cgto_h[0] = PrimitiveGTO(3.42525, 1.0)
+        bs_h.append(cgto_h)
+        p.set_basisset("H@2", bs_h)
+
+        p.save_model()
+        p._close()
+
+        # Reopen from h5 and export via method
+        p2 = PdfParam_H5(self.h5_path)
+        mpac_path = os.path.join(self.tmpdir.name, "exported.mpac")
+        p2.export_pdfparam_mpac(mpac_path)
+        p2._close()
+
+        self.assertTrue(os.path.exists(mpac_path))
+
+        # Load exported mpac and verify
+        loaded = load_pdfparam(mpac_path)
+        self.assertEqual(loaded.molecule.get_number_of_atoms(), 2)
+
+        atoms = loaded.molecule.get_atom_list()
+        self.assertEqual(len(atoms), 2)
+        a1, a2 = atoms[0], atoms[1]
+
+        self.assertEqual(a1.symbol, "O")
+        self.assertEqual(a1.name, "1")
+        self.assertAlmostEqual(a1.xyz.x, 0.0)
+        self.assertAlmostEqual(a1.xyz.y, 0.5)
+        self.assertAlmostEqual(a1.xyz.z, 1.0)
+        self.assertAlmostEqual(a1.charge, 8.0)
+
+        self.assertEqual(a2.symbol, "H")
+        self.assertEqual(a2.name, "2")
+        self.assertAlmostEqual(a2.xyz.x, 0.0)
+        self.assertAlmostEqual(a2.xyz.y, -0.5)
+        self.assertAlmostEqual(a2.xyz.z, 2.0)
+        self.assertAlmostEqual(a2.charge, 1.0)
+
+        bs_loaded_o = loaded.get_basisset("O@1")
+        self.assertEqual(len(bs_loaded_o), 1)
+        self.assertEqual(bs_loaded_o[0].shell_type, "s")
+        self.assertAlmostEqual(bs_loaded_o[0].scale_factor, 1.1)
+        self.assertEqual(len(bs_loaded_o[0]), 2)
+        self.assertAlmostEqual(bs_loaded_o[0][0].exp, 130.70932)
+        self.assertAlmostEqual(bs_loaded_o[0][0].coef, 0.154328)
+        self.assertAlmostEqual(bs_loaded_o[0][1].exp, 23.80886)
+        self.assertAlmostEqual(bs_loaded_o[0][1].coef, 0.535328)
+
+        bs_loaded_h = loaded.get_basisset("H@2")
+        self.assertEqual(len(bs_loaded_h), 1)
+        self.assertEqual(bs_loaded_h[0].shell_type, "s")
+        self.assertAlmostEqual(bs_loaded_h[0].scale_factor, 1.0)
+        self.assertEqual(len(bs_loaded_h[0]), 1)
+        self.assertAlmostEqual(bs_loaded_h[0][0].exp, 3.42525)
+        self.assertAlmostEqual(bs_loaded_h[0][0].coef, 1.0)
+
+        # Test module-level export_pdfparam_mpac function
+        p3 = PdfParam_H5(self.h5_path)
+        mpac_path2 = os.path.join(self.tmpdir.name, "exported2.mpac")
+        export_pdfparam_mpac(p3, mpac_path2)
+        p3._close()
+
+        self.assertTrue(os.path.exists(mpac_path2))
+        loaded2 = load_pdfparam(mpac_path2)
+        self.assertEqual(loaded2.molecule.get_number_of_atoms(), 2)
 
 
 if __name__ == "__main__":

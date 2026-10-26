@@ -22,7 +22,7 @@
 from .vector import Vector
 from .matrix import Matrix, SymmetricMatrix
 from .pdfparam_object import PdfParamObject
-from .pdfcommon import run_pdf
+from .pdfcommon import run_pdf, save_pdfparam
 from .functions import deprecated
 from .basisset import BasisSet, ContractedGTO, PrimitiveGTO
 
@@ -130,6 +130,17 @@ class PdfParam_H5(PdfParamObject):
 
     def save_debug(self, run_type, h5_path):
         self.save_full(run_type, h5_path)
+
+    def export_pdfparam_mpac(self, path):
+        """Export pdfparam as MessagePack (.mpac) format.
+
+        Parameters
+        ----------
+        path : str
+            Path to the output .mpac file.
+        """
+        save_pdfparam(self, path)
+
         
 
     # --------------------------------------------------------------------------
@@ -794,3 +805,16 @@ class PdfParam_H5(PdfParamObject):
         h5path = "pop/mulliken/{run_type}_{iteration}".format(run_type=run_type,
                                                               iteration=iteration)
         return h5path
+
+
+def export_pdfparam_mpac(pdfparam, path):
+    """Export pdfparam as MessagePack (.mpac) format.
+
+    Parameters
+    ----------
+    pdfparam : PdfParamObject or PdfParam_H5
+        ProteinDF parameter object.
+    path : str
+        Path to the output .mpac file.
+    """
+    save_pdfparam(pdfparam, path)
