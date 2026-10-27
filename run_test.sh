@@ -64,6 +64,7 @@ UNITTESTS="\
   pdfparam_object \
   open_archive \
   h5_dash_d_basic \
+  h5_dash_d_rest \
   "
 
 for i in ${UNITTESTS}; do

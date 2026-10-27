@@ -37,11 +37,14 @@ def main():
     group.add_argument('-e', '--elevel_vector',
                        nargs=1,
                        help='ProteinDF energy level vector file')
-    group.add_argument('-d', '--db',
-                       nargs='?',
-                       action='store',
-                       const='pdfresults.db',
-                       help='ProteinDF results file')
+    group.add_argument(
+        "-d",
+        "--db",
+        nargs="?",
+        action="store",
+        const="pdfresults.h5",
+        help="ProteinDF results file (.h5 は HDF5、それ以外は SQLite(従来))",
+    )
     parser.add_argument('-o', '--output',
                         nargs=1,
                         default=['elevel.png'],
@@ -80,12 +83,16 @@ def main():
         elevel2dat(itr, eigvals, data_path)
         plot_elevel_single(data_path, itr, HOMO_level, output_path)
     else:
-        entry = pdf.PdfArchive(args.db)
+        entry = pdf.open_archive(args.db)
 
-        records = entry._db.select(
-            'vectors', fields=['runtype'], where={'dtype': 'ENERGY_LEVEL'}
-        )
-        runtypes = sorted(set(r['runtype'] for r in records))
+        ext = os.path.splitext(os.fspath(args.db))[1].lower()
+        if ext in (".h5", ".hdf5"):
+            runtypes = entry.get_energy_level_runtypes()
+        else:
+            records = entry._db.select(
+                "vectors", fields=["runtype"], where={"dtype": "ENERGY_LEVEL"}
+            )
+            runtypes = sorted(set(r["runtype"] for r in records))
         if len(runtypes) == 0:
             raise ValueError('ENERGY_LEVEL is not found in database')
         elif len(runtypes) > 1:

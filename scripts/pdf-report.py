@@ -60,7 +60,7 @@ def main():
     do_profile = args.profile
 
     output_dir = args.output_dir
-    entry = pdf.PdfArchive(args.pdfresults_db)
+    entry = pdf.open_archive(args.pdfresults_db)
 
     # run
     if do_profile != None:
@@ -97,7 +97,7 @@ def plot_convergence_check(entry, output_dir):
     """
     TEのヒストリ
     """
-    assert isinstance(entry, pdf.PdfArchive)
+    assert isinstance(entry, (pdf.PdfArchive, pdf.PdfParam_H5))
     itr = entry.iterations
     iterations = range(1, itr + 1)
 
@@ -191,7 +191,7 @@ def plot_convergence_energy_level(entry, output_dir):
 
 
 def get_rst(pdfdata):
-    assert isinstance(pdfdata, pdf.PdfArchive)
+    assert isinstance(pdfdata, (pdf.PdfArchive, pdf.PdfParam_H5))
     contents = """
     =========================
     ProteinDF report:

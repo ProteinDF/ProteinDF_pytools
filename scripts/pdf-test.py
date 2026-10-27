@@ -121,8 +121,8 @@ def main():
     if not os.path.isfile(path2):
         sys.exit('file not found: %s' % (path2))
 
-    data1 = pdf.PdfArchive(path1)
-    data2 = pdf.PdfArchive(path2)
+    data1 = pdf.open_archive(path1)
+    data2 = pdf.open_archive(path2)
 
     # check ------------------------------------------------------------
     answer = True

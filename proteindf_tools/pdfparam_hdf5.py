@@ -522,6 +522,19 @@ class PdfParam_H5(PdfParamObject):
     def get_energylevel(self, runtype, iteration):
         return self.get_energy_level(runtype, iteration)
 
+    def get_energy_level_runtypes(self):
+        if self._h5root is None or "energy_level" not in self._h5root:
+            return []
+        grp = self._h5root["energy_level"]
+        runtypes = set()
+        for key in grp.keys():
+            parts = key.rsplit("_", 1)
+            if len(parts) == 2 and parts[1].isdigit():
+                runtypes.add(parts[0])
+            else:
+                runtypes.add(key)
+        return sorted(runtypes)
+
     # --------------------------------------------------------------------------
     # S matrix
     # --------------------------------------------------------------------------
