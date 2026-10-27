@@ -6,9 +6,12 @@ import os
 os.environ.setdefault("MPLBACKEND", "Agg")
 
 import contextlib
+import importlib.util
 import io
+import sys
 import tempfile
 import unittest
+from unittest import mock
 from unittest.mock import MagicMock
 
 try:
@@ -314,6 +317,55 @@ class TestPdfReport(unittest.TestCase):
         for rt in ["uks_alpha", "uks_beta"]:
             self.assertTrue(os.path.isfile(os.path.join(self.workdir, f"mulliken.{rt}.dat")))
             self.assertTrue(is_valid_png(os.path.join(self.workdir, f"mulliken.{rt}.png")))
+
+
+SCRIPTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts"))
+
+
+def _load_script(filename):
+    path = os.path.join(SCRIPTS_DIR, filename)
+    module_name = filename.replace("-", "_").replace(".py", "")
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+class TestPdfReportScript(unittest.TestCase):
+    def setUp(self):
+        self._orig_argv = sys.argv
+        self.mod = _load_script("pdf-report.py")
+
+    def tearDown(self):
+        sys.argv = self._orig_argv
+
+    def test_h5_input_rejected_with_guidance(self):
+        """pdf-report.py rejects .h5/.H5/.hdf5/.HDF5 with code 1 and guides to pdf-report-h5.py."""
+        for filename in ["results.h5", "results.H5", "results.hdf5", "results.HDF5"]:
+            with self.subTest(filename=filename):
+                with mock.patch.object(sys, "argv", ["pdf-report.py", filename]):
+                    stderr = io.StringIO()
+                    with contextlib.redirect_stderr(stderr):
+                        with self.assertRaises(SystemExit) as cm:
+                            self.mod.main()
+                    self.assertEqual(cm.exception.code, 1)
+                    err_msg = stderr.getvalue()
+                    self.assertIn("pdf-report-h5.py", err_msg)
+                    self.assertIn("SQLite 専用", err_msg)
+
+    def test_db_input_opens_pdfarchive(self):
+        """pdf-report.py opens .db file using pdf.PdfArchive."""
+        with mock.patch.object(sys, "argv", ["pdf-report.py", "results.db"]):
+            with mock.patch("proteindf_tools.PdfArchive") as mock_archive:
+                mock_entry = MagicMock()
+                mock_entry.iterations = 1
+                mock_entry.scf_converged = False
+                mock_archive.return_value = mock_entry
+                with mock.patch.object(self.mod, "plot_convergence_check"), mock.patch.object(
+                    self.mod, "plot_convergence_energy_level"
+                ):
+                    self.mod.main()
+                mock_archive.assert_called_once_with("results.db")
 
 
 if __name__ == "__main__":
