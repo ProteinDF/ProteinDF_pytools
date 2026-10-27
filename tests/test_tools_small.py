@@ -4,7 +4,6 @@
 import unittest
 
 from proteindf_tools import constants
-from proteindf_tools.pdfarchive_object import PdfArchiveObject
 from proteindf_tools.qmsim import QmSim
 
 
@@ -47,19 +46,6 @@ class TestQmSim(unittest.TestCase):
         q1.method = "b3lyp"
         self.assertEqual(q1.method, "b3lyp")
         self.assertEqual(q2.method, "hf")
-
-
-class TestPdfArchiveObject(unittest.TestCase):
-    def test_init_without_args(self):
-        obj = PdfArchiveObject()
-        self.assertIsInstance(obj, PdfArchiveObject)
-
-    def test_init_with_rhs(self):
-        """__init__(self, rhs=None) accepts rhs argument but does not use it."""
-        obj = PdfArchiveObject(rhs="dummy")
-        self.assertIsInstance(obj, PdfArchiveObject)
-        obj2 = PdfArchiveObject(rhs=123)
-        self.assertIsInstance(obj2, PdfArchiveObject)
 
 
 if __name__ == "__main__":

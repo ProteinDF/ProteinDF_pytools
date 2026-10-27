@@ -17,7 +17,6 @@ import proteindf_bridge as bridge
 import proteindf_tools as pdf
 from proteindf_tools.basisset import BasisSet, ContractedGTO, PrimitiveGTO
 from proteindf_tools.matrix import Matrix, SymmetricMatrix
-from proteindf_tools.pdfarchive_sqlite3 import PdfArchive_Sqlite3
 from proteindf_tools.pdfparam import PdfParam
 from proteindf_tools.pdfparam_hdf5 import PdfParam_H5
 from proteindf_tools.vector import Vector
@@ -625,7 +624,7 @@ class TestPlotScripts(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(self.tmpdir.name, "pop.mulliken.txt")))
 
     def test_plot_decaymat(self):
-        """pdf-plot-decaymat.py generates a PNG file from PdfArchive and Matrix."""
+        """pdf-plot-decaymat.py generates a PNG file from HDF5 archive and Matrix."""
         db_path = os.path.join(self.tmpdir.name, "test.db")
         mat_path = os.path.join(self.tmpdir.name, "test.mat")
         out_png = os.path.join(self.tmpdir.name, "mat.png")

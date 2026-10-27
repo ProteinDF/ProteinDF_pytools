@@ -22,7 +22,6 @@
 import copy
 
 from .basisset import ContractedGTO
-# from .pdfarchive import PdfArchive
 from .pdfparam import PdfParam
 
 
@@ -47,21 +46,16 @@ class OrbInfo(object):
             basisset_name = ""
             # Candidates for basis set name lookup:
             # 1. _get_atom_label(atom): matches symbol@label (standard convention in OrbInfo)
-            # 2. symbol@key: in PdfArchive_Sqlite3, atom_id is stored as key (e.g. '0', '1')
-            # 3. symbol@name: get_molecule() reconstructs atoms where DB 'label' is mapped to atom.name
-            # 4. symbol: default element symbol without specific label (e.g. 'H', 'C')
+            # 2. symbol@name: get_molecule() reconstructs atoms where H5 'label' is mapped to atom.name
+            # 3. symbol: default element symbol without specific label (e.g. 'H', 'C')
             candidates = []
             cand1 = self._get_atom_label(atom)
             if cand1:
                 candidates.append(cand1)
-            if key is not None:
-                cand2 = "{symbol}@{key}".format(symbol=atom.symbol, key=key)
+            if getattr(atom, "name", None) and atom.name != "None":
+                cand2 = "{symbol}@{name}".format(symbol=atom.symbol, name=atom.name)
                 if cand2 not in candidates:
                     candidates.append(cand2)
-            if getattr(atom, "name", None) and atom.name != "None":
-                cand3 = "{symbol}@{name}".format(symbol=atom.symbol, name=atom.name)
-                if cand3 not in candidates:
-                    candidates.append(cand3)
             if atom.symbol not in candidates:
                 candidates.append(atom.symbol)
 

@@ -22,7 +22,6 @@
 from .pdfparam_hdf5 import PdfParam_H5
 from .pdfparam import PdfParam
 from .pdfcommon import get_default_pdfparam, run_pdf
-# from .pdfarchive import PdfArchive
 import proteindf_bridge as bridge
 import os
 import sys
@@ -110,9 +109,6 @@ class PdfSim(object):
             run_pdf(cmd_archive)
 
             entry = None
-            # if cmd_archive == 'archive':
-            #     logger.info('read archived file(DB)')
-            #     entry = PdfArchive(db_path)
             if "archive-h5" in cmd_archive:
                 logger.info('read archived file(HDF5)')
                 entry = PdfParam_H5()
@@ -316,7 +312,6 @@ class PdfSim(object):
     #     run_pdf(['-o', 'pdf.log', 'serial'])
     #     run_pdf('archive')
 
-    #     entry = pdf.PdfArchive(self._db_path)
     #     itr = entry.iterations
     #     total_energy = entry.get_total_energy(itr)
 

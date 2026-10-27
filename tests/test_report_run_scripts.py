@@ -24,7 +24,6 @@ except ImportError:
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
 from proteindf_tools.basisset import BasisSet, ContractedGTO, PrimitiveGTO
-from proteindf_tools.pdfarchive_sqlite3 import PdfArchive_Sqlite3
 from proteindf_tools.pdfparam import PdfParam
 from proteindf_tools.pdfparam_hdf5 import PdfParam_H5
 
@@ -95,16 +94,6 @@ def _create_sample_param(iterations=2, te=-75.0):
     return param
 
 
-def _create_sample_db(db_path, iterations=2, te=-75.0):
-    """Create synthetic SQLite3 DB archive."""
-    param = _create_sample_param(iterations=iterations, te=te)
-    arc = PdfArchive_Sqlite3(db_path, pdfparam=param)
-    arc.set_occupations("rks", pdf.Vector([2.0, 0.0, 0.0]))
-    for itr in range(1, iterations + 1):
-        arc.set_energylevel("rks", itr, pdf.Vector([-0.5 - 0.01 * itr, 0.2, 0.5]))
-    return arc
-
-
 def _create_sample_h5(h5_path, iterations=2, te=-75.0):
     """Create synthetic HDF5 archive."""
     param = _create_sample_param(iterations=iterations, te=te)
@@ -155,7 +144,8 @@ class TestPdfTest(BaseScriptTestCase):
         _create_sample_h5(self.h5_1, te=-75.0)
         _create_sample_h5(self.h5_2, te=-75.0)
         _create_sample_h5(self.h5_diff, te=-76.0)
-        _create_sample_db(self.db1, te=-75.0)
+        with open(self.db1, "wb"):
+            pass
 
     def test_same_data(self):
         """Comparing identical HDF5 results exits with 0 (OK)."""

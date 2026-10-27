@@ -14,9 +14,7 @@ except ImportError:
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
-from proteindf_tools.pdfarchive_sqlite3 import PdfArchive_Sqlite3
 from proteindf_tools.pdfcommon import open_archive
-from proteindf_tools.pdfparam import PdfParam
 from proteindf_tools.pdfparam_hdf5 import PdfParam_H5
 from proteindf_tools.poputils import PopUtils
 from proteindf_tools.vector import Vector
@@ -69,25 +67,6 @@ def _create_synthetic_h5(h5_path):
     p.save_occ("rks", Vector([2.0, 2.0, 1.0, 0.0, 0.0]))
     p.save_energy_level("rks", 1, Vector([-19.1, -1.2, -0.5, 0.3, 0.9]))
     p._close()
-
-
-def _create_synthetic_db(db_path):
-    param = PdfParam()
-    param.comment = "synthetic db"
-    param.num_of_atoms = 3
-    param.num_of_AOs = 5
-    param.num_of_MOs = 5
-    param.method = "rks"
-    param.iterations = 1
-    param.max_iterations = 10
-    param.guess = "none"
-    param._set_scf_converged(True)
-    param.molecule = _build_sample_molecule()
-    param.set_total_energy(1, -75.12345)
-
-    db = PdfArchive_Sqlite3(db_path, param)
-    db.set_occupations("rks", Vector([2.0, 2.0, 1.0, 0.0, 0.0]))
-    db.set_energylevel("rks", 1, Vector([-19.1, -1.2, -0.5, 0.3, 0.9]))
 
 
 class TestOpenArchive(unittest.TestCase):
@@ -160,7 +139,6 @@ class TestOpenArchive(unittest.TestCase):
     def test_open_archive_sqlite_raises_value_error(self):
         """Verify open_archive raises ValueError with informative message for .db."""
         db_path = os.path.join(self.tmpdir.name, "sample.db")
-        _create_synthetic_db(db_path)
 
         with self.assertRaises(ValueError) as cm:
             open_archive(db_path)
@@ -175,7 +153,6 @@ class TestOpenArchive(unittest.TestCase):
         h5_path = os.path.join(self.tmpdir.name, "pop.h5")
         db_path = os.path.join(self.tmpdir.name, "pop.db")
         _create_synthetic_h5(h5_path)
-        _create_synthetic_db(db_path)
 
         atoms_h5, charge_h5 = PopUtils.get_atomlist_by_db(h5_path)
 

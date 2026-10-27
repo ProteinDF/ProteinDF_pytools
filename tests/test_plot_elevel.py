@@ -14,7 +14,6 @@ os.environ.setdefault("MPLBACKEND", "Agg")
 import matplotlib.pyplot as plt
 
 import proteindf_bridge as bridge
-from proteindf_tools.pdfarchive_sqlite3 import PdfArchive_Sqlite3
 import proteindf_tools.pdfgraph as pg
 import proteindf_tools.vector as vec
 

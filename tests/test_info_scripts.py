@@ -12,7 +12,6 @@ from contextlib import redirect_stderr, redirect_stdout
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
 from proteindf_tools.basisset import BasisSet, ContractedGTO, PrimitiveGTO
-from proteindf_tools.pdfarchive_sqlite3 import PdfArchive_Sqlite3
 from proteindf_tools.pdfparam import PdfParam
 
 SCRIPTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts"))
@@ -92,7 +91,6 @@ class TestPdfInfoOrb(unittest.TestCase):
         self.mpac_path = os.path.join(self.tmpdir.name, "water.mpac")
         pdf.save_pdfparam(self.param, self.mpac_path)
         self.db_path = os.path.join(self.tmpdir.name, "water.db")
-        self.archive = PdfArchive_Sqlite3(self.db_path, pdfparam=self.param)
         self.mod = _load_script("pdf-info-orb.py")
         self._orig_argv = sys.argv
 
@@ -164,7 +162,6 @@ class TestPdfInfoGeom(unittest.TestCase):
         self.mpac_path = os.path.join(self.tmpdir.name, "water.mpac")
         pdf.save_pdfparam(self.param, self.mpac_path)
         self.db_path = os.path.join(self.tmpdir.name, "water.db")
-        self.archive = PdfArchive_Sqlite3(self.db_path, pdfparam=self.param)
         self.mod = _load_script("pdf-info-geom.py")
         self._orig_argv = sys.argv
 
@@ -211,7 +208,6 @@ class TestPdfInfoXyz(unittest.TestCase):
         self.mpac_path = os.path.join(self.tmpdir.name, "water.mpac")
         pdf.save_pdfparam(self.param, self.mpac_path)
         self.db_path = os.path.join(self.tmpdir.name, "water.db")
-        self.archive = PdfArchive_Sqlite3(self.db_path, pdfparam=self.param)
         self.mod = _load_script("pdf-info-xyz.py")
         self._orig_argv = sys.argv
 
@@ -260,7 +256,6 @@ class TestPdfAtomIndex(unittest.TestCase):
         self.mpac_path = os.path.join(self.tmpdir.name, "water.mpac")
         pdf.save_pdfparam(self.param, self.mpac_path)
         self.db_path = os.path.join(self.tmpdir.name, "water.db")
-        self.archive = PdfArchive_Sqlite3(self.db_path, pdfparam=self.param)
 
         # Create synthetic query AtomGroup with a sub-group
         self.query_mol = bridge.AtomGroup()
