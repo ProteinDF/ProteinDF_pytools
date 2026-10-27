@@ -40,11 +40,14 @@ def main():
                         type=int,
                         help='orbital index (start=0)')
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('-d', '--db',
-                       nargs='?',
-                       action='store',
-                       const='pdfresults.db',
-                       help='ProteinDF results file')
+    group.add_argument(
+        "-d",
+        "--db",
+        nargs="?",
+        action="store",
+        const="pdfresults.h5",
+        help="ProteinDF results file (.h5 は HDF5、それ以外は SQLite(従来))",
+    )
     group.add_argument('-p', '--param',
                        nargs='?',
                        action='store',
@@ -66,7 +69,7 @@ def main():
 
     orb_info = None
     if args.db:
-        entry = pdf.PdfArchive(args.db)
+        entry = pdf.open_archive(args.db)
         orb_info = pdf.OrbInfo(entry)
     elif args.param:
         pdfparam = pdf.load_pdfparam(args.param)

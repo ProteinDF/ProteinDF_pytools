@@ -128,11 +128,14 @@ def main():
     parser = argparse.ArgumentParser(description='calculate RESP charge')
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('-d', '--db',
-                       nargs='?',
-                       action='store',
-                       const='pdfresults.db',
-                       help='ProteinDF results file')
+    group.add_argument(
+        "-d",
+        "--db",
+        nargs="?",
+        action="store",
+        const="pdfresults.h5",
+        help="ProteinDF results file (.h5 は HDF5、それ以外は SQLite(従来))",
+    )
     group.add_argument('-p', '--param',
                        nargs='?',
                        action='store',
@@ -220,7 +223,7 @@ def main():
 
     atomlist = []
     if args.db:
-        entry = pdf.PdfArchive(args.db)
+        entry = pdf.open_archive(args.db)
         atoms = entry.get_molecule().get_atom_list()
         for atom in atoms:
             if atom.symbol != 'X':
