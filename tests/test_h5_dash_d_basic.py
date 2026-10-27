@@ -15,7 +15,6 @@ import proteindf_bridge as bridge
 import proteindf_tools as pdf
 from proteindf_tools.basisset import BasisSet, ContractedGTO, PrimitiveGTO
 from proteindf_tools.matrix import Matrix
-from proteindf_tools.pdfarchive_sqlite3 import PdfArchive_Sqlite3
 from proteindf_tools.pdfparam import PdfParam
 from proteindf_tools.pdfparam_hdf5 import PdfParam_H5
 from proteindf_tools.vector import Vector
@@ -70,7 +69,7 @@ def _create_synthetic_system(tmpdir):
     cg_h[0] = PrimitiveGTO(3.4, 0.15)
     bs_h[0] = cg_h
 
-    # Synthetic parameter & SQLite archive
+    # Synthetic parameter
     param = PdfParam()
     param.comment = "synthetic H2O system"
     param.num_of_atoms = 3
@@ -87,9 +86,6 @@ def _create_synthetic_system(tmpdir):
     param.set_total_energy(1, -75.0)
 
     db_path = os.path.join(tmpdir, "water.db")
-    db = PdfArchive_Sqlite3(db_path, pdfparam=param)
-    db.set_occupations("rks", Vector([2.0, 2.0, 0.0]))
-    db.set_energylevel("rks", 1, Vector([-19.0, -1.0, 0.5]))
 
     # Synthetic HDF5 archive
     h5_path = os.path.join(tmpdir, "water.h5")

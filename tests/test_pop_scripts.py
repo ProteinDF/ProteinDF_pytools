@@ -15,7 +15,6 @@ from contextlib import redirect_stderr, redirect_stdout
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
 from proteindf_tools.basisset import BasisSet, ContractedGTO, PrimitiveGTO
-from proteindf_tools.pdfarchive_sqlite3 import PdfArchive_Sqlite3
 from proteindf_tools.pdfparam import PdfParam
 
 try:
@@ -111,7 +110,6 @@ def _create_sample_system(tmpdir_path):
     pdf.save_pdfparam(param, mpac_path)
 
     db_path = os.path.join(tmpdir_path, "water.db")
-    PdfArchive_Sqlite3(db_path, pdfparam=param)
 
     # 4x4 design matrix for 3 real atoms + 1 Lagrange multiplier constraint
     # X = [[4, 1, 1, 1],

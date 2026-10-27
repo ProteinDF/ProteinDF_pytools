@@ -19,8 +19,6 @@ import matplotlib.pyplot as plt
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
 from proteindf_tools.basisset import BasisSet, ContractedGTO, PrimitiveGTO
-from proteindf_tools.pdfarchive_sqlite3 import PdfArchive_Sqlite3
-from proteindf_tools.pdfparam import PdfParam
 from proteindf_tools.pdfparam_hdf5 import PdfParam_H5
 from proteindf_tools.vector import Vector
 
@@ -81,28 +79,9 @@ def _create_synthetic_system(tmpdir, iterations=2, te=-75.0):
     ]
     tes = [te - 0.1 * i for i in range(iterations)]
 
-    # SQLite archive
-    param = PdfParam()
-    param.comment = "synthetic H2O+X system"
-    param.num_of_atoms = 4
-    param.num_of_AOs = 4
-    param.num_of_MOs = 4
-    param.method = "rks"
-    param.iterations = iterations
-    param.guess = "none"
-    param._set_scf_converged(True)
-    param.molecule = mol
-    param.set_basisset("O@O1", bs_o)
-    param.set_basisset("H@H1", bs_h)
-    param.set_basisset("H@H2", bs_h)
-    for itr in range(1, iterations + 1):
-        param.set_total_energy(itr, tes[itr - 1])
-
     db_path = os.path.join(tmpdir, "water.db")
-    db = PdfArchive_Sqlite3(db_path, pdfparam=param)
-    db.set_occupations("rks", occ_vec)
-    for itr in range(1, iterations + 1):
-        db.set_energylevel("rks", itr, elevels[itr - 1])
+    with open(db_path, "wb"):
+        pass
 
     # HDF5 archive
     h5_path = os.path.join(tmpdir, "water.h5")
