@@ -182,3 +182,19 @@ def save_pdfparam(pdfparam_data, pdfparam_path):
     assert isinstance(pdfparam_path, str)
     raw_data = pdfparam_data.get_raw_data()
     bridge.save_msgpack(raw_data, pdfparam_path)
+
+
+def open_archive(path):
+    """Open an archive file (.h5/.hdf5 as PdfParam_H5, otherwise PdfArchive_Sqlite3)."""
+    path_str = os.fspath(path)
+    ext = os.path.splitext(path_str)[1].lower()
+    if ext in (".h5", ".hdf5"):
+        from .pdfparam_hdf5 import PdfParam_H5
+
+        entry = PdfParam_H5()
+        entry.open(path_str)
+        return entry
+    else:
+        from .pdfarchive_sqlite3 import PdfArchive_Sqlite3
+
+        return PdfArchive_Sqlite3(path_str)
