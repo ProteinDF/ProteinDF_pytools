@@ -6,6 +6,7 @@ import io
 import logging
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -154,21 +155,19 @@ class TestH5DashDRest(unittest.TestCase):
     # =========================================================================
     # 1. pdf-plot-elevel.py
     # =========================================================================
-    def test_plot_elevel_h5_matches_db(self):
-        """pdf-plot-elevel.py generates identical dat and valid PNG for .h5 and .db."""
+    def test_plot_elevel_h5_and_db_error(self):
+        """pdf-plot-elevel.py generates dat and valid PNG for .h5 and raises ValueError on .db."""
         mod = _load_script("pdf-plot-elevel.py")
         png_db = os.path.join(self.tmpdir.name, "elevel_db.png")
         png_h5 = os.path.join(self.tmpdir.name, "elevel_h5.png")
 
-        # Run with .db
+        # Run with .db -> raises ValueError
         sys.argv = ["pdf-plot-elevel.py", "-d", self.data["db"], "-o", png_db, "-v"]
-        out_db = io.StringIO()
-        with redirect_stdout(out_db):
+        with self.assertRaises(ValueError) as cm:
             mod.main()
-        with open("tmp.dat", "r") as f:
-            dat_db = f.read()
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
-        # Run with .h5
+        # Run with .h5 -> succeeds
         sys.argv = ["pdf-plot-elevel.py", "-d", self.data["h5"], "-o", png_h5, "-v"]
         out_h5 = io.StringIO()
         with redirect_stdout(out_h5):
@@ -176,10 +175,8 @@ class TestH5DashDRest(unittest.TestCase):
         with open("tmp.dat", "r") as f:
             dat_h5 = f.read()
 
-        self.assertEqual(dat_db, dat_h5)
-        self.assertTrue(_is_valid_png(png_db))
+        self.assertTrue(len(dat_h5) > 0)
         self.assertTrue(_is_valid_png(png_h5))
-        self.assertIn("HOMO: 1", out_db.getvalue())
         self.assertIn("HOMO: 1", out_h5.getvalue())
 
     def test_plot_elevel_default_h5(self):
@@ -240,8 +237,8 @@ class TestH5DashDRest(unittest.TestCase):
     # =========================================================================
     # 2. pdf-test.py
     # =========================================================================
-    def test_pdf_test_h5_and_db_comparisons(self):
-        """pdf-test.py compares .h5/.h5, .db/.db, and .h5/.db identically."""
+    def test_pdf_test_h5_and_db_error(self):
+        """pdf-test.py compares .h5/.h5, raises on .db, and exits 1 with notice in CLI."""
         mod = _load_script("pdf-test.py")
 
         diff_dir = os.path.join(self.tmpdir.name, "diff")
@@ -251,31 +248,50 @@ class TestH5DashDRest(unittest.TestCase):
         os.makedirs(diff_dir2)
         data_diff = _create_synthetic_system(diff_dir2, te=-76.0)
 
-        # Same energy: .db vs .db, .h5 vs .h5, .h5 vs .db -> all exit 0
+        # In-process: .db inputs raise ValueError
         for p1, p2 in [
-            (self.data["db"], data_same["db"]),
-            (self.data["h5"], data_same["h5"]),
+            (self.data["db"], data_same["h5"]),
             (self.data["h5"], data_same["db"]),
+            (self.data["db"], data_same["db"]),
         ]:
             sys.argv = ["pdf-test.py", p1, p2]
-            buf = io.StringIO()
-            with redirect_stdout(buf), redirect_stderr(buf):
-                with self.assertRaises(SystemExit) as cm:
-                    mod.main()
-            self.assertEqual(cm.exception.code, 0, msg=f"Failed for {p1} vs {p2}")
+            with self.assertRaises(ValueError) as cm:
+                mod.main()
+            self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
-        # Different energy: .db vs .db, .h5 vs .h5, .h5 vs .db -> all exit 1
-        for p1, p2 in [
-            (self.data["db"], data_diff["db"]),
-            (self.data["h5"], data_diff["h5"]),
-            (self.data["h5"], data_diff["db"]),
-        ]:
-            sys.argv = ["pdf-test.py", p1, p2]
-            buf = io.StringIO()
-            with redirect_stdout(buf), redirect_stderr(buf):
-                with self.assertRaises(SystemExit) as cm:
-                    mod.main()
-            self.assertEqual(cm.exception.code, 1, msg=f"Failed for {p1} vs {p2}")
+        # CLI subprocess: .db exits with code 1 and outputs deprecation notice to stderr
+        script_path = os.path.join(SCRIPTS_DIR, "pdf-test.py")
+        top_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        env = dict(os.environ)
+        env["PYTHONPATH"] = top_dir + (os.pathsep + env["PYTHONPATH"] if "PYTHONPATH" in env else "")
+        proc = subprocess.run(
+            [sys.executable, script_path, self.data["db"], data_same["h5"]],
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn("pdf-archive-h5.py", proc.stderr)
+        self.assertIn(
+            "SQLite 形式は廃止されました。pdf-archive-h5.py で pdfresults.h5 を作り直してください",
+            proc.stderr,
+        )
+
+        # .h5 vs .h5 same energy: exit 0
+        sys.argv = ["pdf-test.py", self.data["h5"], data_same["h5"]]
+        buf = io.StringIO()
+        with redirect_stdout(buf), redirect_stderr(buf):
+            with self.assertRaises(SystemExit) as cm:
+                mod.main()
+        self.assertEqual(cm.exception.code, 0)
+
+        # .h5 vs .h5 different energy: exit 1
+        sys.argv = ["pdf-test.py", self.data["h5"], data_diff["h5"]]
+        buf = io.StringIO()
+        with redirect_stdout(buf), redirect_stderr(buf):
+            with self.assertRaises(SystemExit) as cm:
+                mod.main()
+        self.assertEqual(cm.exception.code, 1)
 
         # -d (--debug) option preserves its debug flag meaning
         sys.argv = ["pdf-test.py", "-d", self.data["h5"], data_same["h5"]]

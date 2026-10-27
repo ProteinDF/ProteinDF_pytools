@@ -111,15 +111,12 @@ class TestPdfInfoOrb(unittest.TestCase):
         self.assertIn("1th:", output)
         self.assertIn("shell(s;s)", output)
 
-    def test_info_orb_db_success(self):
-        """Orbital information is output from db file."""
+    def test_info_orb_db_raises_error(self):
+        """Passing .db to -d raises ValueError."""
         sys.argv = ["pdf-info-orb.py", "-d", self.db_path, "0"]
-        out = io.StringIO()
-        with redirect_stdout(out):
+        with self.assertRaises(ValueError) as cm:
             self.mod.main()
-        output = out.getvalue()
-        self.assertIn("0th:", output)
-        self.assertIn("shell(s;s)", output)
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
     def test_info_orb_out_of_range(self):
         """Out of range orbital index produces no output."""
@@ -185,15 +182,12 @@ class TestPdfInfoGeom(unittest.TestCase):
         self.assertIn("O", output)
         self.assertIn("H", output)
 
-    def test_info_geom_db_success(self):
-        """Coordinates of synthetic molecule are printed using -d."""
+    def test_info_geom_db_raises_error(self):
+        """Passing .db to -d raises ValueError."""
         sys.argv = ["pdf-info-geom.py", "-d", self.db_path]
-        out = io.StringIO()
-        with redirect_stdout(out):
+        with self.assertRaises(ValueError) as cm:
             self.mod.main()
-        output = out.getvalue()
-        self.assertIn("O", output)
-        self.assertIn("H", output)
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
     def test_info_geom_no_options_fails(self):
         """Omitting required options raises SystemExit."""
@@ -237,17 +231,12 @@ class TestPdfInfoXyz(unittest.TestCase):
         self.assertTrue(any(line.strip().startswith("O") for line in lines[2:]))
         self.assertTrue(any(line.strip().startswith("H") for line in lines[2:]))
 
-    def test_info_xyz_db_success(self):
-        """XYZ format output is printed using -d."""
+    def test_info_xyz_db_raises_error(self):
+        """Passing .db to -d raises ValueError."""
         sys.argv = ["pdf-info-xyz.py", "-d", self.db_path]
-        out = io.StringIO()
-        with redirect_stdout(out):
+        with self.assertRaises(ValueError) as cm:
             self.mod.main()
-        lines = out.getvalue().strip().splitlines()
-        self.assertGreaterEqual(len(lines), 3)
-        self.assertEqual(lines[0].strip(), "3")
-        self.assertTrue(any(line.strip().startswith("O") for line in lines[2:]))
-        self.assertTrue(any(line.strip().startswith("H") for line in lines[2:]))
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
     def test_info_xyz_no_options_fails(self):
         """Omitting required options raises SystemExit."""
@@ -309,14 +298,12 @@ class TestPdfAtomIndex(unittest.TestCase):
         loaded = bridge.load_msgpack(out_file)
         self.assertEqual(loaded, [[0]])
 
-    def test_atom_index_db_stdout(self):
-        """Atom index is found using -d from database."""
+    def test_atom_index_db_raises_error(self):
+        """Passing .db to -d raises ValueError."""
         sys.argv = ["pdf-atom-index.py", self.brd_path, "-d", self.db_path]
-        out = io.StringIO()
-        with redirect_stdout(out):
+        with self.assertRaises(ValueError) as cm:
             self.mod.main()
-        output = out.getvalue().strip()
-        self.assertIn("0", output)
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
     def test_atom_index_atom_not_found(self):
         """Querying an atom not present in the system returns index -1."""

@@ -148,16 +148,18 @@ class TestPdfTest(BaseScriptTestCase):
     def setUp(self):
         super().setUp()
         self.mod = _load_script("pdf-test.py")
+        self.h5_1 = os.path.join(self.tmpdir.name, "result1.h5")
+        self.h5_2 = os.path.join(self.tmpdir.name, "result2.h5")
+        self.h5_diff = os.path.join(self.tmpdir.name, "result_diff.h5")
         self.db1 = os.path.join(self.tmpdir.name, "result1.db")
-        self.db2 = os.path.join(self.tmpdir.name, "result2.db")
-        self.db_diff = os.path.join(self.tmpdir.name, "result_diff.db")
+        _create_sample_h5(self.h5_1, te=-75.0)
+        _create_sample_h5(self.h5_2, te=-75.0)
+        _create_sample_h5(self.h5_diff, te=-76.0)
         _create_sample_db(self.db1, te=-75.0)
-        _create_sample_db(self.db2, te=-75.0)
-        _create_sample_db(self.db_diff, te=-76.0)
 
     def test_same_data(self):
-        """Comparing identical SQLite3 results exits with 0 (OK)."""
-        sys.argv = ["pdf-test.py", self.db1, self.db2]
+        """Comparing identical HDF5 results exits with 0 (OK)."""
+        sys.argv = ["pdf-test.py", self.h5_1, self.h5_2]
         buf = io.StringIO()
         with redirect_stdout(buf), redirect_stderr(buf):
             with self.assertRaises(SystemExit) as cm:
@@ -166,7 +168,7 @@ class TestPdfTest(BaseScriptTestCase):
 
     def test_different_energy(self):
         """Comparing results with different total energy exits with 1 (NG)."""
-        sys.argv = ["pdf-test.py", self.db1, self.db_diff]
+        sys.argv = ["pdf-test.py", self.h5_1, self.h5_diff]
         buf = io.StringIO()
         with redirect_stdout(buf), redirect_stderr(buf):
             with self.assertRaises(SystemExit) as cm:
@@ -175,7 +177,7 @@ class TestPdfTest(BaseScriptTestCase):
 
     def test_compare_info_option(self):
         """--compare-info checks system information between archives."""
-        sys.argv = ["pdf-test.py", "--compare-info", self.db1, self.db2]
+        sys.argv = ["pdf-test.py", "--compare-info", self.h5_1, self.h5_2]
         buf = io.StringIO()
         with redirect_stdout(buf), redirect_stderr(buf):
             with self.assertRaises(SystemExit) as cm:
@@ -184,16 +186,23 @@ class TestPdfTest(BaseScriptTestCase):
 
     def test_compare_energy_option(self):
         """--compare-energy detects total energy discrepancy."""
-        sys.argv = ["pdf-test.py", "--compare-energy", self.db1, self.db_diff]
+        sys.argv = ["pdf-test.py", "--compare-energy", self.h5_1, self.h5_diff]
         buf = io.StringIO()
         with redirect_stdout(buf), redirect_stderr(buf):
             with self.assertRaises(SystemExit) as cm:
                 self.mod.main()
         self.assertEqual(cm.exception.code, 1)
 
+    def test_db_input_raises_error(self):
+        """Passing .db input raises ValueError with informative message."""
+        sys.argv = ["pdf-test.py", self.db1, self.h5_1]
+        with self.assertRaises(ValueError) as cm:
+            self.mod.main()
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
+
     def test_nonexistent_file(self):
         """Comparing with nonexistent file exits with 'file not found'."""
-        sys.argv = ["pdf-test.py", "nonexistent.db", self.db1]
+        sys.argv = ["pdf-test.py", "nonexistent.h5", self.h5_1]
         buf = io.StringIO()
         with redirect_stdout(buf), redirect_stderr(buf):
             with self.assertRaises(SystemExit) as cm:
@@ -202,20 +211,20 @@ class TestPdfTest(BaseScriptTestCase):
 
     def test_energy_threshold_option(self):
         """--energy-threshold controls total energy comparison tolerance."""
-        db_close = os.path.join(self.tmpdir.name, "result_close.db")
-        # Difference of 1.0e-5 is within default 1.0e-4 but exceeds 1.0e-6
-        _create_sample_db(db_close, te=-75.0 + 1.0e-5)
+        h5_close = os.path.join(self.tmpdir.name, "result_close.h5")
+        # Difference of 1.0e-6 is within default 1.0e-5 but exceeds 1.0e-7
+        _create_sample_h5(h5_close, te=-75.0 + 1.0e-6)
 
-        # Default threshold (1.0e-4) -> matches (exit 0)
-        sys.argv = ["pdf-test.py", self.db1, db_close]
+        # Default threshold (1.0e-5) -> matches (exit 0)
+        sys.argv = ["pdf-test.py", self.h5_1, h5_close]
         buf = io.StringIO()
         with redirect_stdout(buf), redirect_stderr(buf):
             with self.assertRaises(SystemExit) as cm:
                 self.mod.main()
         self.assertEqual(cm.exception.code, 0)
 
-        # Stricter threshold (1.0e-6) -> does not match (exit 1)
-        sys.argv = ["pdf-test.py", "--energy-threshold", "1e-6", self.db1, db_close]
+        # Stricter threshold (1.0e-7) -> does not match (exit 1)
+        sys.argv = ["pdf-test.py", "--energy-threshold", "1e-7", self.h5_1, h5_close]
         buf = io.StringIO()
         with redirect_stdout(buf), redirect_stderr(buf):
             with self.assertRaises(SystemExit) as cm:
@@ -225,7 +234,7 @@ class TestPdfTest(BaseScriptTestCase):
     def test_energy_threshold_invalid_values(self):
         """Invalid --energy-threshold values cause non-zero exit."""
         for invalid_val in ["0", "-1.0", "-1e-4", "abc"]:
-            sys.argv = ["pdf-test.py", "--energy-threshold", invalid_val, self.db1, self.db2]
+            sys.argv = ["pdf-test.py", "--energy-threshold", invalid_val, self.h5_1, self.h5_2]
             buf = io.StringIO()
             with redirect_stdout(buf), redirect_stderr(buf):
                 with self.assertRaises(SystemExit) as cm:

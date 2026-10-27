@@ -99,7 +99,7 @@ class TestOpenArchive(unittest.TestCase):
 
     @unittest.skipUnless(HAVE_H5PY, "h5py not available")
     def test_open_archive_dispatch_by_extension(self):
-        """Verify extension-based dispatch (.h5, .hdf5, .H5, .HDF5 vs .db and others)."""
+        """Verify extension-based dispatch (.h5, .hdf5, .H5, .HDF5 accept, .db and others raise ValueError)."""
         for filename in ("test.h5", "test.hdf5", "test.H5", "test.HDF5"):
             path = os.path.join(self.tmpdir.name, filename)
             entry = open_archive(path)
@@ -110,8 +110,10 @@ class TestOpenArchive(unittest.TestCase):
 
         for filename in ("test.db", "test.sqlite", "pdfentry"):
             path = os.path.join(self.tmpdir.name, filename)
-            entry = open_archive(path)
-            self.assertIsInstance(entry, PdfArchive_Sqlite3, msg=f"Failed for {filename}")
+            with self.assertRaises(ValueError) as cm:
+                open_archive(path)
+            self.assertIn("SQLite 形式は廃止されました。pdf-archive-h5.py で pdfresults.h5 を作り直してください", str(cm.exception))
+            self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
         # Also exposed on top-level proteindf_tools module
         self.assertIs(pdf.open_archive, open_archive)
@@ -155,92 +157,36 @@ class TestOpenArchive(unittest.TestCase):
         finally:
             entry._close()
 
-    def test_open_archive_sqlite_compat_methods(self):
-        """Verify get_molecule and common methods on synthetic SQLite archive."""
+    def test_open_archive_sqlite_raises_value_error(self):
+        """Verify open_archive raises ValueError with informative message for .db."""
         db_path = os.path.join(self.tmpdir.name, "sample.db")
         _create_synthetic_db(db_path)
 
-        entry = open_archive(db_path)
-        self.assertIsInstance(entry, PdfArchive_Sqlite3)
-
-        mol_meth = entry.get_molecule()
-        mol_prop = entry.molecule
-        self.assertEqual(mol_meth.get_number_of_atoms(), 3)
-        self.assertEqual(mol_prop.get_number_of_atoms(), 3)
-
-        atoms_meth = mol_meth.get_atom_list()
-        atoms_prop = mol_prop.get_atom_list()
-        self.assertEqual([a.symbol for a in atoms_meth], ["O", "H", "X"])
-        self.assertEqual([a.name for a in atoms_meth], ["O1", "H2", "X3"])
-        for a1, a2 in zip(atoms_meth, atoms_prop):
-            self.assertEqual(a1.symbol, a2.symbol)
-            self.assertEqual(a1.name, a2.name)
-            self.assertAlmostEqual(a1.xyz.x, a2.xyz.x)
-            self.assertAlmostEqual(a1.xyz.y, a2.xyz.y)
-            self.assertAlmostEqual(a1.xyz.z, a2.xyz.z)
-            self.assertAlmostEqual(a1.charge, a2.charge)
-
-        el1 = entry.get_energylevel("rks", 1)
-        el2 = entry.get_energy_level("rks", 1)
-        expected_el = [-19.1, -1.2, -0.5, 0.3, 0.9]
-        self.assertEqual(len(el1), len(expected_el))
-        self.assertEqual(len(el2), len(expected_el))
-        for v1, v2, exp in zip(el1, el2, expected_el):
-            self.assertAlmostEqual(v1, exp)
-            self.assertAlmostEqual(v2, exp)
-
-        self.assertEqual(entry.get_HOMO_level("rks"), 2)
-        self.assertAlmostEqual(entry.get_total_energy(1), -75.12345)
+        with self.assertRaises(ValueError) as cm:
+            open_archive(db_path)
+        msg = str(cm.exception)
+        self.assertIn("SQLite 形式は廃止されました。pdf-archive-h5.py で pdfresults.h5 を作り直してください", msg)
+        self.assertIn("pdf-archive-h5.py", msg)
+        self.assertIn(db_path, msg)
 
     @unittest.skipUnless(HAVE_H5PY, "h5py not available")
-    def test_h5_and_sqlite_return_identical_values(self):
-        """Verify HDF5 and SQLite return identical values across all common methods."""
-        h5_path = os.path.join(self.tmpdir.name, "compare.h5")
-        db_path = os.path.join(self.tmpdir.name, "compare.db")
-        _create_synthetic_h5(h5_path)
-        _create_synthetic_db(db_path)
-
-        h5_entry = open_archive(h5_path)
-        db_entry = open_archive(db_path)
-        try:
-            self.assertEqual(h5_entry.get_HOMO_level("rks"), db_entry.get_HOMO_level("rks"))
-            self.assertAlmostEqual(h5_entry.get_total_energy(1), db_entry.get_total_energy(1))
-
-            for v_h5, v_db in zip(
-                h5_entry.get_energylevel("rks", 1), db_entry.get_energylevel("rks", 1)
-            ):
-                self.assertAlmostEqual(v_h5, v_db)
-
-            for v_h5, v_db in zip(
-                h5_entry.get_energy_level("rks", 1), db_entry.get_energy_level("rks", 1)
-            ):
-                self.assertAlmostEqual(v_h5, v_db)
-        finally:
-            h5_entry._close()
-
-    @unittest.skipUnless(HAVE_H5PY, "h5py not available")
-    def test_poputils_get_atomlist_by_db_h5_and_db(self):
-        """Verify PopUtils.get_atomlist_by_db returns identical results for .h5 and .db."""
+    def test_poputils_get_atomlist_by_db(self):
+        """Verify PopUtils.get_atomlist_by_db works with HDF5 and raises ValueError on .db."""
         h5_path = os.path.join(self.tmpdir.name, "pop.h5")
         db_path = os.path.join(self.tmpdir.name, "pop.db")
         _create_synthetic_h5(h5_path)
         _create_synthetic_db(db_path)
 
         atoms_h5, charge_h5 = PopUtils.get_atomlist_by_db(h5_path)
-        atoms_db, charge_db = PopUtils.get_atomlist_by_db(db_path)
 
         # Dummy atom 'X' should be filtered out, leaving O and H
         self.assertEqual(len(atoms_h5), 2)
-        self.assertEqual(len(atoms_db), 2)
-        self.assertAlmostEqual(charge_h5, charge_db)
+        self.assertEqual([a.symbol for a in atoms_h5], ["O", "H"])
+        self.assertAlmostEqual(charge_h5, -0.5)
 
-        for a_h5, a_db in zip(atoms_h5, atoms_db):
-            self.assertEqual(a_h5.symbol, a_db.symbol)
-            self.assertEqual(a_h5.name, a_db.name)
-            self.assertAlmostEqual(a_h5.xyz.x, a_db.xyz.x)
-            self.assertAlmostEqual(a_h5.xyz.y, a_db.xyz.y)
-            self.assertAlmostEqual(a_h5.xyz.z, a_db.xyz.z)
-            self.assertAlmostEqual(a_h5.charge, a_db.charge)
+        with self.assertRaises(ValueError) as cm:
+            PopUtils.get_atomlist_by_db(db_path)
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
 
 if __name__ == "__main__":

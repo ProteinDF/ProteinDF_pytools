@@ -249,8 +249,8 @@ class TestPdfPopRidge(unittest.TestCase):
         self.assertLess(norm_strong, norm_weak)
         self.assertLess(norm_strong, 0.01)
 
-    def test_ridge_db_success(self):
-        """Ridge regression calculates partial charges from database file."""
+    def test_ridge_db_raises_error(self):
+        """Passing .db to -d raises ValueError."""
         sys.argv = [
             "pdf-pop-ridge.py",
             "-d",
@@ -264,10 +264,9 @@ class TestPdfPopRidge(unittest.TestCase):
             "--alpha",
             "0.001",
         ]
-        out = io.StringIO()
-        with redirect_stdout(out):
+        with self.assertRaises(ValueError) as cm:
             self.mod.main()
-        self.assertIn("total charges:  0.000", out.getvalue())
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
     def test_ridge_neither_option_fails(self):
         """Providing neither -d nor -p raises SystemExit."""
@@ -466,8 +465,8 @@ class TestPdfPopLasso(unittest.TestCase):
         self.assertIn("use scikit-learn module", output)
         self.assertIn("RRMS=", output)
 
-    def test_lasso_db_success(self):
-        """Lasso regression calculates partial charges from database file."""
+    def test_lasso_db_raises_error(self):
+        """Passing .db to -d raises ValueError."""
         sys.argv = [
             "pdf-pop-lasso.py",
             "-d",
@@ -483,10 +482,9 @@ class TestPdfPopLasso(unittest.TestCase):
             "--alpha",
             "0.001",
         ]
-        out = io.StringIO()
-        with redirect_stdout(out):
+        with self.assertRaises(ValueError) as cm:
             self.mod.main()
-        self.assertIn("charge=0.000", out.getvalue())
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
     def test_lasso_neither_option_fails(self):
         """Providing neither -d nor -p raises SystemExit."""
@@ -613,8 +611,8 @@ class TestPdfPopElasticNet(unittest.TestCase):
         self.assertIn("charge=-0.000", output)
         self.assertIn("RRMS=", output)
 
-    def test_elasticnet_db_success(self):
-        """ElasticNet regression calculates partial charges from database file."""
+    def test_elasticnet_db_raises_error(self):
+        """Passing .db to -d raises ValueError."""
         sys.argv = [
             "pdf-pop-elasticnet.py",
             "-d",
@@ -630,10 +628,9 @@ class TestPdfPopElasticNet(unittest.TestCase):
             "--alpha",
             "0.001",
         ]
-        out = io.StringIO()
-        with redirect_stdout(out):
+        with self.assertRaises(ValueError) as cm:
             self.mod.main()
-        self.assertIn("charge=-0.000", out.getvalue())
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
     def test_elasticnet_neither_option_fails(self):
         """Providing neither -d nor -p raises SystemExit."""
@@ -765,8 +762,8 @@ class TestPdfPopClasso(unittest.TestCase):
         cl.fit(X, y, C, b)
         self.assertAlmostEqual(sum(cl.coef), 1.0, places=5)
 
-    def test_classo_db_success(self):
-        """Constrained Lasso calculates partial charges from database file."""
+    def test_classo_db_raises_error(self):
+        """Passing .db to -d raises ValueError."""
         sys.argv = [
             "pdf-pop-classo.py",
             "-d",
@@ -782,10 +779,9 @@ class TestPdfPopClasso(unittest.TestCase):
             "--min-alpha",
             "0.01",
         ]
-        out = io.StringIO()
-        with redirect_stdout(out):
+        with self.assertRaises(ValueError) as cm:
             self.mod.main()
-        self.assertIn("total charges:  0.000", out.getvalue())
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
     def test_classo_neither_option_fails(self):
         """Providing neither -d nor -p raises SystemExit."""
@@ -920,8 +916,8 @@ class TestPdfPopRrms(unittest.TestCase):
             mod.main()
         self.assertIn("RRMS=", out.getvalue())
 
-    def test_rrms_db_success(self):
-        """RRMS is calculated from database file."""
+    def test_rrms_db_raises_error(self):
+        """Passing .db to -d raises ValueError."""
         sys.modules["proteindf_pytools"] = pdf
         mod = _load_script("pdf-pop-rrms.py")
         sys.argv = [
@@ -933,10 +929,9 @@ class TestPdfPopRrms(unittest.TestCase):
             "-c",
             self.sys_data["charge_csv_path"],
         ]
-        out = io.StringIO()
-        with redirect_stdout(out):
+        with self.assertRaises(ValueError) as cm:
             mod.main()
-        self.assertIn("RRMS=", out.getvalue())
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
     def test_rrms_neither_option_fails(self):
         """Providing neither -d nor -p raises SystemExit."""
@@ -1092,8 +1087,8 @@ class TestPdfPopResp(unittest.TestCase):
         self.assertAlmostEqual(coef_q[1], -0.125, delta=1e-4)
         self.assertAlmostEqual(coef_q[2], -0.125, delta=1e-4)
 
-    def test_resp_db_success(self):
-        """RESP charges are calculated from database file."""
+    def test_resp_db_raises_error(self):
+        """Passing .db to -d raises ValueError."""
         sys.argv = [
             "pdf-pop-resp.py",
             "-d",
@@ -1107,10 +1102,9 @@ class TestPdfPopResp(unittest.TestCase):
             "--alpha",
             "0.0001",
         ]
-        out = io.StringIO()
-        with redirect_stdout(out):
+        with self.assertRaises(ValueError) as cm:
             self.mod.main()
-        self.assertIn("total charges:  0.000", out.getvalue())
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
     def test_resp_neither_option_fails(self):
         """Providing neither -d nor -p raises SystemExit."""
