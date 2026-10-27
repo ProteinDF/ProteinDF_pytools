@@ -20,8 +20,6 @@ Submodules
    proteindf_tools.gauparam
    proteindf_tools.matrix
    proteindf_tools.orbinfo
-   proteindf_tools.pdfarchive_object
-   proteindf_tools.pdfarchive_sqlite3
    proteindf_tools.pdfcommon
    proteindf_tools.pdfgraph
    proteindf_tools.pdfmath
