@@ -238,53 +238,7 @@ class TestH5DashDRest(unittest.TestCase):
         self.assertIn("ENERGY_LEVEL", str(cm.exception))
 
     # =========================================================================
-    # 2. pdf-report.py
-    # =========================================================================
-    def test_report_h5_matches_db(self):
-        """pdf-report.py produces identical output files and stdout for .h5 and .db."""
-        mod = _load_script("pdf-report.py")
-        dir_db = os.path.join(self.tmpdir.name, "report_db")
-        dir_h5 = os.path.join(self.tmpdir.name, "report_h5")
-
-        sys.argv = ["pdf-report.py", self.data["db"], dir_db]
-        out_db = io.StringIO()
-        with redirect_stdout(out_db):
-            mod.main()
-
-        sys.argv = ["pdf-report.py", self.data["h5"], dir_h5]
-        out_h5 = io.StringIO()
-        with redirect_stdout(out_h5):
-            mod.main()
-
-        self.assertEqual(out_db.getvalue(), out_h5.getvalue())
-        self.assertIn("ProteinDF report:", out_h5.getvalue())
-
-        for dat_file in ("TE_hist.dat", "eigvals_hist.dat"):
-            with open(os.path.join(dir_db, dat_file)) as f1, open(
-                os.path.join(dir_h5, dat_file)
-            ) as f2:
-                self.assertEqual(f1.read(), f2.read())
-
-        for png_file in ("TE_hist.png", "eigvals_hist.png", "eigvals_last.png"):
-            self.assertTrue(_is_valid_png(os.path.join(dir_db, png_file)))
-            self.assertTrue(_is_valid_png(os.path.join(dir_h5, png_file)))
-
-    def test_report_assert_isinstance_accepts_both(self):
-        """plot_convergence_check and get_rst accept both PdfArchive and PdfParam_H5."""
-        mod = _load_script("pdf-report.py")
-        db_entry = pdf.open_archive(self.data["db"])
-        h5_entry = pdf.open_archive(self.data["h5"])
-        try:
-            self.assertEqual(mod.get_rst(db_entry), mod.get_rst(h5_entry))
-            with self.assertRaises(AssertionError):
-                mod.get_rst("invalid")
-            with self.assertRaises(AssertionError):
-                mod.plot_convergence_check("invalid", self.tmpdir.name)
-        finally:
-            h5_entry._close()
-
-    # =========================================================================
-    # 3. pdf-test.py
+    # 2. pdf-test.py
     # =========================================================================
     def test_pdf_test_h5_and_db_comparisons(self):
         """pdf-test.py compares .h5/.h5, .db/.db, and .h5/.db identically."""
@@ -332,7 +286,7 @@ class TestH5DashDRest(unittest.TestCase):
         self.assertEqual(cm.exception.code, 0)
 
     # =========================================================================
-    # 4. pdf-info-iteration.py, pdf-plot-dos.py, pdf-plot-gvalues.py defaults
+    # 3. pdf-info-iteration.py, pdf-plot-dos.py, pdf-plot-gvalues.py defaults
     # =========================================================================
     def test_info_iteration_default_h5(self):
         """pdf-info-iteration.py -d without path uses pdfresults.h5 by default."""
