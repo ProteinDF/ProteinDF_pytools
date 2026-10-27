@@ -4,7 +4,7 @@
 import math
 
 from .pdfarchive_sqlite3 import PdfArchive_Sqlite3 as PdfArchive
-from .pdfcommon import load_pdfparam
+from .pdfcommon import load_pdfparam, open_archive
 import proteindf_bridge as bridge
 
 import logging
@@ -16,7 +16,7 @@ class PopUtils(object):
     '''
     @staticmethod
     def get_atomlist_by_db(db_path):
-        entry = PdfArchive(db_path)
+        entry = open_archive(db_path)
         molecule = entry.get_molecule()
         return PopUtils._get_atomlist(molecule)
 

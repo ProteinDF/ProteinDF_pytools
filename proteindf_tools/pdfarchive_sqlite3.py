@@ -499,6 +499,8 @@ class PdfArchive_Sqlite3(object):
                 mol.set_atom(atom_id, a)
         return mol
 
+    molecule = property(get_molecule)
+
     def get_basisset_name(self, atom_label):
         """
         Return the name corresponding to the atom name (atom_label).
@@ -743,6 +745,12 @@ class PdfArchive_Sqlite3(object):
         Retrieve the energy level.
         """
         return self._get_vector('energy_level', runtype, iteration)
+
+    def get_energy_level(self, runtype, iteration):
+        """
+        Retrieve the energy level.
+        """
+        return self.get_energylevel(runtype, iteration)
 
     # LCAO ---------------------------------------------------------------------
     def set_lcao(self, runtype, iteration, lcao):

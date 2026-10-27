@@ -458,6 +458,9 @@ class PdfParam_H5(PdfParamObject):
         return v
 
 
+    def get_molecule(self):
+        return self.molecule
+
     def get_HOMO_level(self, run_type):
         """
         Return the HOMO level.
@@ -495,6 +498,9 @@ class PdfParam_H5(PdfParamObject):
         h5path = self._get_h5path_energy_level(run_type, iteration)
         energy_level = self._get_vector(self._h5root, h5path)
         return energy_level
+
+    def get_energylevel(self, runtype, iteration):
+        return self.get_energy_level(runtype, iteration)
 
     # --------------------------------------------------------------------------
     # S matrix
