@@ -91,11 +91,14 @@ def main():
         description='calculate ridge partial charges')
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('-d', '--db',
-                       nargs='?',
-                       action='store',
-                       const='pdfresults.db',
-                       help='ProteinDF results file')
+    group.add_argument(
+        "-d",
+        "--db",
+        nargs="?",
+        action="store",
+        const="pdfresults.h5",
+        help="ProteinDF results file (.h5 は HDF5、それ以外は SQLite(従来))",
+    )
     group.add_argument('-p', '--param',
                        nargs='?',
                        action='store',

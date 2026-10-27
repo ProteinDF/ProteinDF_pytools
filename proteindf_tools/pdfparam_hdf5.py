@@ -326,6 +326,7 @@ class PdfParam_H5(PdfParamObject):
                 self.set_basisset(atom_label, BasisSet(basis_dict[name]))
             else:
                 self.set_basisset(atom_label, BasisSet(name))
+            self.set_basisset_name(atom_label, name)
 
 
     def _load_model_control(self, h5grp):
@@ -397,10 +398,14 @@ class PdfParam_H5(PdfParamObject):
         h5_atomlabel = []
         h5_cgto = []
         h5_pgto = []
+        saved_names = set()
         for atom_label in self.get_basisset_atomlabels():
             basisset = self.get_basisset(atom_label)
             name = basisset.name.encode("utf-8")
             h5_atomlabel.append([name, atom_label.encode("utf-8")])
+            if name in saved_names:
+                continue
+            saved_names.add(name)
 
             for cgto_id, cgto in enumerate(basisset):
                 shell_type = cgto.shell_type.encode("utf-8")
@@ -460,6 +465,21 @@ class PdfParam_H5(PdfParamObject):
 
     def get_molecule(self):
         return self.molecule
+
+    def get_basisset(self, name_or_label):
+        bs = super().get_basisset(name_or_label)
+        if bs and len(bs) > 0:
+            return bs
+        for bs_obj in self._data.get("basis_set", {}).values():
+            if getattr(bs_obj, "name", None) == name_or_label:
+                return bs_obj
+        return bs
+
+    def set_basisset(self, atom_label, basisset):
+        super().set_basisset(atom_label, basisset)
+        name = getattr(basisset, "name", basisset)
+        if name:
+            self.set_basisset_name(atom_label, name)
 
     def get_HOMO_level(self, run_type):
         """
