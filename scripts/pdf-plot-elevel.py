@@ -85,14 +85,7 @@ def main():
     else:
         entry = pdf.open_archive(args.db)
 
-        ext = os.path.splitext(os.fspath(args.db))[1].lower()
-        if ext in (".h5", ".hdf5"):
-            runtypes = entry.get_energy_level_runtypes()
-        else:
-            records = entry._db.select(
-                "vectors", fields=["runtype"], where={"dtype": "ENERGY_LEVEL"}
-            )
-            runtypes = sorted(set(r["runtype"] for r in records))
+        runtypes = entry.get_energy_level_runtypes()
         if len(runtypes) == 0:
             raise ValueError('ENERGY_LEVEL is not found in database')
         elif len(runtypes) > 1:

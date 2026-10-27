@@ -5,6 +5,7 @@ import importlib.util
 import io
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -208,92 +209,109 @@ class TestH5DashDBasic(unittest.TestCase):
                 msg=f"Help text missing format description in {script_name}",
             )
 
-    def test_info_geom_h5_matches_db(self):
-        """pdf-info-geom.py yields identical geometry for .h5 and .db."""
+    def test_info_geom_h5_and_db_error(self):
+        """pdf-info-geom.py works with .h5 and raises ValueError on .db."""
         mod = _load_script("pdf-info-geom.py")
 
         sys.argv = ["pdf-info-geom.py", "-d", self.data["db"]]
-        out_db = io.StringIO()
-        with redirect_stdout(out_db):
+        with self.assertRaises(ValueError) as cm:
             mod.main()
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
         sys.argv = ["pdf-info-geom.py", "-d", self.data["h5"]]
         out_h5 = io.StringIO()
         with redirect_stdout(out_h5):
             mod.main()
 
-        self.assertEqual(out_db.getvalue(), out_h5.getvalue())
         self.assertIn("O", out_h5.getvalue())
         self.assertIn("H", out_h5.getvalue())
 
-    def test_info_xyz_h5_matches_db(self):
-        """pdf-info-xyz.py yields identical XYZ for .h5 and .db."""
+    def test_info_xyz_h5_and_db_error(self):
+        """pdf-info-xyz.py works with .h5, raises ValueError on .db, and exits 1 in CLI."""
         mod = _load_script("pdf-info-xyz.py")
 
+        # In-process: .db raises ValueError
         sys.argv = ["pdf-info-xyz.py", "-d", self.data["db"]]
-        out_db = io.StringIO()
-        with redirect_stdout(out_db):
+        with self.assertRaises(ValueError) as cm:
             mod.main()
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
+        # CLI subprocess: exits with code 1 and prints deprecation notice to stderr
+        script_path = os.path.join(SCRIPTS_DIR, "pdf-info-xyz.py")
+        env = dict(os.environ)
+        top_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        env["PYTHONPATH"] = top_dir + (os.pathsep + env["PYTHONPATH"] if "PYTHONPATH" in env else "")
+        proc = subprocess.run(
+            [sys.executable, script_path, "-d", self.data["db"]],
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn("pdf-archive-h5.py", proc.stderr)
+        self.assertIn(
+            "SQLite 形式は廃止されました。pdf-archive-h5.py で pdfresults.h5 を作り直してください",
+            proc.stderr,
+        )
+
+        # .h5 succeeds
         sys.argv = ["pdf-info-xyz.py", "-d", self.data["h5"]]
         out_h5 = io.StringIO()
         with redirect_stdout(out_h5):
             mod.main()
 
-        self.assertEqual(out_db.getvalue(), out_h5.getvalue())
         self.assertTrue(out_h5.getvalue().startswith("3\n"))
 
-    def test_info_orb_h5_matches_db(self):
-        """pdf-info-orb.py yields identical orbital info for .h5 and .db."""
+    def test_info_orb_h5_and_db_error(self):
+        """pdf-info-orb.py works with .h5 and raises ValueError on .db."""
         mod = _load_script("pdf-info-orb.py")
 
         sys.argv = ["pdf-info-orb.py", "-d", self.data["db"], "0", "1"]
-        out_db = io.StringIO()
-        with redirect_stdout(out_db):
+        with self.assertRaises(ValueError) as cm:
             mod.main()
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
         sys.argv = ["pdf-info-orb.py", "-d", self.data["h5"], "0", "1"]
         out_h5 = io.StringIO()
         with redirect_stdout(out_h5):
             mod.main()
 
-        self.assertEqual(out_db.getvalue(), out_h5.getvalue())
         self.assertIn("0th:", out_h5.getvalue())
         self.assertIn("shell(s;s)", out_h5.getvalue())
 
-    def test_atom_index_h5_matches_db(self):
-        """pdf-atom-index.py yields identical atom index for .h5 and .db."""
+    def test_atom_index_h5_and_db_error(self):
+        """pdf-atom-index.py works with .h5 and raises ValueError on .db."""
         mod = _load_script("pdf-atom-index.py")
 
         sys.argv = ["pdf-atom-index.py", self.data["brd"], "-d", self.data["db"]]
-        out_db = io.StringIO()
-        with redirect_stdout(out_db):
+        with self.assertRaises(ValueError) as cm:
             mod.main()
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
         sys.argv = ["pdf-atom-index.py", self.data["brd"], "-d", self.data["h5"]]
         out_h5 = io.StringIO()
         with redirect_stdout(out_h5):
             mod.main()
 
-        self.assertEqual(out_db.getvalue(), out_h5.getvalue())
         self.assertIn("0", out_h5.getvalue().strip())
 
-    def test_plot_decaymat_h5_matches_db(self):
-        """pdf-plot-decaymat.py generates PNG for both .h5 and .db."""
+    def test_plot_decaymat_h5_and_db_error(self):
+        """pdf-plot-decaymat.py generates PNG for .h5 and raises ValueError on .db."""
         mod = _load_script("pdf-plot-decaymat.py")
         out_png_db = os.path.join(self.tmpdir.name, "decay_db.png")
         out_png_h5 = os.path.join(self.tmpdir.name, "decay_h5.png")
 
         sys.argv = ["pdf-plot-decaymat.py", self.data["mat"], "-d", self.data["db"], "-o", out_png_db]
-        mod.main()
-        self.assertTrue(os.path.exists(out_png_db))
+        with self.assertRaises(ValueError) as cm:
+            mod.main()
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
         sys.argv = ["pdf-plot-decaymat.py", self.data["mat"], "-d", self.data["h5"], "-o", out_png_h5]
         mod.main()
         self.assertTrue(os.path.exists(out_png_h5))
 
-    def test_pop_ridge_h5_matches_db(self):
-        """pdf-pop-ridge.py yields identical output for .h5 and .db."""
+    def test_pop_ridge_h5_and_db_error(self):
+        """pdf-pop-ridge.py works with .h5 and raises ValueError on .db."""
         mod = _load_script("pdf-pop-ridge.py")
         csv_db = os.path.join(self.tmpdir.name, "ridge_db.csv")
         csv_h5 = os.path.join(self.tmpdir.name, "ridge_h5.csv")
@@ -311,9 +329,9 @@ class TestH5DashDBasic(unittest.TestCase):
             "--csv",
             csv_db,
         ]
-        out_db = io.StringIO()
-        with redirect_stdout(out_db):
+        with self.assertRaises(ValueError) as cm:
             mod.main()
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
         sys.argv = [
             "pdf-pop-ridge.py",
@@ -332,12 +350,14 @@ class TestH5DashDBasic(unittest.TestCase):
         with redirect_stdout(out_h5):
             mod.main()
 
-        self.assertEqual(out_db.getvalue(), out_h5.getvalue())
-        with open(csv_db) as f_db, open(csv_h5) as f_h5:
-            self.assertEqual(f_db.read(), f_h5.read())
+        self.assertTrue(os.path.exists(csv_h5))
+        with open(csv_h5) as f_h5:
+            content = f_h5.read()
+            self.assertIn("O", content)
+            self.assertIn("H", content)
 
-    def test_pop_lasso_h5_matches_db(self):
-        """pdf-pop-lasso.py yields identical output for .h5 and .db."""
+    def test_pop_lasso_h5_and_db_error(self):
+        """pdf-pop-lasso.py works with .h5 and raises ValueError on .db."""
         mod = _load_script("pdf-pop-lasso.py")
         csv_db = os.path.join(self.tmpdir.name, "lasso_db.csv")
         csv_h5 = os.path.join(self.tmpdir.name, "lasso_h5.csv")
@@ -353,9 +373,9 @@ class TestH5DashDBasic(unittest.TestCase):
             "--csv",
             csv_db,
         ]
-        out_db = io.StringIO()
-        with redirect_stdout(out_db):
+        with self.assertRaises(ValueError) as cm:
             mod.main()
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
         sys.argv = [
             "pdf-pop-lasso.py",
@@ -372,12 +392,14 @@ class TestH5DashDBasic(unittest.TestCase):
         with redirect_stdout(out_h5):
             mod.main()
 
-        self.assertEqual(out_db.getvalue(), out_h5.getvalue())
-        with open(csv_db) as f_db, open(csv_h5) as f_h5:
-            self.assertEqual(f_db.read(), f_h5.read())
+        self.assertTrue(os.path.exists(csv_h5))
+        with open(csv_h5) as f_h5:
+            content = f_h5.read()
+            self.assertIn("O", content)
+            self.assertIn("H", content)
 
-    def test_pop_elasticnet_h5_matches_db(self):
-        """pdf-pop-elasticnet.py yields identical output for .h5 and .db."""
+    def test_pop_elasticnet_h5_and_db_error(self):
+        """pdf-pop-elasticnet.py works with .h5 and raises ValueError on .db."""
         mod = _load_script("pdf-pop-elasticnet.py")
         csv_db = os.path.join(self.tmpdir.name, "enet_db.csv")
         csv_h5 = os.path.join(self.tmpdir.name, "enet_h5.csv")
@@ -397,9 +419,9 @@ class TestH5DashDBasic(unittest.TestCase):
             "--csv",
             csv_db,
         ]
-        out_db = io.StringIO()
-        with redirect_stdout(out_db):
+        with self.assertRaises(ValueError) as cm:
             mod.main()
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
         sys.argv = [
             "pdf-pop-elasticnet.py",
@@ -420,12 +442,14 @@ class TestH5DashDBasic(unittest.TestCase):
         with redirect_stdout(out_h5):
             mod.main()
 
-        self.assertEqual(out_db.getvalue(), out_h5.getvalue())
-        with open(csv_db) as f_db, open(csv_h5) as f_h5:
-            self.assertEqual(f_db.read(), f_h5.read())
+        self.assertTrue(os.path.exists(csv_h5))
+        with open(csv_h5) as f_h5:
+            content = f_h5.read()
+            self.assertIn("O", content)
+            self.assertIn("H", content)
 
-    def test_pop_resp_h5_matches_db(self):
-        """pdf-pop-resp.py yields identical output for .h5 and .db."""
+    def test_pop_resp_h5_and_db_error(self):
+        """pdf-pop-resp.py works with .h5 and raises ValueError on .db."""
         mod = _load_script("pdf-pop-resp.py")
         csv_db = os.path.join(self.tmpdir.name, "resp_db.csv")
         csv_h5 = os.path.join(self.tmpdir.name, "resp_h5.csv")
@@ -443,9 +467,9 @@ class TestH5DashDBasic(unittest.TestCase):
             "--csv",
             csv_db,
         ]
-        out_db = io.StringIO()
-        with redirect_stdout(out_db):
+        with self.assertRaises(ValueError) as cm:
             mod.main()
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
         sys.argv = [
             "pdf-pop-resp.py",
@@ -464,12 +488,14 @@ class TestH5DashDBasic(unittest.TestCase):
         with redirect_stdout(out_h5):
             mod.main()
 
-        self.assertEqual(out_db.getvalue(), out_h5.getvalue())
-        with open(csv_db) as f_db, open(csv_h5) as f_h5:
-            self.assertEqual(f_db.read(), f_h5.read())
+        self.assertTrue(os.path.exists(csv_h5))
+        with open(csv_h5) as f_h5:
+            content = f_h5.read()
+            self.assertIn("O", content)
+            self.assertIn("H", content)
 
-    def test_pop_rrms_h5_matches_db(self):
-        """pdf-pop-rrms.py yields identical output for .h5 and .db."""
+    def test_pop_rrms_h5_and_db_error(self):
+        """pdf-pop-rrms.py works with .h5 and raises ValueError on .db."""
         mod = _load_script("pdf-pop-rrms.py")
 
         sys.argv = [
@@ -481,9 +507,9 @@ class TestH5DashDBasic(unittest.TestCase):
             "-c",
             self.data["charges"],
         ]
-        out_db = io.StringIO()
-        with redirect_stdout(out_db):
+        with self.assertRaises(ValueError) as cm:
             mod.main()
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
         sys.argv = [
             "pdf-pop-rrms.py",
@@ -498,10 +524,10 @@ class TestH5DashDBasic(unittest.TestCase):
         with redirect_stdout(out_h5):
             mod.main()
 
-        self.assertEqual(out_db.getvalue(), out_h5.getvalue())
+        self.assertIn("RRMS", out_h5.getvalue())
 
-    def test_pop_classo_h5_matches_db(self):
-        """pdf-pop-classo.py yields identical output for .h5 and .db."""
+    def test_pop_classo_h5_and_db_error(self):
+        """pdf-pop-classo.py works with .h5 and raises ValueError on .db."""
         mod = _load_script("pdf-pop-classo.py")
         csv_db = os.path.join(self.tmpdir.name, "classo_db.csv")
         csv_h5 = os.path.join(self.tmpdir.name, "classo_h5.csv")
@@ -523,9 +549,9 @@ class TestH5DashDBasic(unittest.TestCase):
             "--csv",
             csv_db,
         ]
-        out_db = io.StringIO()
-        with redirect_stdout(out_db):
+        with self.assertRaises(ValueError) as cm:
             mod.main()
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
 
         sys.argv = [
             "pdf-pop-classo.py",
@@ -548,9 +574,11 @@ class TestH5DashDBasic(unittest.TestCase):
         with redirect_stdout(out_h5):
             mod.main()
 
-        self.assertEqual(out_db.getvalue(), out_h5.getvalue())
-        with open(csv_db) as f_db, open(csv_h5) as f_h5:
-            self.assertEqual(f_db.read(), f_h5.read())
+        self.assertTrue(os.path.exists(csv_h5))
+        with open(csv_h5) as f_h5:
+            content = f_h5.read()
+            self.assertIn("O", content)
+            self.assertIn("H", content)
 
     def test_dash_d_default_resolution_from_current_dir(self):
         """Invoking -d without path argument picks up pdfresults.h5 in current dir."""

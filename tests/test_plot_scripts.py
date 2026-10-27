@@ -655,12 +655,18 @@ class TestPlotScripts(unittest.TestCase):
         cgto = ContractedGTO("s", 1)
         cgto[0] = PrimitiveGTO(3.42525, 0.15433)
         bs.append(cgto)
-        param.set_basisset("H@0", bs)
-        param.set_basisset("H@1", bs)
+        param.set_basisset("H", bs)
+        param.set_basisset("H@H1", bs)
+        param.set_basisset("H@H2", bs)
         param.set_total_energy(1, -1.10)
         param.set_total_energy(2, -1.17)
 
-        archive = PdfArchive_Sqlite3(db_path, pdfparam=param)
+        h5_path = os.path.join(self.tmpdir.name, "test.h5")
+        h = PdfParam_H5(param)
+        h.open(h5_path)
+        h.save_model()
+        h.save_TEs(Vector([-1.10, -1.17]))
+        h._close()
 
         mat = Matrix(2, 2)
         mat.set(0, 0, 1.0)
@@ -670,7 +676,15 @@ class TestPlotScripts(unittest.TestCase):
         mat.save(mat_path)
 
         mod = _load_script("pdf-plot-decaymat.py")
+
+        # .db raises ValueError
         sys.argv = ["pdf-plot-decaymat.py", "-d", db_path, mat_path, "-o", out_png]
+        with self.assertRaises(ValueError) as cm:
+            mod.main()
+        self.assertIn("pdf-archive-h5.py", str(cm.exception))
+
+        # .h5 succeeds
+        sys.argv = ["pdf-plot-decaymat.py", "-d", h5_path, mat_path, "-o", out_png]
         mod.main()
 
         self.assertTrue(os.path.exists(out_png))

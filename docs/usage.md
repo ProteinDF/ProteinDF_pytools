@@ -10,7 +10,7 @@ them with `-h` / `--help` for the full list of options.
 
 | Script | Description |
 | --- | --- |
-| `pdf` (`pdfcmd.py`) | dispatch a `pdf-*` subcommand by name, e.g. `pdf report` runs `pdf-report.py` |
+| `pdf` (`pdfcmd.py`) | dispatch a `pdf-*` subcommand by name, e.g. `pdf report-h5` runs `pdf-report-h5.py`, `pdf archive-h5` runs `pdf-archive-h5.py` |
 
 ## Archiving, reporting & testing
 

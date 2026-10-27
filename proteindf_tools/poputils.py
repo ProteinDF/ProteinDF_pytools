@@ -3,7 +3,6 @@
 
 import math
 
-from .pdfarchive_sqlite3 import PdfArchive_Sqlite3 as PdfArchive
 from .pdfcommon import load_pdfparam, open_archive
 import proteindf_bridge as bridge
 
