@@ -60,7 +60,13 @@ def main():
     do_profile = args.profile
 
     output_dir = args.output_dir
-    entry = pdf.open_archive(args.pdfresults_db)
+    ext = os.path.splitext(args.pdfresults_db)[1].lower()
+    if ext in (".h5", ".hdf5"):
+        sys.stderr.write(
+            "pdf-report.py は SQLite 専用です。HDF5 は pdf-report-h5.py を使ってください\n"
+        )
+        sys.exit(1)
+    entry = pdf.PdfArchive(args.pdfresults_db)
 
     # run
     if do_profile != None:
@@ -97,7 +103,7 @@ def plot_convergence_check(entry, output_dir):
     """
     TEのヒストリ
     """
-    assert isinstance(entry, (pdf.PdfArchive, pdf.PdfParam_H5))
+    assert isinstance(entry, pdf.PdfArchive)
     itr = entry.iterations
     iterations = range(1, itr + 1)
 
@@ -191,7 +197,7 @@ def plot_convergence_energy_level(entry, output_dir):
 
 
 def get_rst(pdfdata):
-    assert isinstance(pdfdata, (pdf.PdfArchive, pdf.PdfParam_H5))
+    assert isinstance(pdfdata, pdf.PdfArchive)
     contents = """
     =========================
     ProteinDF report:
