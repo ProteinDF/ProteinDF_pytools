@@ -18,7 +18,7 @@ them with `-h` / `--help` for the full list of options.
 | --- | --- |
 | `pdf-archive.py` | archive ProteinDF results (非推奨: `pdf-archive-h5.py` を使う) |
 | `pdf-archive-h5.py` | archive ProteinDF results (HDF5) |
-| `pdf-report.py` | make a ProteinDF report |
+| `pdf-report.py` | make a ProteinDF report (SQLite 専用(HDF5 は `pdf-report-h5.py`)) |
 | `pdf-report-h5.py` | make a ProteinDF report (HDF5) |
 | `pdf-test.py` | compare ProteinDF results |
 | `pdf-test-h5.py` | compare ProteinDF results (HDF5) |
