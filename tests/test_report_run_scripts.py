@@ -326,67 +326,7 @@ class TestPdfTestH5(BaseScriptTestCase):
 
 
 # =============================================================================
-# 3. pdf-report.py
-# =============================================================================
-class TestPdfReport(BaseScriptTestCase):
-    def setUp(self):
-        super().setUp()
-        self.mod = _load_script("pdf-report.py")
-        self.db = os.path.join(self.tmpdir.name, "pdfresults.db")
-        _create_sample_db(self.db, iterations=2, te=-75.0)
-
-    def test_report_generation(self):
-        """pdf-report.py generates convergence dat and png files in output directory."""
-        out_dir = os.path.join(self.tmpdir.name, "report_dir")
-        sys.argv = ["pdf-report.py", self.db, out_dir]
-        buf = io.StringIO()
-        with redirect_stdout(buf):
-            self.mod.main()
-
-        expected_files = [
-            "TE_hist.dat",
-            "TE_hist.png",
-            "eigvals_hist.dat",
-            "eigvals_hist.png",
-            "eigvals_last.png",
-        ]
-        for f in expected_files:
-            self.assertTrue(
-                os.path.exists(os.path.join(out_dir, f)),
-                f"Expected file {f} was not generated",
-            )
-        self.assertIn("ProteinDF report:", buf.getvalue())
-
-    def test_profile_option(self):
-        """pdf-report.py with -p generates profiling stat file."""
-        out_dir = os.path.join(self.tmpdir.name, "report_prof_dir")
-        stat_file = os.path.join(self.tmpdir.name, "profile.stat")
-        sys.argv = ["pdf-report.py", self.db, out_dir, "-p", stat_file]
-        buf = io.StringIO()
-        with redirect_stdout(buf):
-            self.mod.main()
-
-        self.assertTrue(os.path.exists(stat_file))
-
-    def test_nonexistent_db(self):
-        """pdf-report.py raises error or stops when db file does not exist."""
-        out_dir = os.path.join(self.tmpdir.name, "report_err")
-        sys.argv = ["pdf-report.py", "nonexistent.db", out_dir]
-        with self.assertRaises(Exception):
-            self.mod.main()
-
-    def test_cannot_create_output_dir(self):
-        """pdf-report.py fails if output directory path exists as a regular file."""
-        file_as_dir = os.path.join(self.tmpdir.name, "file_as_dir")
-        with open(file_as_dir, "w") as f:
-            f.write("blocking file")
-        sys.argv = ["pdf-report.py", self.db, file_as_dir]
-        with self.assertRaises(FileExistsError):
-            self.mod.main()
-
-
-# =============================================================================
-# 4. pdf-report-h5.py
+# 3. pdf-report-h5.py
 # =============================================================================
 @unittest.skipUnless(HAS_RICH, "rich is not installed")
 class TestPdfReportH5(BaseScriptTestCase):

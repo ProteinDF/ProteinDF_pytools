@@ -41,7 +41,6 @@ import proteindf_bridge as bridge
 import proteindf_tools as pdf
 from proteindf_tools.basisset import BasisSet, ContractedGTO, PrimitiveGTO
 from proteindf_tools.matrix import Matrix, SymmetricMatrix
-from proteindf_tools.pdfarchive_sqlite3 import PdfArchive_Sqlite3
 from proteindf_tools.pdfparam import PdfParam
 from proteindf_tools.pdfparam_hdf5 import PdfParam_H5
 from proteindf_tools.vector import Vector
@@ -156,90 +155,7 @@ class TestArchiveScripts(unittest.TestCase):
         self.tmpdir.cleanup()
 
     # -------------------------------------------------------------------------
-    # 1. pdf-archive.py tests
-    # -------------------------------------------------------------------------
-
-    def test_pdf_archive_with_param_option(self):
-        """pdf-archive.py with -p <path> reads parameter and generates DB."""
-        param = _create_sample_param(work_path=self.tmpdir.name, iterations=2)
-        _create_synthetic_files(param)
-        mpac_path = os.path.join(self.tmpdir.name, "custom.mpac")
-        pdf.save_pdfparam(param, mpac_path)
-
-        db_path = os.path.join(self.tmpdir.name, "result.db")
-        mod = _load_script("pdf-archive.py")
-        sys.argv = ["pdf-archive.py", "-p", mpac_path, "-o", db_path]
-        err_buf = io.StringIO()
-        with redirect_stderr(err_buf):
-            mod.main()
-
-        self.assertIn(
-            "pdf-archive.py is deprecated and will be removed. Use pdf-archive-h5.py (HDF5) instead.",
-            err_buf.getvalue(),
-        )
-        self.assertTrue(os.path.exists(db_path))
-        archive = PdfArchive_Sqlite3(db_path)
-        self.assertEqual(archive.iterations, 2)
-        e1 = archive.get_energylevel("rks", 1)
-        self.assertAlmostEqual(e1[0], -0.5)
-
-    def test_pdf_archive_default_param(self):
-        """pdf-archive.py without -p reads pdfparam.mpac in current working directory."""
-        param = _create_sample_param(work_path=self.tmpdir.name, iterations=2)
-        _create_synthetic_files(param)
-        mpac_path = os.path.join(self.tmpdir.name, "pdfparam.mpac")
-        pdf.save_pdfparam(param, mpac_path)
-
-        db_path = os.path.join(self.tmpdir.name, "result_default.db")
-        mod = _load_script("pdf-archive.py")
-        sys.argv = ["pdf-archive.py", "-o", db_path]
-        err_buf = io.StringIO()
-        with redirect_stderr(err_buf):
-            mod.main()
-
-        self.assertIn(
-            "pdf-archive.py is deprecated and will be removed. Use pdf-archive-h5.py (HDF5) instead.",
-            err_buf.getvalue(),
-        )
-        self.assertTrue(os.path.exists(db_path))
-        archive = PdfArchive_Sqlite3(db_path)
-        self.assertEqual(archive.iterations, 2)
-
-    def test_pdf_archive_nonexistent_param(self):
-        """pdf-archive.py handles nonexistent mpac without creating DB."""
-        db_path = os.path.join(self.tmpdir.name, "result_nonexistent.db")
-        mod = _load_script("pdf-archive.py")
-        sys.argv = ["pdf-archive.py", "-p", "nonexistent.mpac", "-o", db_path]
-        buf = io.StringIO()
-        err_buf = io.StringIO()
-        with redirect_stdout(buf), redirect_stderr(err_buf):
-            mod.main()
-
-        self.assertIn(
-            "pdf-archive.py is deprecated and will be removed. Use pdf-archive-h5.py (HDF5) instead.",
-            err_buf.getvalue(),
-        )
-        self.assertFalse(os.path.exists(db_path))
-        self.assertIn("FileNotFoundError", buf.getvalue())
-
-    def test_pdf_archive_help_shows_warning(self):
-        """pdf-archive.py -h outputs deprecation warning to stderr before help message."""
-        mod = _load_script("pdf-archive.py")
-        sys.argv = ["pdf-archive.py", "-h"]
-        buf = io.StringIO()
-        err_buf = io.StringIO()
-        with redirect_stdout(buf), redirect_stderr(err_buf):
-            with self.assertRaises(SystemExit) as cm:
-                mod.main()
-            self.assertEqual(cm.exception.code, 0)
-
-        self.assertIn(
-            "pdf-archive.py is deprecated and will be removed. Use pdf-archive-h5.py (HDF5) instead.",
-            err_buf.getvalue(),
-        )
-
-    # -------------------------------------------------------------------------
-    # 2. pdf-archive-h5.py tests
+    # pdf-archive-h5.py tests
     # -------------------------------------------------------------------------
 
     def test_pdf_archive_h5_with_param_option(self):
