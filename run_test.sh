@@ -63,6 +63,7 @@ UNITTESTS="\
   roks_run_types \
   pdfparam_object \
   open_archive \
+  h5_dash_d_basic \
   "
 
 for i in ${UNITTESTS}; do
