@@ -12,8 +12,8 @@
       Linux for the Japanese PDF) and verify `make latexpdf` /
       `make latexpdf-ja`.
 - [ ] Review the auto-generated API reference (`docs/api/*.rst`) for modules
-      that should be excluded or reorganized (e.g. `pdfarchive_object.py`
-      if it is an abstract base not meant for direct end-user use).
+      that should be excluded or reorganized (e.g. abstract base classes
+      not meant for direct end-user use).
 - [ ] Most `proteindf_tools` modules have little or no docstring content,
       so the autodoc-generated API pages are currently thin. Add
       docstrings to the library's public classes/methods for the API
