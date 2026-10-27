@@ -7,6 +7,7 @@
 1. **タスク指示書を書く**: ユーザーと相談して`private/tasks/TASK_<name>.md`を`devtool/TASK_TEMPLATE.md`から作る。**タスク指示書・`TODO.md`・`SPEC.md`は非公開**で、ProteinDF_pytools本体とは別の非公開リポジトリで管理する(developのworktreeの`private/`はそこへのシンボリックリンク、`TODO.md`・`SPEC.md`も`private/`へのリンク)。書いたら非公開リポジトリにコミットする(`git -C private commit`)。ProteinDF_pytools本体にはコミットしない。不具合の分析などを含むため、内容をコミットメッセージや公開されるファイルに書き写さない。設計判断が必要な点は書く前にユーザーに確認する。
    - **指示書は短く、タスクは小さくする**: 指示書は約3KB、対象・完了の定義とも各5項目以内を目安にし、背景は5行以内、調査の経緯や数値は`TODO.md`・`SPEC.md`に置く(実装担当は毎回これを読み込むのでコンテキストを使う)。超えるなら調査・修正・基準値の更新などに分けて複数のTASKにする。レビュー結果も要点だけを書く。
 2. **実装を依頼する**: ユーザーの指示があれば`devtool/delegate.sh private/tasks/TASK_<name>.md`を実行する(時間がかかるのでバックグラウンドで実行する)。ユーザー自身がagy / Copilotに渡す場合もある。
+   - **モデルを仕事の重さで選ぶ**: 既定はagyの既定のモデル(指示書の`- **Model**:`の行に名前を書かない)。軽い仕事(翻訳・docstringの直し・小さな整理)は`gemini-3.8-flash-medium`、設計を伴う重い仕事(複数モジュールにまたがる変更)は`gemini-4-argon-high`を、その行に書く(`delegate.sh`が読む。`-m`で上書きできる)。agyのClaudeのモデルは高価なので、ユーザーの指示があるときだけ使う。使えるモデルは`agy models`で確かめる。軽いモデルでレビューの往復が増えたら、次の回から既定に戻す。
    - agyが利用上限で止まると`delegate.sh`は終了コード75で終わる。再開の方法(上限のリセットを待って`-c`で続ける、`-W`で自動的に待つ、`-a copilot`に切り替える)はユーザーに確認する。
 3. **レビューする**: ブランチのworktree(`devtool/flow.sh path <branch>`)で`/code-review`を使い、あわせて次を行う。
    - `devtool/review.sh <branch>`を**自分で実行する**(`check.sh`を実行し、出力を`.git/review-logs/`に保存する)。実装担当の完了報告の数字・出力を鵜呑みにしない。
