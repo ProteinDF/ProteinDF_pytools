@@ -185,7 +185,7 @@ def save_pdfparam(pdfparam_data, pdfparam_path):
 
 
 def open_archive(path):
-    """Open an archive file (.h5/.hdf5 as PdfParam_H5, otherwise PdfArchive_Sqlite3)."""
+    """Open an archive file (.h5/.hdf5 as PdfParam_H5, otherwise error)."""
     path_str = os.fspath(path)
     ext = os.path.splitext(path_str)[1].lower()
     if ext in (".h5", ".hdf5"):
@@ -195,6 +195,6 @@ def open_archive(path):
         entry.open(path_str)
         return entry
     else:
-        from .pdfarchive_sqlite3 import PdfArchive_Sqlite3
-
-        return PdfArchive_Sqlite3(path_str)
+        raise ValueError(
+            f"SQLite 形式は廃止されました。pdf-archive-h5.py で pdfresults.h5 を作り直してください: {path_str}"
+        )
