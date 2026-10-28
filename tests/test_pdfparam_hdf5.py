@@ -768,7 +768,7 @@ class TestPdfParamH5(unittest.TestCase):
         h2_mat = SymmetricMatrix(np.array([[-0.1, 0.0], [0.0, -0.1]], dtype=float))
         h2_mat.save(p.get_h2_mat_path())
 
-        # iteration data (C, P, energy_level, pop)
+        # iteration data (C, P, energy_level)
         for itr in range(1, iterations + 1):
             c_mat = Matrix(np.array([[0.8, -0.6], [0.6, 0.8]], dtype=float) * itr)
             c_mat.save(p.get_c_mat_path("rks", itr))
@@ -779,15 +779,41 @@ class TestPdfParamH5(unittest.TestCase):
             el = Vector([-0.5 * itr, 0.2 * itr])
             el.save(p.get_energy_level_path("rks", itr))
 
-            vtr = Vector([0.1 * itr])
-            vtr.save(p.get_pop_mulliken_path("rks", itr))
-
         return p
 
     def test_save_standard_with_synthetic_data(self):
         """Verify save_standard saves model, S, h, h2, C, P, energy_level, and Mulliken pop."""
         p = self._setup_synthetic_param(iterations=2, scf_converged=True)
-        p.save_standard("rks", self.h5_path)
+        dummy_output = (
+            " Gross atom population\n"
+            "  index Atom    gross         net\n"
+            "      0   O       7.800000     0.200000\n"
+        )
+
+        def fake_subprocess_run(cmd, capture_output=True, text=True):
+            self.assertEqual(cmd[0], "pdf")
+            self.assertEqual(cmd[1], "pop-mulliken")
+            self.assertIn("-p", cmd)
+            self.assertIn("-P", cmd)
+            self.assertIn("-S", cmd)
+            self.assertNotIn("-i", cmd)
+            p_file = cmd[cmd.index("-P") + 1]
+            s_file = cmd[cmd.index("-S") + 1]
+            mpac_file = cmd[cmd.index("-p") + 1]
+            self.assertTrue(os.path.exists(p_file))
+            self.assertTrue(os.path.exists(s_file))
+            self.assertTrue(os.path.exists(mpac_file))
+            p_loaded = SymmetricMatrix()
+            self.assertTrue(p_loaded.load(p_file))
+            expected_p2 = np.array([[1.2, 0.0], [0.3, 0.8]], dtype=float) * 2
+            self.assertTrue(np.allclose(p_loaded.data, expected_p2))
+            return mock.Mock(returncode=0, stdout=dummy_output, stderr="")
+
+        with mock.patch(
+            "proteindf_tools.poputils.subprocess.run", side_effect=fake_subprocess_run
+        ) as mock_run:
+            p.save_standard("rks", self.h5_path)
+            self.assertEqual(mock_run.call_count, 1)
 
         with h5py.File(self.h5_path, "r") as h5:
             # Model data from save_basic must be retained (no overwrite deletion)
@@ -834,13 +860,16 @@ class TestPdfParamH5(unittest.TestCase):
                 self.assertTrue(np.allclose(h5[e_key][:], expected_e))
 
             # Converged Mulliken population uses last iteration (2)
+            self.assertNotIn("pop/mulliken/rks_1", h5)
             self.assertIn("pop/mulliken/rks_2", h5)
             self.assertTrue(np.allclose(h5["pop/mulliken/rks_2"][:], [0.2]))
 
     def test_save_standard_unconverged(self):
-        """Verify save_standard archives iteration - 1 Mulliken pop when unconverged."""
+        """Verify save_standard does not archive Mulliken pop when unconverged."""
         p = self._setup_synthetic_param(iterations=2, scf_converged=False)
-        p.save_standard("rks", self.h5_path)
+        with mock.patch("proteindf_tools.poputils.subprocess.run") as mock_run:
+            p.save_standard("rks", self.h5_path)
+            mock_run.assert_not_called()
 
         with h5py.File(self.h5_path, "r") as h5:
             # Model preserved
@@ -850,10 +879,10 @@ class TestPdfParamH5(unittest.TestCase):
             self.assertIn("s", h5)
             self.assertIn("C/rks_1", h5)
             self.assertIn("C/rks_2", h5)
-            # Mulliken: iteration 1 saved, iteration 2 NOT saved
-            self.assertIn("pop/mulliken/rks_1", h5)
+            # Mulliken: not saved when unconverged
+            self.assertNotIn("pop", h5)
+            self.assertNotIn("pop/mulliken/rks_1", h5)
             self.assertNotIn("pop/mulliken/rks_2", h5)
-            self.assertTrue(np.allclose(h5["pop/mulliken/rks_1"][:], [0.1]))
 
     def test_save_full_and_save_debug_same_as_save_standard(self):
         """Verify save_full and save_debug produce identical datasets to save_standard."""
@@ -862,9 +891,18 @@ class TestPdfParamH5(unittest.TestCase):
         full_path = os.path.join(self.tmpdir.name, "full.h5")
         debug_path = os.path.join(self.tmpdir.name, "debug.h5")
 
-        p.save_standard("rks", std_path)
-        p.save_full("rks", full_path)
-        p.save_debug("rks", debug_path)
+        dummy_output = (
+            " Gross atom population\n"
+            "  index Atom    gross         net\n"
+            "      0   O       7.800000     0.200000\n"
+        )
+        with mock.patch(
+            "proteindf_tools.poputils.subprocess.run",
+            return_value=mock.Mock(returncode=0, stdout=dummy_output, stderr=""),
+        ):
+            p.save_standard("rks", std_path)
+            p.save_full("rks", full_path)
+            p.save_debug("rks", debug_path)
 
         def get_all_dataset_keys(path):
             keys = []
@@ -895,23 +933,6 @@ class TestPdfParamH5(unittest.TestCase):
                 else:
                     self.assertTrue(np.array_equal(d_std, d_full))
                     self.assertTrue(np.array_equal(d_std, d_dbg))
-
-    def test_save_standard_without_vtr_calls_run_pdf(self):
-        """Verify save_standard invokes run_pdf without error when vtr is missing."""
-        p = self._setup_synthetic_param(iterations=2, scf_converged=True)
-        # Remove vtr file so run_pdf is invoked
-        vtr_path = p.get_pop_mulliken_path("rks", 2)
-        if os.path.exists(vtr_path):
-            os.remove(vtr_path)
-
-        with mock.patch("proteindf_tools.pdfparam_hdf5.run_pdf") as mock_run_pdf:
-            p.save_standard("rks", self.h5_path)
-            mock_run_pdf.assert_called_once_with("pop-mulliken -i 2")
-
-        with h5py.File(self.h5_path, "r") as h5:
-            self.assertIn("molecule/xyzc", h5)
-            self.assertIn("s", h5)
-            self.assertNotIn("pop/mulliken/rks_2", h5)
 
 
 if __name__ == "__main__":
