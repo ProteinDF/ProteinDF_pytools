@@ -23,6 +23,7 @@ from .vector import Vector
 from .matrix import Matrix, SymmetricMatrix
 from .pdfparam_object import PdfParamObject
 from .pdfcommon import run_pdf, save_pdfparam
+from .poputils import compute_mulliken_pop
 from .functions import deprecated
 from .basisset import BasisSet, ContractedGTO, PrimitiveGTO
 
@@ -146,12 +147,14 @@ class PdfParam_H5(PdfParamObject):
                     if energy_level.load(file_path):
                         self._save_energy_level(run_type, iteration, energy_level, h5grp=h5)
 
-            if self.scf_converged:
-                self._write_sp_pop_mulliken_atom(h5, run_type, self.iterations)
-            else:
-                iteration = self.iterations - 1
-                if iteration > 0:
-                    self._write_sp_pop_mulliken_atom(h5, run_type, iteration)
+            if self.scf_converged and self.iterations > 0:
+                s_h5path = self._get_h5path_s()
+                p_h5path = self._get_h5path_density_matrix(run_type, self.iterations)
+                if s_h5path in h5 and p_h5path in h5:
+                    S = self.get_s_matrix(h5grp=h5)
+                    P = self.get_density_matrix(run_type, self.iterations, h5grp=h5)
+                    pop = compute_mulliken_pop(self, P, S)
+                    self.save_pop_mulliken_atom(run_type, self.iterations, pop, h5grp=h5)
 
 
     def save_full(self, run_type, h5_path):
