@@ -35,6 +35,7 @@ import rich.progress
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
+from proteindf_tools.poputils import compute_mulliken_pop, parse_mulliken_pop
 
 import logging
 logger = logging.getLogger(__name__)
@@ -105,56 +106,6 @@ def archive(pdfparam, entry, calc_pop=False):
         archive_f(run_type, pdfparam, entry)
 
 
-def parse_mulliken_pop(output):
-    """Parse Gross atom population table from pdf-pop-mulliken output.
-
-    Parameters
-    ----------
-    output : str
-        Standard output of pdf-pop-mulliken.
-
-    Returns
-    -------
-    pdf.Vector or None
-        Vector of atomic charges (net charges).
-    """
-    lines = output.splitlines()
-    in_table = False
-    charges = []
-    for line in lines:
-        stripped = line.strip()
-        if "Gross atom population" in stripped:
-            in_table = True
-            continue
-        if in_table:
-            if not stripped:
-                if charges:
-                    break
-                continue
-            if stripped.startswith("index") or stripped.startswith("Mulliken"):
-                if stripped.startswith("Mulliken") and charges:
-                    break
-                continue
-            tokens = stripped.split()
-            if len(tokens) >= 4:
-                try:
-                    int(tokens[0])
-                    charges.append(float(tokens[3]))
-                except ValueError:
-                    if charges:
-                        break
-            elif len(tokens) == 3:
-                try:
-                    int(tokens[0])
-                    charges.append(float(tokens[2]))
-                except ValueError:
-                    if charges:
-                        break
-    if not charges:
-        return None
-    return pdf.Vector(charges)
-
-
 def archive_pop_mulliken(pdfparam, run_type, entry):
     if pdfparam.iterations <= 0:
         logger.debug("Since the SCF iteration == 0, the charge calculation is not performed.")
@@ -177,36 +128,14 @@ def archive_pop_mulliken(pdfparam, run_type, entry):
         )
         return
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        mpac_path = os.path.join(tmpdir, "pdfparam.mpac")
-        s_path = os.path.join(tmpdir, "S.mat")
-        p_path = os.path.join(tmpdir, "P.mat")
+    logger.info("calculate pop(Mulliken) data for iteration %d ..." % last_itr)
+    try:
+        pop = compute_mulliken_pop(entry, P, S)
+    except Exception as e:
+        logger.warning("failed to run pop-mulliken for iteration %d: %s" % (last_itr, e))
+        return
 
-        entry.export_pdfparam_mpac(mpac_path)
-        S.save(s_path)
-        P.save(p_path)
-
-        logger.info("calculate pop(Mulliken) data for iteration %d ..." % last_itr)
-        cmd = ["pdf", "pop-mulliken", "-p", mpac_path, "-P", p_path, "-S", s_path]
-        try:
-            res = subprocess.run(cmd, capture_output=True, text=True)
-            if res.returncode != 0:
-                logger.warning(
-                    "failed to run pop-mulliken for iteration %d (exit %d): %s"
-                    % (last_itr, res.returncode, res.stderr)
-                )
-                return
-        except Exception as e:
-            logger.warning("failed to run pop-mulliken for iteration %d: %s" % (last_itr, e))
-            return
-
-        pop = parse_mulliken_pop(res.stdout)
-        if pop is not None:
-            entry.save_pop_mulliken_atom(run_type, last_itr, pop)
-        else:
-            logger.warning(
-                "failed to parse pop mulliken from output (%s, itr %d)" % (run_type, last_itr)
-            )
+    entry.save_pop_mulliken_atom(run_type, last_itr, pop)
 
 
 def archive_occ(pdfparam, run_type, entry):

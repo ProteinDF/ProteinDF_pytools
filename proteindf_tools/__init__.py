@@ -47,7 +47,7 @@ from .basis2 import Basis2
 
 from .pdfmath import Math
 
-from .poputils import PopUtils, PopEspUtils
+from .poputils import PopUtils, PopEspUtils, compute_mulliken_pop, parse_mulliken_pop
 
 from .pdfsim import PdfSim
 
@@ -61,6 +61,6 @@ __all__ = [
     'Basis2',
     'Vector',
     'Matrix', 'SymmetricMatrix',
-    'PopUtils', 'PopEspUtils',
+    'PopUtils', 'PopEspUtils', 'compute_mulliken_pop', 'parse_mulliken_pop',
     'PdfSim'
 ]

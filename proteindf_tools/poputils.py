@@ -2,12 +2,110 @@
 # -*- coding: utf-8 -*-
 
 import math
+import os
+import subprocess
+import tempfile
 
-from .pdfcommon import load_pdfparam, open_archive
+from .pdfcommon import load_pdfparam, open_archive, save_pdfparam
+from .vector import Vector
 import proteindf_bridge as bridge
 
 import logging
 logger = logging.getLogger(__name__)
+
+
+def parse_mulliken_pop(output):
+    """Parse Gross atom population table from pdf-pop-mulliken output.
+
+    Parameters
+    ----------
+    output : str
+        Standard output of pdf-pop-mulliken.
+
+    Returns
+    -------
+    Vector or None
+        Vector of atomic charges (net charges).
+    """
+    lines = output.splitlines()
+    in_table = False
+    charges = []
+    for line in lines:
+        stripped = line.strip()
+        if "Gross atom population" in stripped:
+            in_table = True
+            continue
+        if in_table:
+            if not stripped:
+                if charges:
+                    break
+                continue
+            if stripped.startswith("index") or stripped.startswith("Mulliken"):
+                if stripped.startswith("Mulliken") and charges:
+                    break
+                continue
+            tokens = stripped.split()
+            if len(tokens) >= 4:
+                try:
+                    int(tokens[0])
+                    charges.append(float(tokens[3]))
+                except ValueError:
+                    if charges:
+                        break
+            elif len(tokens) == 3:
+                try:
+                    int(tokens[0])
+                    charges.append(float(tokens[2]))
+                except ValueError:
+                    if charges:
+                        break
+    if not charges:
+        return None
+    return Vector(charges)
+
+
+def compute_mulliken_pop(pdfparam, P, S):
+    """Compute Mulliken population using pdf-pop-mulliken.
+
+    Parameters
+    ----------
+    pdfparam : PdfParamObject or PdfParam_H5
+        ProteinDF parameter object.
+    P : Matrix or SymmetricMatrix
+        Density matrix.
+    S : SymmetricMatrix
+        Overlap matrix S.
+
+    Returns
+    -------
+    Vector
+        Vector of atomic Mulliken charges.
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        mpac_path = os.path.join(tmpdir, "pdfparam.mpac")
+        s_path = os.path.join(tmpdir, "S.mat")
+        p_path = os.path.join(tmpdir, "P.mat")
+
+        save_pdfparam(pdfparam, mpac_path)
+        S.save(s_path)
+        P.save(p_path)
+
+        cmd = ["pdf", "pop-mulliken", "-p", mpac_path, "-P", p_path, "-S", s_path]
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True)
+            if res.returncode != 0:
+                raise RuntimeError(
+                    "pop-mulliken failed with exit code {}: {}".format(
+                        res.returncode, res.stderr
+                    )
+                )
+        except Exception as e:
+            raise RuntimeError("failed to run pop-mulliken: {}".format(e))
+
+        pop = parse_mulliken_pop(res.stdout)
+        if pop is None:
+            raise RuntimeError("failed to parse Mulliken population from pop-mulliken output")
+        return pop
 
 
 class PopUtils(object):

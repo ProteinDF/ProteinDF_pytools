@@ -11,7 +11,7 @@ import warnings
 import h5py
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
-from proteindf_tools.pdfparam_hdf5 import export_pdfparam_mpac
+from proteindf_tools.poputils import compute_mulliken_pop, parse_mulliken_pop
 
 import logging
 
@@ -139,100 +139,6 @@ def save_pop_diff_json(plot_data, output_path):
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(plot_data, f, indent=2, ensure_ascii=False)
         f.write("\n")
-
-
-def parse_mulliken_pop(output):
-    """Parse Gross atom population table from pdf-pop-mulliken output.
-
-    Parameters
-    ----------
-    output : str
-        Standard output of pdf-pop-mulliken.
-
-    Returns
-    -------
-    pdf.Vector or None
-        Vector of atomic charges (net charges).
-    """
-    lines = output.splitlines()
-    in_table = False
-    charges = []
-    for line in lines:
-        stripped = line.strip()
-        if "Gross atom population" in stripped:
-            in_table = True
-            continue
-        if in_table:
-            if not stripped:
-                if charges:
-                    break
-                continue
-            if stripped.startswith("index") or stripped.startswith("Mulliken"):
-                if stripped.startswith("Mulliken") and charges:
-                    break
-                continue
-            tokens = stripped.split()
-            if len(tokens) >= 4:
-                try:
-                    int(tokens[0])
-                    charges.append(float(tokens[3]))
-                except ValueError:
-                    if charges:
-                        break
-            elif len(tokens) == 3:
-                try:
-                    int(tokens[0])
-                    charges.append(float(tokens[2]))
-                except ValueError:
-                    if charges:
-                        break
-    if not charges:
-        return None
-    return pdf.Vector(charges)
-
-
-def compute_pop_mulliken(pdfparam, p_matrix, s_matrix):
-    """Compute Mulliken population using pdf-pop-mulliken.
-
-    Parameters
-    ----------
-    pdfparam : PdfParam_H5
-        ProteinDF parameter object.
-    p_matrix : Matrix or SymmetricMatrix
-        Density matrix.
-    s_matrix : SymmetricMatrix
-        Overlap matrix S.
-
-    Returns
-    -------
-    pdf.Vector
-        Vector of atomic Mulliken charges.
-    """
-    with tempfile.TemporaryDirectory() as tmpdir:
-        mpac_path = os.path.join(tmpdir, "pdfparam.mpac")
-        s_path = os.path.join(tmpdir, "S.mat")
-        p_path = os.path.join(tmpdir, "P.mat")
-
-        export_pdfparam_mpac(pdfparam, mpac_path)
-        s_matrix.save(s_path)
-        p_matrix.save(p_path)
-
-        cmd = ["pdf", "pop-mulliken", "-p", mpac_path, "-P", p_path, "-S", s_path]
-        try:
-            res = subprocess.run(cmd, capture_output=True, text=True)
-            if res.returncode != 0:
-                raise RuntimeError(
-                    "pop-mulliken failed with exit code {}: {}".format(
-                        res.returncode, res.stderr
-                    )
-                )
-        except Exception as e:
-            raise RuntimeError("failed to run pop-mulliken: {}".format(e))
-
-        pop = parse_mulliken_pop(res.stdout)
-        if pop is None:
-            raise RuntimeError("failed to parse Mulliken population from pop-mulliken output")
-        return pop
 
 
 def open_pdfparam_h5(filepath):
@@ -387,7 +293,7 @@ def main():
                     itr, pdfparam_h5_path
                 )
             )
-        pop_vtr1 = compute_pop_mulliken(pdfparam, P_last, S)
+        pop_vtr1 = compute_mulliken_pop(pdfparam, P_last, S)
         need_save_last = True
 
     pop_vtr2 = pdfparam.get_pop_mulliken_atom(run_type, 1)
@@ -400,7 +306,7 @@ def main():
                     pdfparam_h5_path
                 )
             )
-        pop_vtr2 = compute_pop_mulliken(pdfparam, P_in, S)
+        pop_vtr2 = compute_mulliken_pop(pdfparam, P_in, S)
         need_save_1 = True
 
     if need_save_last:
