@@ -415,6 +415,40 @@ class TestPdfParamH5(unittest.TestCase):
         self.assertTrue(np.allclose(mat_c.data, loaded_c.data))
         p2._close()
 
+    def test_gradient_roundtrip(self):
+        """Verify save_gradient and get_gradient roundtrip and None when missing."""
+        p = PdfParam_H5()
+        p.open(self.h5_path)
+        p.iterations = 0
+        p.num_of_atoms = 3
+        p.num_of_AOs = 3
+        p.num_of_MOs = 3
+        p.save_model()
+
+        self.assertIsNone(p.get_gradient())
+
+        arr_grad = np.array(
+            [[0.01, -0.02, 0.03], [-0.04, 0.05, -0.06], [0.03, -0.03, 0.03]],
+            dtype=float,
+        )
+        mat_grad = Matrix(arr_grad)
+        p.save_gradient(mat_grad)
+        p._close()
+
+        with h5py.File(self.h5_path, "r") as h5:
+            self.assertIn("gradient", h5)
+            self.assertEqual(h5["gradient"].shape, (3, 3))
+            self.assertTrue(np.allclose(h5["gradient"][:], arr_grad))
+
+        p2 = PdfParam_H5()
+        p2.open(self.h5_path)
+        loaded_grad = p2.get_gradient()
+        self.assertIsInstance(loaded_grad, Matrix)
+        self.assertEqual(loaded_grad.rows, 3)
+        self.assertEqual(loaded_grad.cols, 3)
+        self.assertTrue(np.allclose(loaded_grad.data, arr_grad))
+        p2._close()
+
     # -------------------------------------------------------------------------
     # 4. Nonexistent files and unsaved items behavior
     # -------------------------------------------------------------------------

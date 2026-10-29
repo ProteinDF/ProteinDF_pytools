@@ -448,6 +448,132 @@ class TestArchiveScripts(unittest.TestCase):
             self.assertIn("P/rks_1", h5_raw)
             self.assertIn("P/rks_2", h5_raw)
 
+    def test_pdf_archive_h5_gradient_from_param_force(self):
+        """pdf-archive-h5.py saves gradient = -force (3x3) from pdfparam force and get_gradient reads it."""
+        param = _create_sample_param(work_path=self.tmpdir.name, iterations=2)
+        param.num_of_atoms = 3
+        mol = bridge.AtomGroup()
+        mol.set_atom(
+            "0", bridge.Atom(symbol="O", position=bridge.Position([0.0, 0.0, 0.0]), charge=8.0, name="O1")
+        )
+        mol.set_atom(
+            "1", bridge.Atom(symbol="H", position=bridge.Position([0.0, 0.75, 0.58]), charge=1.0, name="H1")
+        )
+        mol.set_atom(
+            "2", bridge.Atom(symbol="H", position=bridge.Position([0.0, -0.75, 0.58]), charge=1.0, name="H2")
+        )
+        param.molecule = mol
+        _create_synthetic_files(param)
+
+        known_force = [
+            [0.01, -0.02, 0.03],
+            [-0.005, 0.01, -0.015],
+            [-0.005, 0.01, -0.015],
+        ]
+        param._data["force"] = known_force
+
+        mpac_path = os.path.join(self.tmpdir.name, "param_force.mpac")
+        pdf.save_pdfparam(param, mpac_path)
+
+        h5_path = os.path.join(self.tmpdir.name, "archive_grad_param.h5")
+        mod = _load_script("pdf-archive-h5.py")
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path]
+        mod.main()
+
+        expected_gradient = -np.asarray(known_force, dtype=float)
+        import h5py
+
+        with h5py.File(h5_path, "r") as h5_raw:
+            self.assertIn("gradient", h5_raw)
+            self.assertEqual(h5_raw["gradient"].shape, (3, 3))
+            self.assertTrue(np.allclose(h5_raw["gradient"][:], expected_gradient))
+
+        h5 = PdfParam_H5()
+        h5.open(h5_path)
+        grad = h5.get_gradient()
+        self.assertIsInstance(grad, Matrix)
+        self.assertEqual(grad.rows, 3)
+        self.assertEqual(grad.cols, 3)
+        self.assertTrue(np.allclose(grad.data, expected_gradient))
+        h5._close()
+
+    def test_pdf_archive_h5_gradient_from_force_mtx(self):
+        """pdf-archive-h5.py reads force.mtx when force is absent from pdfparam and saves -force."""
+        param = _create_sample_param(work_path=self.tmpdir.name, iterations=2)
+        param.num_of_atoms = 3
+        mol = bridge.AtomGroup()
+        mol.set_atom(
+            "0", bridge.Atom(symbol="O", position=bridge.Position([0.0, 0.0, 0.0]), charge=8.0, name="O1")
+        )
+        mol.set_atom(
+            "1", bridge.Atom(symbol="H", position=bridge.Position([0.0, 0.75, 0.58]), charge=1.0, name="H1")
+        )
+        mol.set_atom(
+            "2", bridge.Atom(symbol="H", position=bridge.Position([0.0, -0.75, 0.58]), charge=1.0, name="H2")
+        )
+        param.molecule = mol
+        _create_synthetic_files(param)
+
+        known_force = np.array(
+            [
+                [0.02, -0.04, 0.06],
+                [-0.01, 0.02, -0.03],
+                [-0.01, 0.02, -0.03],
+            ],
+            dtype=float,
+        )
+        force_mat = Matrix(known_force)
+        force_mat.save(os.path.join(self.tmpdir.name, "force.mtx"))
+
+        mpac_path = os.path.join(self.tmpdir.name, "param_no_force.mpac")
+        pdf.save_pdfparam(param, mpac_path)
+
+        h5_path = os.path.join(self.tmpdir.name, "archive_grad_mtx.h5")
+        mod = _load_script("pdf-archive-h5.py")
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path]
+        mod.main()
+
+        expected_gradient = -known_force
+        import h5py
+
+        with h5py.File(h5_path, "r") as h5_raw:
+            self.assertIn("gradient", h5_raw)
+            self.assertEqual(h5_raw["gradient"].shape, (3, 3))
+            self.assertTrue(np.allclose(h5_raw["gradient"][:], expected_gradient))
+
+        h5 = PdfParam_H5()
+        h5.open(h5_path)
+        grad = h5.get_gradient()
+        self.assertIsInstance(grad, Matrix)
+        self.assertEqual(grad.rows, 3)
+        self.assertEqual(grad.cols, 3)
+        self.assertTrue(np.allclose(grad.data, expected_gradient))
+        h5._close()
+
+    def test_pdf_archive_h5_gradient_missing(self):
+        """pdf-archive-h5.py does not fail and omits gradient key when neither force nor force.mtx exists."""
+        param = _create_sample_param(work_path=self.tmpdir.name, iterations=2)
+        _create_synthetic_files(param)
+
+        mpac_path = os.path.join(self.tmpdir.name, "param_no_grad.mpac")
+        pdf.save_pdfparam(param, mpac_path)
+
+        h5_path = os.path.join(self.tmpdir.name, "archive_no_grad.h5")
+        mod = _load_script("pdf-archive-h5.py")
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path]
+        mod.main()
+
+        self.assertTrue(os.path.exists(h5_path))
+        import h5py
+
+        with h5py.File(h5_path, "r") as h5_raw:
+            self.assertNotIn("gradient", h5_raw)
+
+        h5 = PdfParam_H5()
+        h5.open(h5_path)
+        self.assertIsNone(h5.get_gradient())
+        h5._close()
+
     def test_pdf_archive_h5_default_param(self):
         """pdf-archive-h5.py without -p reads pdfparam.mpac in current working directory."""
         param = _create_sample_param(work_path=self.tmpdir.name, iterations=2)

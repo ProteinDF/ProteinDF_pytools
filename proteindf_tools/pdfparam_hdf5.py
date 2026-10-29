@@ -764,6 +764,33 @@ class PdfParam_H5(PdfParamObject):
 
 
     # --------------------------------------------------------------------------
+    # gradient
+    # --------------------------------------------------------------------------
+    def get_gradient(self, h5grp=None):
+        if isinstance(h5grp, int):
+            return super().get_gradient(h5grp)
+        if h5grp is None:
+            h5grp = self._h5root
+        if h5grp is None:
+            return None
+        h5path = self._get_h5path_gradient()
+        if h5path not in h5grp:
+            return None
+
+        return self._get_matrix(h5grp, h5path)
+
+    def save_gradient(self, gradient, h5grp=None):
+        if not isinstance(gradient, Matrix):
+            gradient = Matrix(numpy.asarray(gradient, dtype=float))
+        assert gradient.cols == 3
+        if h5grp is None:
+            h5grp = self._h5root
+
+        h5path = self._get_h5path_gradient()
+        self._set_matrix(h5grp, h5path, gradient)
+
+
+    # --------------------------------------------------------------------------
     # Matrix I/O
     # --------------------------------------------------------------------------
     def _get_matrix(self, h5grp, dataset_name):
@@ -877,6 +904,9 @@ class PdfParam_H5(PdfParamObject):
         h5path = "pop/mulliken/{run_type}_{iteration}".format(run_type=run_type,
                                                               iteration=iteration)
         return h5path
+
+    def _get_h5path_gradient(self):
+        return "gradient"
 
 
 def export_pdfparam_mpac(pdfparam, path):
