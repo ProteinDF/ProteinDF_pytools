@@ -290,6 +290,40 @@ class TestPdfParamModel(unittest.TestCase):
         with self.assertRaises(AssertionError):
             param.get_gradient(2)
 
+    def _roundtrip_with(self, key, value):
+        import os
+        import tempfile
+
+        import proteindf_tools as pdf
+
+        base = PdfParam()
+        base.num_of_atoms = 2
+        base.num_of_AOs = 2
+        base.num_of_MOs = 2
+        base.method = "rks"
+        base.iterations = 1
+        base.guess = "none"
+        base._set_scf_converged(True)
+        mol = bridge.AtomGroup()
+        mol.set_atom("0", bridge.Atom(symbol="H", position=bridge.Position([0.0, 0.0, 0.0])))
+        mol.set_atom("1", bridge.Atom(symbol="H", position=bridge.Position([0.0, 0.0, 0.7])))
+        base.molecule = mol
+        base._data[key] = value
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "param.mpac")
+            pdf.save_pdfparam(base, path)
+            return pdf.load_pdfparam(path)
+
+    def test_gradient_from_force_key_is_negated(self):
+        param = self._roundtrip_with("force", [[0.01, -0.02, 0.03], [-0.01, 0.02, -0.03]])
+        self.assertEqual(param.get_gradient(0), [-0.01, 0.02, -0.03])
+        self.assertEqual(param.get_gradient(1), [0.01, -0.02, 0.03])
+
+    def test_gradient_from_gradient_key_is_unchanged(self):
+        param = self._roundtrip_with("gradient", [[0.01, -0.02, 0.03], [-0.01, 0.02, -0.03]])
+        self.assertEqual(param.get_gradient(0), [0.01, -0.02, 0.03])
+        self.assertEqual(param.get_gradient(1), [-0.01, 0.02, -0.03])
+
     def test_gradient_rms_when_unset(self):
         param = PdfParamObject()
         param.num_of_atoms = 2

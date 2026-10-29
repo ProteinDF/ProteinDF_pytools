@@ -190,7 +190,7 @@ def archive_TEs(pdfparam, entry):
 
 def archive_gradient(pdfparam, entry):
     logger.debug("save gradient")
-    force_mat = None
+    grad_mat = None
 
     num_atoms = pdfparam.num_of_atoms
     if num_atoms and num_atoms > 0:
@@ -205,20 +205,12 @@ def archive_gradient(pdfparam, entry):
                 break
             rows.append(v)
         if len(rows) == num_atoms:
-            force_mat = pdf.Matrix(num_atoms, 3)
+            grad_mat = pdf.Matrix(num_atoms, 3)
             for r, row in enumerate(rows):
                 for c in range(3):
-                    force_mat.set(r, c, float(row[c]))
+                    grad_mat.set(r, c, float(row[c]))
 
-    if force_mat is None and hasattr(pdfparam, "_data") and "force" in pdfparam._data:
-        force_dat = pdfparam._data.get("force")
-        if force_dat is not None and len(force_dat) > 0:
-            force_mat = pdf.Matrix(len(force_dat), 3)
-            for r, row in enumerate(force_dat):
-                for c in range(3):
-                    force_mat.set(r, c, float(row[c]))
-
-    if force_mat is None:
+    if grad_mat is None:
         candidate_paths = ["force.mtx"]
         if getattr(pdfparam, "work_path", None):
             work_force = os.path.join(pdfparam.work_path, "force.mtx")
@@ -227,21 +219,20 @@ def archive_gradient(pdfparam, entry):
 
         for filepath in candidate_paths:
             if os.path.isfile(filepath):
-                mat = pdf.Matrix()
-                if mat.load(filepath):
-                    force_mat = mat
+                force_mat = pdf.Matrix()
+                if force_mat.load(filepath):
+                    # force.mtx holds ProteinDF's force; gradient = -force
+                    grad_mat = pdf.Matrix(force_mat.rows, force_mat.cols)
+                    for r in range(force_mat.rows):
+                        for c in range(force_mat.cols):
+                            grad_mat.set(r, c, -force_mat.get(r, c))
                 else:
                     logger.warning("failed to load force matrix: %s" % filepath)
                 break
 
-    if force_mat is None:
+    if grad_mat is None:
         logger.warning("force not found; gradient is not saved")
         return
-
-    grad_mat = pdf.Matrix(force_mat.rows, force_mat.cols)
-    for r in range(force_mat.rows):
-        for c in range(force_mat.cols):
-            grad_mat.set(r, c, -force_mat.get(r, c))
 
     entry.save_gradient(grad_mat)
 
