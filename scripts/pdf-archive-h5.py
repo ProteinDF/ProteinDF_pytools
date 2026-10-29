@@ -384,6 +384,11 @@ def main():
                         dest='pdfparam_path',
                         default='pdfparam.mpac',
                         help='ProteinDF parameter file')
+    parser.add_argument('-w', '--workdir',
+                        dest='workdir',
+                        default=None,
+                        metavar='DIR',
+                        help='directory holding the matrix files (default: work_path of pdfparam, ./fl_Work)')
     parser.add_argument('-o', '--output',
                         dest='output',
                         nargs='?',
@@ -410,6 +415,8 @@ def main():
                         default=False,
                         help='debug output')
     args = parser.parse_args()
+    if args.workdir is not None and not os.path.isdir(args.workdir):
+        parser.error("work directory not found: {}".format(args.workdir))
 
     # setting from command-line
     pdfparam_path = args.pdfparam_path
@@ -436,6 +443,8 @@ def main():
     try:
         # read ProteinDF parameters
         pdfparam = pdf.load_pdfparam(pdfparam_path)
+        if args.workdir is not None:
+            pdfparam.work_path = args.workdir
 
         # setup DB
         logger.debug("setup DB")
