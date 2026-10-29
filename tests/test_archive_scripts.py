@@ -194,6 +194,44 @@ class TestArchiveScripts(unittest.TestCase):
             self.assertEqual(f.cols, 2)
         h5._close()
 
+    def test_pdf_archive_h5_workdir_option(self):
+        """-w DIR reads matrix files from DIR; no ./fl_Work is needed."""
+        import h5py
+
+        data_dir = os.path.join(self.tmpdir.name, "mydata")
+        os.makedirs(data_dir)
+        param = _create_sample_param(work_path=data_dir, iterations=2)
+        _create_synthetic_files(param)
+        # as written by ProteinDF: the mpac carries no work_path
+        del param._data["work_path"]
+        mpac_path = os.path.join(self.tmpdir.name, "p.mpac")
+        pdf.save_pdfparam(param, mpac_path)
+        self.assertFalse(os.path.exists(os.path.join(self.tmpdir.name, "fl_Work")))
+
+        h5_path = os.path.join(self.tmpdir.name, "w.h5")
+        mod = _load_script("pdf-archive-h5.py")
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path, "-w", data_dir]
+        mod.main()
+
+        with h5py.File(h5_path, "r") as h5_raw:
+            for k in ("P/rks_2", "C/rks_2", "s"):
+                self.assertIn(k, h5_raw)
+
+    def test_pdf_archive_h5_workdir_default_is_fl_work(self):
+        """Without -w, ./fl_Work is searched as before."""
+        keys = self._archive_keys("basic")
+        self.assertIn("P/rks_2", keys)
+
+    def test_pdf_archive_h5_workdir_missing(self):
+        missing = os.path.join(self.tmpdir.name, "no_such_dir")
+        mod = _load_script("pdf-archive-h5.py")
+        sys.argv = ["pdf-archive-h5.py", "-w", missing]
+        err = io.StringIO()
+        with redirect_stderr(err), self.assertRaises(SystemExit) as cm:
+            mod.main()
+        self.assertNotEqual(cm.exception.code, 0)
+        self.assertIn(missing, err.getvalue())
+
     def _archive_keys(self, level, iterations=2, with_pop=False):
         """Run pdf-archive-h5.py and return the set of dataset keys."""
         import h5py
