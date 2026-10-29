@@ -63,7 +63,23 @@ def setup_logger(is_debug=False, output_file='pdf-archive-h5.log'):
 
 
 
-def archive(pdfparam, entry, calc_pop=False):
+LEVELS = ('basic', 'standard', 'full', 'debug')
+DEFAULT_LEVEL = 'standard'
+
+
+def _last_iterations(pdfparam):
+    """Iteration list holding only the converged (last) iteration."""
+    if pdfparam.iterations <= 0:
+        return []
+    return [pdfparam.iterations]
+
+
+def archive(pdfparam, entry, calc_pop=False, level=DEFAULT_LEVEL):
+    if level not in LEVELS:
+        raise ValueError("unknown archive level: %s" % level)
+    # None means all iterations
+    itrs = None if level in ('full', 'debug') else _last_iterations(pdfparam)
+
     logger.info("save model")
     entry.save_model()
 
@@ -77,8 +93,9 @@ def archive(pdfparam, entry, calc_pop=False):
     archive_h(pdfparam, entry)
     archive_h2(pdfparam, entry)
 
-    logger.info("save gradient")
-    archive_gradient(pdfparam, entry)
+    if level != 'basic':
+        logger.info("save gradient")
+        archive_gradient(pdfparam, entry)
 
     for run_type in pdfparam.run_types():
         logger.info('run_type: %s' % run_type)
@@ -87,12 +104,17 @@ def archive(pdfparam, entry, calc_pop=False):
         archive_occ(pdfparam, run_type, entry)
 
         logger.info("save P")
-        archive_p(run_type, pdfparam, entry)
+        archive_p(run_type, pdfparam, entry, iterations=itrs)
 
-        logger.info("save input P")
-        archive_input_p(run_type, pdfparam, entry)
+        if level != 'basic':
+            logger.info("save input P")
+            archive_input_p(run_type, pdfparam, entry)
 
-        if calc_pop:
+        if level == 'debug':
+            logger.info("save pop (Mulliken) for all iterations")
+            for itr in range(1, pdfparam.iterations + 1):
+                archive_pop_mulliken(pdfparam, run_type, entry, iteration=itr)
+        elif calc_pop:
             logger.info("save pop (Mulliken)")
             archive_pop_mulliken(pdfparam, run_type, entry)
 
@@ -100,21 +122,25 @@ def archive(pdfparam, entry, calc_pop=False):
         logger.info('orbital run_type: %s' % run_type)
 
         logger.info("save energy level")
-        archive_energy_level(pdfparam, run_type, entry)
+        archive_energy_level(pdfparam, run_type, entry, iterations=itrs)
 
         logger.info("save C")
-        archive_c(run_type, pdfparam, entry)
+        archive_c(run_type, pdfparam, entry, iterations=itrs)
 
-        logger.info("save F")
-        archive_f(run_type, pdfparam, entry)
+        if level in ('full', 'debug'):
+            logger.info("save F")
+            archive_f(run_type, pdfparam, entry)
 
 
-def archive_pop_mulliken(pdfparam, run_type, entry):
+def archive_pop_mulliken(pdfparam, run_type, entry, iteration=None):
     if pdfparam.iterations <= 0:
         logger.debug("Since the SCF iteration == 0, the charge calculation is not performed.")
         return
 
-    last_itr = pdfparam.iterations if pdfparam.scf_converged else pdfparam.iterations - 1
+    if iteration is None:
+        last_itr = pdfparam.iterations if pdfparam.scf_converged else pdfparam.iterations - 1
+    else:
+        last_itr = iteration
     if last_itr <= 0:
         return
 
@@ -123,10 +149,11 @@ def archive_pop_mulliken(pdfparam, run_type, entry):
         logger.warning("failed to load S from archive for Mulliken population")
         return
 
-    P = entry.get_density_matrix(run_type, last_itr)
-    if P is None:
+    # P of this iteration may not be archived at the selected level
+    P = pdf.SymmetricMatrix()
+    if not P.load(pdfparam.get_density_matrix_path(run_type, last_itr)):
         logger.warning(
-            "failed to load P (%s, itr %d) from archive for Mulliken population"
+            "failed to load P (%s, itr %d) for Mulliken population"
             % (run_type, last_itr)
         )
         return
@@ -219,10 +246,14 @@ def archive_gradient(pdfparam, entry):
     entry.save_gradient(grad_mat)
 
 
-def archive_energy_level(pdfparam, run_type, entry):
-    iterations = pdfparam.iterations
-    energy_levels = pdf.Vector(iterations)
-    for itr in range(1, iterations+1):
+def _iteration_range(pdfparam, iterations):
+    if iterations is None:
+        return range(1, pdfparam.iterations + 1)
+    return iterations
+
+
+def archive_energy_level(pdfparam, run_type, entry, iterations=None):
+    for itr in _iteration_range(pdfparam, iterations):
         e_level_path = pdfparam.get_energy_level_path(run_type, itr)
         e_level = pdf.Vector()
         if e_level.load(e_level_path):
@@ -255,9 +286,8 @@ def archive_h2(pdfparam, entry):
     entry.save_h2_matrix(h2)
 
 
-def archive_c(run_type, pdfparam, entry):
-    iterations = pdfparam.iterations
-    for itr in rich.progress.track(range(1, iterations+1)):
+def archive_c(run_type, pdfparam, entry, iterations=None):
+    for itr in rich.progress.track(_iteration_range(pdfparam, iterations)):
         logger.debug("save c({})".format(itr))
         filepath = pdfparam.get_c_mat_path(run_type, itr)
         c = pdf.Matrix()
@@ -267,9 +297,8 @@ def archive_c(run_type, pdfparam, entry):
             logger.warning('failed to load C (%s): %s' % (run_type, filepath))
 
 
-def archive_p(run_type, pdfparam, entry):
-    iterations = pdfparam.iterations
-    for itr in rich.progress.track(range(1, iterations+1)):
+def archive_p(run_type, pdfparam, entry, iterations=None):
+    for itr in rich.progress.track(_iteration_range(pdfparam, iterations)):
         logger.debug("save p({})".format(itr))
         filepath = pdfparam.get_density_matrix_path(run_type, itr)
         p = pdf.SymmetricMatrix()
@@ -295,9 +324,8 @@ def archive_input_p(run_type, pdfparam, entry):
         logger.warning('failed to load input P (%s): %s' % (run_type, filepath))
 
 
-def archive_f(run_type, pdfparam, entry):
-    iterations = pdfparam.iterations
-    for itr in rich.progress.track(range(1, iterations+1)):
+def archive_f(run_type, pdfparam, entry, iterations=None):
+    for itr in rich.progress.track(_iteration_range(pdfparam, iterations)):
         logger.debug("save F({})".format(itr))
         filepath = pdfparam.get_f_mat_path(run_type, itr)
         f = pdf.SymmetricMatrix()
@@ -327,6 +355,10 @@ def main():
                         action='store_true',
                         default=False,
                         help='calculate Mulliken population for converged solution')
+    parser.add_argument('-l', '--level',
+                        choices=LEVELS,
+                        default=DEFAULT_LEVEL,
+                        help='archive level (default: %(default)s)')
     # parser.add_argument('-v', '--verbose',
     #                     action='store_true',
     #                     default=False)
@@ -341,6 +373,7 @@ def main():
     output = args.output
     force_overwrite = args.force
     calc_pop = args.pop
+    level = args.level
     # verbose = args.verbose
     is_debug = args.debug
     #is_little_endian = True
@@ -367,7 +400,7 @@ def main():
         entry.open(output)
 
         logger.debug("call archive")
-        archive(pdfparam, entry, calc_pop=calc_pop)
+        archive(pdfparam, entry, calc_pop=calc_pop, level=level)
 
     except:
         logger.exception("failed to archive")

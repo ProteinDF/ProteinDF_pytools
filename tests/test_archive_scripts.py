@@ -167,7 +167,7 @@ class TestArchiveScripts(unittest.TestCase):
 
         h5_path = os.path.join(self.tmpdir.name, "result.h5")
         mod = _load_script("pdf-archive-h5.py")
-        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path]
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path, "-l", "full"]
         mod.main()
 
         self.assertTrue(os.path.exists(h5_path))
@@ -193,6 +193,103 @@ class TestArchiveScripts(unittest.TestCase):
             self.assertEqual(f.rows, 2)
             self.assertEqual(f.cols, 2)
         h5._close()
+
+    def _archive_keys(self, level, iterations=2, with_pop=False):
+        """Run pdf-archive-h5.py and return the set of dataset keys."""
+        import h5py
+
+        work_dir = os.path.join(self.tmpdir.name, "fl_Work")
+        os.makedirs(work_dir, exist_ok=True)
+        param = _create_sample_param(work_path=work_dir, iterations=iterations)
+        param._data.setdefault("control", {})["file_base_name"]["Ppq_matrix"] = "Ppq.%s.mat"
+        _create_synthetic_files(param)
+        mat_p_in = SymmetricMatrix(2)
+        mat_p_in.set(0, 0, 3.14)
+        mat_p_in.save(param.get_input_density_matrix_path("rks", 1))
+        force = Matrix(1, 3)
+        force.set(0, 0, 0.1)
+        force.save(os.path.join(work_dir, "force.mtx"))
+
+        mpac_path = os.path.join(self.tmpdir.name, "level_%s.mpac" % (level or "default"))
+        pdf.save_pdfparam(param, mpac_path)
+        h5_path = os.path.join(self.tmpdir.name, "level_%s.h5" % (level or "default"))
+        argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path]
+        if level:
+            argv += ["-l", level]
+        if with_pop:
+            argv.append("--pop")
+        sys.argv = argv
+
+        dummy_output = (
+            " Gross atom population\n"
+            "  index Atom    gross         net\n"
+            "      0   H       0.800000     0.200000\n"
+        )
+        mod = _load_script("pdf-archive-h5.py")
+        with mock.patch.object(
+            mod.subprocess,
+            "run",
+            return_value=mock.Mock(returncode=0, stdout=dummy_output, stderr=""),
+        ):
+            mod.main()
+
+        keys = set()
+        with h5py.File(h5_path, "r") as h5_raw:
+
+            def _visit(name, obj):
+                if isinstance(obj, h5py.Dataset):
+                    keys.add(name)
+
+            h5_raw.visititems(_visit)
+        return keys
+
+    def test_pdf_archive_h5_level_basic(self):
+        keys = self._archive_keys("basic")
+        for k in ("P/rks_2", "C/rks_2", "energy_level/rks_2"):
+            self.assertIn(k, keys)
+        for k in ("P/rks_1", "C/rks_1", "energy_level/rks_1", "P_in/rks_1", "gradient"):
+            self.assertNotIn(k, keys)
+        self.assertFalse([k for k in keys if k.startswith(("F/", "pop/"))])
+
+    def test_pdf_archive_h5_level_standard(self):
+        basic = self._archive_keys("basic")
+        keys = self._archive_keys("standard")
+        self.assertEqual(keys - basic, {"P_in/rks_1", "gradient"})
+        self.assertTrue(basic <= keys)
+        self.assertNotIn("P/rks_1", keys)
+
+    def test_pdf_archive_h5_level_default_is_standard(self):
+        self.assertEqual(self._archive_keys(None), self._archive_keys("standard"))
+
+    def test_pdf_archive_h5_level_full(self):
+        keys = self._archive_keys("full")
+        for itr in (1, 2):
+            for name in ("P", "C", "F", "energy_level"):
+                self.assertIn("%s/rks_%d" % (name, itr), keys)
+        self.assertIn("P_in/rks_1", keys)
+        self.assertIn("gradient", keys)
+        self.assertFalse([k for k in keys if k.startswith("pop/")])
+
+    def test_pdf_archive_h5_level_debug(self):
+        full = self._archive_keys("full")
+        keys = self._archive_keys("debug")
+        self.assertTrue(full <= keys)
+        self.assertEqual(
+            {k for k in keys - full}, {"pop/mulliken/rks_1", "pop/mulliken/rks_2"}
+        )
+
+    def test_pdf_archive_h5_level_pop_basic(self):
+        keys = self._archive_keys("basic", with_pop=True)
+        self.assertEqual([k for k in keys if k.startswith("pop/")], ["pop/mulliken/rks_2"])
+
+    def test_pdf_archive_h5_level_invalid(self):
+        param = _create_sample_param(work_path=self.tmpdir.name, iterations=2)
+        mpac_path = os.path.join(self.tmpdir.name, "bad.mpac")
+        pdf.save_pdfparam(param, mpac_path)
+        mod = _load_script("pdf-archive-h5.py")
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-l", "bogus"]
+        with self.assertRaises(SystemExit):
+            mod.main()
 
     def test_pdf_archive_h5_pop_mulliken_default_no_pop(self):
         """pdf-archive-h5.py does not calculate or archive Mulliken population by default."""
@@ -391,7 +488,7 @@ class TestArchiveScripts(unittest.TestCase):
 
         h5_path = os.path.join(self.tmpdir.name, "archive_with_pin.h5")
         mod = _load_script("pdf-archive-h5.py")
-        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path]
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path, "-l", "full"]
         mod.main()
 
         self.assertTrue(os.path.exists(h5_path))
@@ -432,7 +529,7 @@ class TestArchiveScripts(unittest.TestCase):
 
         h5_path = os.path.join(self.tmpdir.name, "archive_no_pin.h5")
         mod = _load_script("pdf-archive-h5.py")
-        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path]
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path, "-l", "full"]
 
         with self.assertLogs(mod.logger, level="WARNING") as log:
             mod.main()
@@ -583,7 +680,7 @@ class TestArchiveScripts(unittest.TestCase):
 
         h5_path = os.path.join(self.tmpdir.name, "result_default.h5")
         mod = _load_script("pdf-archive-h5.py")
-        sys.argv = ["pdf-archive-h5.py", "-o", h5_path]
+        sys.argv = ["pdf-archive-h5.py", "-o", h5_path, "-l", "full"]
         mod.main()
 
         self.assertTrue(os.path.exists(h5_path))
