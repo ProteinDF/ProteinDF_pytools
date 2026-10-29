@@ -546,7 +546,7 @@ class TestArchiveScripts(unittest.TestCase):
             self.assertIn("P/rks_2", h5_raw)
 
     def test_pdf_archive_h5_gradient_from_param_force(self):
-        """pdf-archive-h5.py saves gradient = -force (3x3) from pdfparam force and get_gradient reads it."""
+        """pdf-archive-h5.py saves the pdfparam gradient (force is read as -force) without further sign flip."""
         param = _create_sample_param(work_path=self.tmpdir.name, iterations=2)
         param.num_of_atoms = 3
         mol = bridge.AtomGroup()
@@ -578,6 +578,9 @@ class TestArchiveScripts(unittest.TestCase):
         mod.main()
 
         expected_gradient = -np.asarray(known_force, dtype=float)
+        param_loaded = pdf.load_pdfparam(mpac_path)
+        loaded = np.array([param_loaded.get_gradient(i) for i in range(3)])
+        self.assertTrue(np.allclose(loaded, expected_gradient))
         import h5py
 
         with h5py.File(h5_path, "r") as h5_raw:

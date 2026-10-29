@@ -1370,11 +1370,11 @@ class PdfParamObject(object):
                 self.set_gradient(atom_index, gradient[0], gradient[1], gradient[2])
             del odict["gradient"]
         elif "force" in odict:
-            logger.warning('parameter "force" is ABSOLUTE.')
-            gradient_dat = odict.get("force")
-            for atom_index in range(len(gradient_dat)):
-                gradient = gradient_dat[atom_index]
-                self.set_gradient(atom_index, gradient[0], gradient[1], gradient[2])
+            logger.debug('"force" is read as -force (gradient = -force)')
+            force_dat = odict.get("force")
+            for atom_index in range(len(force_dat)):
+                force = force_dat[atom_index]
+                self.set_gradient(atom_index, -force[0], -force[1], -force[2])
             del odict["force"]
 
         # merge the unspecified parts
