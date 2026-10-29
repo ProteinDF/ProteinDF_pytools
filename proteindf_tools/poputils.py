@@ -14,6 +14,21 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# run types whose densities sum to the total density, keyed by method
+TOTAL_DENSITY_RUN_TYPES = {
+    "uks": ("uks_alpha", "uks_beta"),
+    "roks": ("roks_closed", "roks_open"),
+}
+
+
+def sum_density_matrices(matrices):
+    """Return the sum of density matrices (e.g. P_alpha + P_beta)."""
+    total = matrices[0]
+    for mat in matrices[1:]:
+        total = total + mat
+    return total
+
+
 def parse_mulliken_pop(output):
     """Parse Gross atom population table from pdf-pop-mulliken output.
 

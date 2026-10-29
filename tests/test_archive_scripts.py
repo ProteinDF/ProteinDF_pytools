@@ -369,6 +369,70 @@ class TestArchiveScripts(unittest.TestCase):
         self.assertAlmostEqual(pop_loaded2[1], -0.15)
         h5._close()
 
+    def _archive_pop_spin(self, method, run_types, diag):
+        """Run pdf-archive-h5.py --pop on a UKS/ROKS system; return (h5 path, P diagonals)."""
+        param = _create_sample_param(work_path=self.tmpdir.name, iterations=2)
+        param.method = method
+        param._data["control"]["file_base_name"]["Ppq_matrix"] = "Ppq.%s.mat"
+        for run_type, value in zip(run_types, diag):
+            for itr in (1, 2):
+                mat_p = SymmetricMatrix(2)
+                mat_p.set(0, 0, value)
+                mat_p.set(1, 1, 10 * value)
+                mat_p.save(param.get_density_matrix_path(run_type, itr))
+        s_mat = SymmetricMatrix(2)
+        s_mat.set(0, 0, 1.0)
+        s_mat.set(1, 1, 1.0)
+        s_mat.save(param.get_s_mat_path())
+        s_mat.save(param.get_h_mat_path())
+        s_mat.save(param.get_h2_mat_path())
+
+        mpac_path = os.path.join(self.tmpdir.name, "pop_%s.mpac" % method)
+        pdf.save_pdfparam(param, mpac_path)
+        h5_path = os.path.join(self.tmpdir.name, "pop_%s.h5" % method)
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path, "--pop"]
+
+        seen = []
+
+        def fake_subprocess_run(cmd, capture_output=True, text=True):
+            P = pdf.SymmetricMatrix()
+            self.assertTrue(P.load(cmd[cmd.index("-P") + 1]))
+            seen.append((P.get(0, 0), P.get(1, 1)))
+            out = (
+                " Gross atom population\n"
+                "  index Atom    gross         net\n"
+                "      0   H       0.850000     %f\n"
+                "      1   H       1.150000    -0.150000\n\n"
+            ) % (len(seen) / 10.0)
+            return mock.Mock(returncode=0, stdout=out, stderr="")
+
+        mod = _load_script("pdf-archive-h5.py")
+        with mock.patch.object(mod.subprocess, "run", side_effect=fake_subprocess_run) as m:
+            mod.main()
+            self.assertEqual(m.call_count, 3)
+        return h5_path, seen
+
+    def _check_pop_spin(self, method, run_types, diag):
+        h5_path, seen = self._archive_pop_spin(method, run_types, diag)
+        self.assertEqual(seen[0], (diag[0], 10 * diag[0]))
+        self.assertEqual(seen[1], (diag[1], 10 * diag[1]))
+        self.assertEqual(seen[2], (sum(diag), 10 * sum(diag)))
+        h5 = PdfParam_H5()
+        h5.open(h5_path)
+        for i, run_type in enumerate(run_types + [method]):
+            self.assertIsNone(h5.get_pop_mulliken_atom(run_type, 1))
+            pop = h5.get_pop_mulliken_atom(run_type, 2)
+            self.assertAlmostEqual(pop[0], (i + 1) / 10.0)
+        h5._close()
+
+    def test_pdf_archive_h5_pop_mulliken_uks(self):
+        """UKS: spin Mulliken from each density, plus the total (Pa + Pb) under 'uks'."""
+        self._check_pop_spin("uks", ["uks_alpha", "uks_beta"], [0.5, 0.25])
+
+    def test_pdf_archive_h5_pop_mulliken_roks(self):
+        """ROKS: spin Mulliken from each density, plus the total (Pc + Po) under 'roks'."""
+        self._check_pop_spin("roks", ["roks_closed", "roks_open"], [0.5, 0.25])
+
     def test_pdf_archive_h5_pop_mulliken_unconverged(self):
         """pdf-archive-h5.py --pop calculates pop for last iteration when unconverged."""
         param = _create_sample_param(work_path=self.tmpdir.name, iterations=3)
