@@ -35,7 +35,12 @@ import rich.progress
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
-from proteindf_tools.poputils import compute_mulliken_pop, parse_mulliken_pop
+from proteindf_tools.poputils import (
+    TOTAL_DENSITY_RUN_TYPES,
+    compute_mulliken_pop,
+    parse_mulliken_pop,
+    sum_density_matrices,
+)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -118,6 +123,15 @@ def archive(pdfparam, entry, calc_pop=False, level=DEFAULT_LEVEL):
             logger.info("save pop (Mulliken)")
             archive_pop_mulliken(pdfparam, run_type, entry)
 
+    if pdfparam.method in TOTAL_DENSITY_RUN_TYPES:
+        if level == 'debug':
+            logger.info("save pop (Mulliken, total density) for all iterations")
+            for itr in range(1, pdfparam.iterations + 1):
+                archive_pop_mulliken_total(pdfparam, entry, iteration=itr)
+        elif calc_pop:
+            logger.info("save pop (Mulliken, total density)")
+            archive_pop_mulliken_total(pdfparam, entry)
+
     for run_type in pdfparam.orbital_run_types():
         logger.info('orbital run_type: %s' % run_type)
 
@@ -132,16 +146,45 @@ def archive(pdfparam, entry, calc_pop=False, level=DEFAULT_LEVEL):
             archive_f(run_type, pdfparam, entry)
 
 
-def archive_pop_mulliken(pdfparam, run_type, entry, iteration=None):
+def _pop_mulliken_iteration(pdfparam, iteration=None):
     if pdfparam.iterations <= 0:
         logger.debug("Since the SCF iteration == 0, the charge calculation is not performed.")
-        return
+        return None
 
     if iteration is None:
         last_itr = pdfparam.iterations if pdfparam.scf_converged else pdfparam.iterations - 1
     else:
         last_itr = iteration
     if last_itr <= 0:
+        return None
+    return last_itr
+
+
+def _load_density_matrix(pdfparam, run_type, itr):
+    # P of this iteration may not be archived at the selected level
+    P = pdf.SymmetricMatrix()
+    if not P.load(pdfparam.get_density_matrix_path(run_type, itr)):
+        logger.warning(
+            "failed to load P (%s, itr %d) for Mulliken population" % (run_type, itr)
+        )
+        return None
+    return P
+
+
+def _save_pop_mulliken(entry, run_type, itr, P, S):
+    logger.info("calculate pop(Mulliken) data for iteration %d ..." % itr)
+    try:
+        pop = compute_mulliken_pop(entry, P, S)
+    except Exception as e:
+        logger.warning("failed to run pop-mulliken for iteration %d: %s" % (itr, e))
+        return
+
+    entry.save_pop_mulliken_atom(run_type, itr, pop)
+
+
+def archive_pop_mulliken(pdfparam, run_type, entry, iteration=None):
+    last_itr = _pop_mulliken_iteration(pdfparam, iteration)
+    if last_itr is None:
         return
 
     S = entry.get_s_matrix()
@@ -149,23 +192,32 @@ def archive_pop_mulliken(pdfparam, run_type, entry, iteration=None):
         logger.warning("failed to load S from archive for Mulliken population")
         return
 
-    # P of this iteration may not be archived at the selected level
-    P = pdf.SymmetricMatrix()
-    if not P.load(pdfparam.get_density_matrix_path(run_type, last_itr)):
-        logger.warning(
-            "failed to load P (%s, itr %d) for Mulliken population"
-            % (run_type, last_itr)
-        )
+    P = _load_density_matrix(pdfparam, run_type, last_itr)
+    if P is None:
+        return
+    _save_pop_mulliken(entry, run_type, last_itr, P, S)
+
+
+def archive_pop_mulliken_total(pdfparam, entry, iteration=None):
+    """Save Mulliken population of the total density (UKS: Pa + Pb, ROKS: Pc + Po)."""
+    total_run_type = pdfparam.method
+    spin_run_types = TOTAL_DENSITY_RUN_TYPES.get(total_run_type)
+    if spin_run_types is None:
         return
 
-    logger.info("calculate pop(Mulliken) data for iteration %d ..." % last_itr)
-    try:
-        pop = compute_mulliken_pop(entry, P, S)
-    except Exception as e:
-        logger.warning("failed to run pop-mulliken for iteration %d: %s" % (last_itr, e))
+    last_itr = _pop_mulliken_iteration(pdfparam, iteration)
+    if last_itr is None:
         return
 
-    entry.save_pop_mulliken_atom(run_type, last_itr, pop)
+    S = entry.get_s_matrix()
+    if S is None:
+        logger.warning("failed to load S from archive for Mulliken population")
+        return
+
+    Ps = [_load_density_matrix(pdfparam, rt, last_itr) for rt in spin_run_types]
+    if any(P is None for P in Ps):
+        return
+    _save_pop_mulliken(entry, total_run_type, last_itr, sum_density_matrices(Ps), S)
 
 
 def archive_occ(pdfparam, run_type, entry):

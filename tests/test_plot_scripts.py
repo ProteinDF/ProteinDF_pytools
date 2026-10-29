@@ -322,6 +322,67 @@ class TestPlotScripts(unittest.TestCase):
         self.assertAlmostEqual(pop2[0], 0.5)
         self.assertAlmostEqual(pop2[1], -0.5)
 
+    def _plot_pop_spin(self, method, run_types):
+        h5_path = os.path.join(self.tmpdir.name, "pdfresults_%s.h5" % method)
+        out_png = os.path.join(self.tmpdir.name, "pop_%s.png" % method)
+
+        p = PdfParam_H5()
+        p.open(h5_path)
+        p.method = method
+        p.iterations = 2
+        p.num_of_atoms = 2
+        p.num_of_AOs = 4
+        p.num_of_MOs = 4
+        p.save_model()
+        p.save_TEs(Vector([-100.0, -100.5]))
+        S = SymmetricMatrix(4)
+        for i in range(4):
+            S.set(i, i, 1.0)
+        p.save_s_matrix(S)
+        for k, run_type in enumerate(run_types):
+            P_in = SymmetricMatrix(4)
+            P_in.set(0, 0, 1.0 + k)
+            p.save_input_density_matrix(run_type, 1, P_in)
+            P_last = SymmetricMatrix(4)
+            P_last.set(1, 1, 1.0 + k)
+            p.save_density_matrix(run_type, 2, P_last)
+        p._close()
+
+        seen = []
+
+        def fake_run(cmd, capture_output=True, text=True):
+            P = pdf.SymmetricMatrix()
+            self.assertTrue(P.load(cmd[cmd.index("-P") + 1]))
+            seen.append((P.get(0, 0), P.get(1, 1)))
+            out = (
+                " Gross atom population\n"
+                "  index Atom    gross         net\n"
+                "      0   H       0.5     0.5\n"
+                "      1   H       1.5    -0.5\n\n"
+            )
+            return mock.Mock(returncode=0, stdout=out, stderr="")
+
+        mod = _load_script("pdf-plot-pop.py")
+        sys.argv = ["pdf-plot-pop.py", "--h5", h5_path, "-o", out_png]
+        with mock.patch.object(mod.subprocess, "run", side_effect=fake_run):
+            mod.main()
+
+        # last iteration is computed first, then iteration 1; both use the total density
+        self.assertEqual(seen, [(0.0, 3.0), (3.0, 0.0)])
+        p_check = PdfParam_H5()
+        p_check.open(h5_path)
+        self.assertIsNotNone(p_check.get_pop_mulliken_atom(method, 1))
+        self.assertIsNotNone(p_check.get_pop_mulliken_atom(method, 2))
+        p_check._close()
+
+    def test_plot_pop_uks(self):
+        """pdf-plot-pop.py uses run_type 'uks' with Pa + Pb for method uks."""
+        self._plot_pop_spin("uks", ["uks_alpha", "uks_beta"])
+
+    def test_plot_pop_roks(self):
+        """pdf-plot-pop.py uses run_type 'roks' with Pc + Po for method roks."""
+        self._plot_pop_spin("roks", ["roks_closed", "roks_open"])
+
     def test_plot_pop_readonly_fallback(self):
         """(c) When HDF5 is read-only, emit warning but plot successfully using in-memory data."""
         h5_path = os.path.join(self.tmpdir.name, "pdfresults_readonly.h5")

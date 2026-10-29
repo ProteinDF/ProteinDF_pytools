@@ -11,7 +11,12 @@ import warnings
 import h5py
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
-from proteindf_tools.poputils import compute_mulliken_pop, parse_mulliken_pop
+from proteindf_tools.poputils import (
+    TOTAL_DENSITY_RUN_TYPES,
+    compute_mulliken_pop,
+    parse_mulliken_pop,
+    sum_density_matrices,
+)
 
 import logging
 
@@ -228,6 +233,28 @@ def get_input_density_matrix_safe(pdfparam, run_type, iteration):
         return None
 
 
+def get_total_input_density_matrix_safe(pdfparam, run_type, iteration):
+    """Input density matrix; for UKS/ROKS the total density (Pa + Pb, Pc + Po)."""
+    spin_run_types = TOTAL_DENSITY_RUN_TYPES.get(run_type)
+    if spin_run_types is None:
+        return get_input_density_matrix_safe(pdfparam, run_type, iteration)
+    Ps = [get_input_density_matrix_safe(pdfparam, rt, iteration) for rt in spin_run_types]
+    if any(P is None for P in Ps):
+        return None
+    return sum_density_matrices(Ps)
+
+
+def get_total_density_matrix_safe(pdfparam, run_type, iteration):
+    """Density matrix; for UKS/ROKS the total density (Pa + Pb, Pc + Po)."""
+    spin_run_types = TOTAL_DENSITY_RUN_TYPES.get(run_type)
+    if spin_run_types is None:
+        return get_density_matrix_safe(pdfparam, run_type, iteration)
+    Ps = [get_density_matrix_safe(pdfparam, rt, iteration) for rt in spin_run_types]
+    if any(P is None for P in Ps):
+        return None
+    return sum_density_matrices(Ps)
+
+
 def get_s_matrix_safe(pdfparam):
     try:
         return pdfparam.get_s_matrix()
@@ -277,7 +304,9 @@ def main():
     #
     pdfparam, is_writable = open_pdfparam_h5(pdfparam_h5_path)
 
-    run_type = "rks"
+    run_type = pdfparam.method
+    if run_type not in ("rks", "uks", "roks"):
+        raise ValueError("unsupported method: {}".format(run_type))
     itr = pdfparam.iterations
 
     need_save_last = False
@@ -285,7 +314,7 @@ def main():
 
     pop_vtr1 = pdfparam.get_pop_mulliken_atom(run_type, itr)
     if pop_vtr1 is None or len(pop_vtr1) == 0:
-        P_last = get_density_matrix_safe(pdfparam, run_type, itr)
+        P_last = get_total_density_matrix_safe(pdfparam, run_type, itr)
         S = get_s_matrix_safe(pdfparam)
         if P_last is None or S is None:
             raise ValueError(
@@ -298,7 +327,7 @@ def main():
 
     pop_vtr2 = pdfparam.get_pop_mulliken_atom(run_type, 1)
     if pop_vtr2 is None or len(pop_vtr2) == 0:
-        P_in = get_input_density_matrix_safe(pdfparam, run_type, 1)
+        P_in = get_total_input_density_matrix_safe(pdfparam, run_type, 1)
         S = get_s_matrix_safe(pdfparam)
         if P_in is None or S is None:
             raise ValueError(
