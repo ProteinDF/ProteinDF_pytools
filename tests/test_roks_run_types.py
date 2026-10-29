@@ -163,7 +163,7 @@ class TestRoksArchiveH5(unittest.TestCase):
 
         h5_path = os.path.join(self.tmpdir.name, "pdfresults.h5")
         mod = _load_script("pdf-archive-h5.py")
-        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path]
+        sys.argv = ["pdf-archive-h5.py", "-p", mpac_path, "-o", h5_path, "-l", "full"]
         mod.main()
 
         self.assertTrue(os.path.exists(h5_path))
