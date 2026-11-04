@@ -3,6 +3,7 @@
 
 import importlib.util
 import json
+import yaml
 import os
 import sys
 import tempfile
@@ -656,6 +657,159 @@ class TestPlotScripts(unittest.TestCase):
         for i, pt in enumerate(points):
             expected_diff = pop2[i] - pop1[i]
             self.assertAlmostEqual(pt["y"], expected_diff, places=7)
+
+    def test_save_pop_diff_yaml_matches_json(self):
+        """save_pop_diff_yaml output matches JSON dict on safe_load, preserves 'No', and formats 1 pt/line."""
+        mod = _load_script("pdf-plot-pop.py")
+        h5_path = "results.h5"
+        elements = ["C", "No", "O"]
+        pop_last = [1.2, -0.4, 0.8]
+        pop_ref = [1.0, -0.5, 0.5]
+
+        plot_data = mod.make_pop_diff_plot_data(
+            h5_path=h5_path,
+            last_iteration=3,
+            elements=elements,
+            pop_vtr_last=pop_last,
+            pop_vtr_ref=pop_ref,
+            run_type="rks",
+            reference_iteration=1,
+        )
+
+        json_path = os.path.join(self.tmpdir.name, "pop_test.json")
+        yaml_path = os.path.join(self.tmpdir.name, "pop_test.yaml")
+
+        mod.save_pop_diff_json(plot_data, json_path)
+        mod.save_pop_diff_yaml(plot_data, yaml_path)
+
+        with open(json_path, "r", encoding="utf-8") as f:
+            data_json = json.load(f)
+        with open(yaml_path, "r", encoding="utf-8") as f:
+            yaml_content = f.read()
+            data_yaml = yaml.safe_load(yaml_content)
+
+        # 1. Matches JSON dict
+        self.assertEqual(data_yaml, data_json)
+
+        # 2. 'No' element preserved as str
+        no_atom = next(a for a in data_yaml["atoms"] if a["index"] == 2)
+        self.assertEqual(no_atom["element"], "No")
+        self.assertIsInstance(no_atom["element"], str)
+
+        # 3. 1 point per line in points section
+        lines = yaml_content.splitlines()
+        points_idx = lines.index("  points:")
+        points_lines = lines[points_idx + 1 :]
+        self.assertEqual(len(points_lines), len(pop_last))
+        for line in points_lines:
+            self.assertTrue(line.strip().startswith("- {"))
+            self.assertTrue(line.strip().endswith("}"))
+
+    def test_plot_pop_yaml_cli(self):
+        """pdf-plot-pop.py --yaml generates yaml directly and PNG without pop.mulliken.txt."""
+        h5_path = os.path.join(self.tmpdir.name, "pdfresults_yaml.h5")
+        out_png = os.path.join(self.tmpdir.name, "pop_yaml.png")
+        out_yaml = os.path.join(self.tmpdir.name, "pop.yaml")
+
+        p = PdfParam_H5()
+        p.open(h5_path)
+        p.method = "rks"
+        p.iterations = 2
+        p.num_of_atoms = 2
+        p.num_of_AOs = 4
+        p.num_of_MOs = 4
+
+        mol = bridge.AtomGroup()
+        mol.set_atom(
+            "0", bridge.Atom(symbol="C", position=bridge.Position(0.0, 0.0, 0.0), charge=6.0, name="C1")
+        )
+        mol.set_atom(
+            "1", bridge.Atom(symbol="No", position=bridge.Position(0.0, 0.0, 1.0), charge=102.0, name="No1")
+        )
+        p.molecule = mol
+        p.save_model()
+        p.save_TEs(Vector([-100.0, -100.5]))
+
+        pop1 = Vector([0.1, -0.1])
+        pop2 = Vector([0.3, -0.25])
+        p._write_vector(p._h5root, p._get_h5path_pop_mulliken_atom("rks", 1), pop1)
+        p._write_vector(p._h5root, p._get_h5path_pop_mulliken_atom("rks", 2), pop2)
+        p._close()
+
+        mod = _load_script("pdf-plot-pop.py")
+        sys.argv = ["pdf-plot-pop.py", "--h5", h5_path, "--yaml", out_yaml, "-o", out_png]
+        mod.main()
+
+        # YAML and PNG should exist
+        self.assertTrue(os.path.exists(out_yaml))
+        self.assertTrue(os.path.exists(out_png))
+        self.assertGreater(os.path.getsize(out_yaml), 0)
+        self.assertGreater(os.path.getsize(out_png), 0)
+
+        # pop.mulliken.txt must NOT exist when --yaml is specified
+        self.assertFalse(os.path.exists(os.path.join(self.tmpdir.name, "pop.mulliken.txt")))
+
+        with open(out_yaml, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+
+        self.assertEqual(data["schema"], "pdf-plot/1")
+        self.assertEqual(data["kind"], "scatter")
+        self.assertEqual(data["atoms"][1]["element"], "No")
+        self.assertIsInstance(data["atoms"][1]["element"], str)
+
+    def test_plot_pop_json_and_yaml_cli(self):
+        """pdf-plot-pop.py supports specifying both --json and --yaml simultaneously."""
+        h5_path = os.path.join(self.tmpdir.name, "pdfresults_both.h5")
+        out_png = os.path.join(self.tmpdir.name, "pop_both.png")
+        out_json = os.path.join(self.tmpdir.name, "pop_both.json")
+        out_yaml = os.path.join(self.tmpdir.name, "pop_both.yaml")
+
+        p = PdfParam_H5()
+        p.open(h5_path)
+        p.method = "rks"
+        p.iterations = 2
+        p.num_of_atoms = 1
+        p.num_of_AOs = 2
+        p.num_of_MOs = 2
+
+        mol = bridge.AtomGroup()
+        mol.set_atom(
+            "0", bridge.Atom(symbol="C", position=bridge.Position(0.0, 0.0, 0.0), charge=6.0, name="C1")
+        )
+        p.molecule = mol
+        p.save_model()
+        p.save_TEs(Vector([-100.0, -100.5]))
+
+        pop1 = Vector([0.1])
+        pop2 = Vector([0.3])
+        p._write_vector(p._h5root, p._get_h5path_pop_mulliken_atom("rks", 1), pop1)
+        p._write_vector(p._h5root, p._get_h5path_pop_mulliken_atom("rks", 2), pop2)
+        p._close()
+
+        mod = _load_script("pdf-plot-pop.py")
+        sys.argv = [
+            "pdf-plot-pop.py",
+            "--h5",
+            h5_path,
+            "--json",
+            out_json,
+            "--yaml",
+            out_yaml,
+            "-o",
+            out_png,
+        ]
+        mod.main()
+
+        self.assertTrue(os.path.exists(out_json))
+        self.assertTrue(os.path.exists(out_yaml))
+        self.assertTrue(os.path.exists(out_png))
+
+        with open(out_json, "r", encoding="utf-8") as f:
+            data_json = json.load(f)
+        with open(out_yaml, "r", encoding="utf-8") as f:
+            data_yaml = yaml.safe_load(f)
+
+        self.assertEqual(data_yaml, data_json)
 
     def test_plot_pop_default_creates_txt(self):
         """pdf-plot-pop.py without --json still creates pop.mulliken.txt and pop.png."""
