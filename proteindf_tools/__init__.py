@@ -33,7 +33,7 @@ from .qmsim import QmSim
 
 from .pdfcommon import *
 
-from .report import PdfReport
+from .report import PdfReport, save_report_yaml
 from .pdfgraph import *
 
 from .pdfparam import PdfParam

@@ -12,6 +12,7 @@ import tempfile
 import unittest
 from unittest import mock
 from unittest.mock import MagicMock
+import yaml
 
 try:
     import h5py
@@ -25,7 +26,7 @@ import matplotlib.pyplot as plt
 
 from proteindf_tools.pdfparam_hdf5 import PdfParam_H5
 from proteindf_tools.pdfparam_object import PdfParamObject
-from proteindf_tools.report import PdfReport
+from proteindf_tools.report import PdfReport, save_report_yaml
 from proteindf_tools.vector import Vector
 
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
@@ -316,6 +317,96 @@ class TestPdfReport(unittest.TestCase):
         for rt in ["uks_alpha", "uks_beta"]:
             self.assertTrue(os.path.isfile(os.path.join(self.workdir, f"mulliken.{rt}.dat")))
             self.assertTrue(is_valid_png(os.path.join(self.workdir, f"mulliken.{rt}.png")))
+
+    # -------------------------------------------------------------------------
+    # 6. YAML output methods: get_report_data & save_report_yaml
+    # -------------------------------------------------------------------------
+    def test_get_report_data_rks(self):
+        """get_report_data generates report dictionary with schema, summary, and series."""
+        p = self._create_h5_rks(iterations=2)
+        try:
+            rep = PdfReport(p, self.workdir)
+            data = rep.get_report_data(iteration=2, source="test.h5")
+            self.assertEqual(data["schema"], "pdf-report/1")
+            self.assertEqual(data["kind"], "report")
+            self.assertEqual(data["source"], "test.h5")
+            self.assertEqual(data["iteration"], 2)
+
+            summary = data["summary"]
+            self.assertEqual(summary["num_of_AOs"], 4)
+            self.assertEqual(summary["num_of_MOs"], 4)
+            self.assertEqual(summary["num_of_iterations"], 2)
+            self.assertAlmostEqual(summary["total_energy"], -101.5)
+
+            te_hist = data["total_energy_history"]
+            self.assertEqual(len(te_hist), 2)
+            self.assertEqual(te_hist[0]["iteration"], 1)
+            self.assertAlmostEqual(te_hist[0]["energy"], -100.0)
+            self.assertEqual(te_hist[1]["iteration"], 2)
+            self.assertAlmostEqual(te_hist[1]["energy"], -101.5)
+
+            e_levels = data["energy_levels"]
+            self.assertEqual(len(e_levels), 1)
+            el_rks = e_levels[0]
+            self.assertEqual(el_rks["run_type"], "rks")
+            self.assertEqual(el_rks["HOMO_level"], 1)
+            # 2 iterations * 4 MOs = 8 items in history
+            self.assertEqual(len(el_rks["history"]), 8)
+            self.assertEqual(el_rks["history"][0]["iteration"], 1)
+            self.assertEqual(el_rks["history"][0]["level"], 0)
+            self.assertAlmostEqual(el_rks["history"][0]["energy_ev"], -1.0 * 27.2116)
+
+            # last iteration levels
+            self.assertEqual(len(el_rks["last"]), 4)
+            self.assertAlmostEqual(el_rks["last"][0], -1.1 * 27.2116)
+        finally:
+            p._close()
+
+    def test_get_report_data_uks(self):
+        """get_report_data includes both spin channels for UKS."""
+        p = self._create_h5_uks(iterations=2)
+        try:
+            rep = PdfReport(p, self.workdir)
+            data = rep.get_report_data(iteration=0)
+            self.assertEqual(data["iteration"], 2)
+            e_levels = data["energy_levels"]
+            self.assertEqual(len(e_levels), 2)
+            run_types = [el["run_type"] for el in e_levels]
+            self.assertIn("uks_alpha", run_types)
+            self.assertIn("uks_beta", run_types)
+        finally:
+            p._close()
+
+    def test_save_report_yaml(self):
+        """save_report_yaml writes valid YAML that safe_load can read back."""
+        p = self._create_h5_rks(iterations=2)
+        try:
+            rep = PdfReport(p, self.workdir)
+            data = rep.get_report_data(iteration=2, source="test.h5")
+            yaml_path = os.path.join(self.workdir, "report.yaml")
+            save_report_yaml(data, yaml_path)
+
+            self.assertTrue(os.path.isfile(yaml_path))
+            with open(yaml_path, "r", encoding="utf-8") as f:
+                content = f.read()
+                loaded = yaml.safe_load(content)
+
+            self.assertEqual(loaded["schema"], "pdf-report/1")
+            self.assertEqual(loaded["kind"], "report")
+            self.assertEqual(loaded["iteration"], 2)
+            self.assertEqual(loaded["summary"]["total_energy"], -101.5)
+            self.assertEqual(len(loaded["total_energy_history"]), 2)
+            self.assertEqual(len(loaded["energy_levels"]), 1)
+
+            # Check inline flow formatting of history points
+            flow_lines = [
+                line
+                for line in content.splitlines()
+                if line.strip().startswith("- {") and "iteration:" in line
+            ]
+            self.assertGreater(len(flow_lines), 0)
+        finally:
+            p._close()
 
 
 if __name__ == "__main__":

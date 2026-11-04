@@ -12,6 +12,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from unittest import mock
+import yaml
 
 try:
     import rich
@@ -366,6 +367,83 @@ class TestPdfReportH5(BaseScriptTestCase):
             self.mod.main()
 
         self.assertTrue(os.path.exists(os.path.join(out_dir, "TE_hist.png")))
+
+    def test_yaml_option(self):
+        """pdf-report-h5.py with --yaml generates YAML report matching .dat files and raw data."""
+        out_dir = os.path.join(self.tmpdir.name, "report_h5_yaml")
+        out_yaml = os.path.join(self.tmpdir.name, "report.yaml")
+        sys.argv = ["pdf-report-h5.py", self.h5, out_dir, "--yaml", out_yaml]
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            self.mod.main()
+
+        # Existing outputs still generated
+        expected_files = [
+            "TE_hist.dat",
+            "TE_hist.png",
+            "eigvals_hist.rks.dat",
+            "eigvals_hist.rks.png",
+            "eigvals_last.rks.png",
+        ]
+        for f in expected_files:
+            self.assertTrue(os.path.exists(os.path.join(out_dir, f)))
+        self.assertIn("ProteinDF report:", buf.getvalue())
+
+        # YAML exists and can be loaded
+        self.assertTrue(os.path.isfile(out_yaml))
+        with open(out_yaml, "r", encoding="utf-8") as f:
+            yaml_content = f.read()
+            data = yaml.safe_load(yaml_content)
+
+        # 1. Check schema, kind, summary, total_energy_history length, energy_levels count
+        self.assertEqual(data["schema"], "pdf-report/1")
+        self.assertEqual(data["kind"], "report")
+        self.assertEqual(data["source"], self.h5)
+        self.assertEqual(data["iteration"], 2)
+
+        summary = data["summary"]
+        self.assertEqual(summary["num_of_AOs"], 3)
+        self.assertEqual(summary["num_of_MOs"], 3)
+        self.assertEqual(summary["num_of_iterations"], 2)
+
+        self.assertEqual(len(data["total_energy_history"]), 2)
+        self.assertEqual(len(data["energy_levels"]), 1)
+
+        # 2. total_energy_history matches TE_hist.dat values (tolerance 1e-10)
+        te_dat_path = os.path.join(out_dir, "TE_hist.dat")
+        with open(te_dat_path, "r") as f:
+            dat_lines = [line.strip() for line in f if line.strip()]
+        self.assertEqual(len(dat_lines), len(data["total_energy_history"]))
+        for dat_line, yaml_pt in zip(dat_lines, data["total_energy_history"]):
+            parts = [p.strip() for p in dat_line.split(",")]
+            itr = int(parts[0])
+            te = float(parts[1])
+            self.assertEqual(itr, yaml_pt["iteration"])
+            self.assertAlmostEqual(te, yaml_pt["energy"], delta=1e-10)
+
+        # 3. last matches eigvals_last source (get_energy_level * 27.2116)
+        p_loaded = pdf.PdfParam_H5()
+        p_loaded.open(self.h5)
+        try:
+            expected_last = [
+                float(e) * 27.2116 for e in p_loaded.get_energy_level("rks", 2)
+            ]
+        finally:
+            p_loaded._close()
+
+        el_rks = data["energy_levels"][0]
+        self.assertEqual(el_rks["run_type"], "rks")
+        self.assertEqual(len(el_rks["last"]), len(expected_last))
+        for actual, expected in zip(el_rks["last"], expected_last):
+            self.assertAlmostEqual(actual, expected, delta=1e-10)
+
+        # Check inline flow formatting of history points
+        flow_lines = [
+            line
+            for line in yaml_content.splitlines()
+            if line.strip().startswith("- {") and "iteration:" in line
+        ]
+        self.assertGreater(len(flow_lines), 0)
 
     def test_profile_option(self):
         """pdf-report-h5.py with -p runs cProfile profiling."""
