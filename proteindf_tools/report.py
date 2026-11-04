@@ -3,6 +3,7 @@
 
 import os
 import textwrap
+import yaml
 
 from .pdfgraph import DfTotalEnergyHistGraph, DfEnergyLevelHistoryGraphH, DfEnergyLevelHistoryGraphV, DfPopulationGraph
 from .pdfparam_object import PdfParamObject
@@ -10,7 +11,54 @@ from .pdfparam_object import PdfParamObject
 import logging
 logger = logging.getLogger(__name__)
 
-# , DfEigValsHistGraph
+
+class _FlowMapping(dict):
+    """Mapping serialized in YAML inline flow style."""
+
+    pass
+
+
+yaml.add_representer(
+    _FlowMapping,
+    lambda dumper, data: dumper.represent_mapping(
+        "tag:yaml.org,2002:map", data, flow_style=True
+    ),
+    Dumper=yaml.SafeDumper,
+)
+
+
+def _prepare_report_data_for_yaml(data):
+    if not isinstance(data, dict):
+        return data
+    te_hist = data.get("total_energy_history")
+    if isinstance(te_hist, list):
+        data["total_energy_history"] = [
+            p if isinstance(p, _FlowMapping) else _FlowMapping(p)
+            for p in te_hist
+            if isinstance(p, dict)
+        ]
+    e_levels = data.get("energy_levels")
+    if isinstance(e_levels, list):
+        for el in e_levels:
+            if isinstance(el, dict) and "history" in el:
+                hist = el.get("history")
+                if isinstance(hist, list):
+                    el["history"] = [
+                        p if isinstance(p, _FlowMapping) else _FlowMapping(p)
+                        for p in hist
+                        if isinstance(p, dict)
+                    ]
+    return data
+
+
+def save_report_yaml(data, output_path):
+    data = _prepare_report_data_for_yaml(data)
+    content = yaml.safe_dump(data, sort_keys=False, allow_unicode=True)
+    out_dir = os.path.dirname(output_path)
+    if out_dir and not os.path.exists(out_dir):
+        os.makedirs(out_dir, exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(content)
 
 
 class PdfReport(object):
@@ -45,6 +93,86 @@ class PdfReport(object):
 
         contents = self._get_rst()
         print(contents)
+
+    def get_report_data(self, iteration=0, source=None):
+        if iteration == 0:
+            iteration = self._pdfparam.iterations
+
+        num_of_iterations = self._pdfparam.iterations
+        TEs = self._get_total_energy_vector()
+        if (
+            num_of_iterations > 0
+            and len(TEs) >= num_of_iterations
+            and TEs[num_of_iterations - 1] is not None
+        ):
+            total_energy = float(TEs[num_of_iterations - 1])
+        else:
+            total_energy = None
+
+        total_energy_history = []
+        for i in range(num_of_iterations):
+            if TEs[i] is not None:
+                total_energy_history.append(
+                    _FlowMapping(
+                        {
+                            "iteration": i + 1,
+                            "energy": float(TEs[i]),
+                        }
+                    )
+                )
+
+        energy_levels = []
+        for run_type in self._pdfparam.orbital_run_types():
+            homo_level = self._pdfparam.get_HOMO_level(run_type)
+            history = []
+            for itr in range(1, iteration + 1):
+                eigvals = self._pdfparam.get_energy_level(run_type, itr)
+                if eigvals:
+                    for level, e in enumerate(eigvals):
+                        history.append(
+                            _FlowMapping(
+                                {
+                                    "iteration": itr,
+                                    "level": level,
+                                    "energy_ev": float(e) * 27.2116,
+                                }
+                            )
+                        )
+
+            last_eigvals = self._pdfparam.get_energy_level(run_type, iteration)
+            if last_eigvals:
+                last = [float(e) * 27.2116 for e in last_eigvals]
+            else:
+                last = []
+
+            energy_levels.append(
+                {
+                    "run_type": run_type,
+                    "HOMO_level": homo_level,
+                    "history": history,
+                    "last": last,
+                }
+            )
+
+        if source is None:
+            source = getattr(self._pdfparam, "filepath", "")
+
+        return {
+            "schema": "pdf-report/1",
+            "kind": "report",
+            "source": source,
+            "iteration": iteration,
+            "summary": {
+                "num_of_AOs": int(self._pdfparam.num_of_AOs),
+                "num_of_MOs": int(self._pdfparam.num_of_MOs),
+                "num_of_iterations": num_of_iterations,
+                "total_energy": total_energy,
+            },
+            "total_energy_history": total_energy_history,
+            "energy_levels": energy_levels,
+        }
+
+    save_report_yaml = staticmethod(save_report_yaml)
 
     def _get_total_energy_vector(self):
         """

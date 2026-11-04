@@ -81,10 +81,15 @@ def main():
                         nargs='?',
                         const='pdf-report.stat',
                         help="do profiling")
+    parser.add_argument('--yaml',
+                        nargs=1,
+                        default=None,
+                        help='output yaml path')
 
     args = parser.parse_args()
     do_profile = args.profile
     is_debug = args.debug
+    yaml_path = args.yaml[0] if args.yaml else None
 
     setup_logger(is_debug)
     # verbose = args.verbose
@@ -113,6 +118,10 @@ def main():
         )
     else:
         report.report(iteration=iteration)
+
+    if yaml_path:
+        data = report.get_report_data(iteration=iteration, source=args.pdfresults_db)
+        report.save_report_yaml(data, yaml_path)
 
 
 if __name__ == '__main__':
