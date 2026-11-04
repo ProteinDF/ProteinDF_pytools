@@ -52,6 +52,7 @@ UNITTESTS="\
   report \
   pdf_test_eri \
   plot_elevel \
+  plot_elevel_history \
   plot_energy \
   plot_scripts \
   archive_scripts \
