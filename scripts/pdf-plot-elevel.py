@@ -22,11 +22,98 @@
 import os
 import sys
 import argparse
+import yaml
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
 
 import logging
+
+
+class _FlowMapping(dict):
+    """Mapping serialized in YAML inline flow style."""
+
+    pass
+
+
+yaml.add_representer(
+    _FlowMapping,
+    lambda dumper, data: dumper.represent_mapping(
+        "tag:yaml.org,2002:map", data, flow_style=True
+    ),
+    Dumper=yaml.SafeDumper,
+)
+
+
+def _prepare_plot_data_for_yaml(plot_data):
+    if not isinstance(plot_data, dict) or "series" not in plot_data:
+        return plot_data
+    series_list = plot_data.get("series")
+    if not isinstance(series_list, list):
+        return plot_data
+    need_copy = False
+    for s in series_list:
+        if isinstance(s, dict) and "points" in s:
+            pts = s.get("points")
+            if isinstance(pts, list) and any(not isinstance(p, _FlowMapping) for p in pts):
+                need_copy = True
+                break
+    if not need_copy:
+        return plot_data
+    new_data = dict(plot_data)
+    new_series = []
+    for s in series_list:
+        if isinstance(s, dict) and "points" in s:
+            new_s = dict(s)
+            new_s["points"] = [
+                p if isinstance(p, _FlowMapping) else _FlowMapping(p)
+                for p in s.get("points", [])
+            ]
+            new_series.append(new_s)
+        else:
+            new_series.append(s)
+    new_data["series"] = new_series
+    return new_data
+
+
+def make_elevel_plot_data(source_path, itr, HOMO_level, eigvals, run_type=None):
+    values = [float(e) * 27.2116 for e in eigvals]
+    return {
+        "schema": "pdf-plot/1",
+        "kind": "elevel",
+        "title": "Energy Level",
+        "source": {
+            "tool": "pdf-plot-elevel.py",
+            "input": source_path,
+            "run_type": run_type,
+            "iteration": int(itr),
+            "homo_level": int(HOMO_level),
+        },
+        "axes": {
+            "x": {
+                "label": "energy / eV",
+                "unit": "eV",
+            },
+            "y": {
+                "label": "",
+                "unit": None,
+            },
+        },
+        "series": [
+            {
+                "name": "energy_level",
+                "values": values,
+            }
+        ],
+    }
+
+
+def save_elevel_yaml(plot_data, output_path):
+    data = _prepare_plot_data_for_yaml(plot_data)
+    content = yaml.safe_dump(data, sort_keys=False, allow_unicode=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(content)
+
 
 
 def main():
@@ -47,8 +134,12 @@ def main():
     )
     parser.add_argument('-o', '--output',
                         nargs=1,
-                        default=['elevel.png'],
+                        default=None,
                         help='output graph path')
+    parser.add_argument('--yaml',
+                        nargs=1,
+                        default=None,
+                        help='output yaml path')
     parser.add_argument('-l', '--level',
                         nargs=1,
                         default=['0'],
@@ -65,7 +156,8 @@ def main():
     verbose = args.verbose
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
-    output_path = args.output[0]
+    yaml_path = args.yaml[0] if args.yaml else None
+    output_path = args.output[0] if args.output else (None if yaml_path else 'elevel.png')
     HOMO_level = int(args.level[0])
 
     if args.elevel_vector:
@@ -77,11 +169,18 @@ def main():
         eigvals = pdf.Vector()
         if verbose:
             print('load: %s' % (eigval_path))
-            print('output: %s' % (output_path))
+            if output_path:
+                print('output: %s' % (output_path))
+            if yaml_path:
+                print('yaml: %s' % (yaml_path))
             print('HOMO: %d' % (HOMO_level))
         eigvals.load(eigval_path)
-        elevel2dat(itr, eigvals, data_path)
-        plot_elevel_single(data_path, itr, HOMO_level, output_path)
+        if yaml_path:
+            plot_data = make_elevel_plot_data(eigval_path, itr, HOMO_level, eigvals)
+            save_elevel_yaml(plot_data, yaml_path)
+        if output_path:
+            elevel2dat(itr, eigvals, data_path)
+            plot_elevel_single(data_path, itr, HOMO_level, output_path)
     else:
         entry = pdf.open_archive(args.db)
 
@@ -100,10 +199,19 @@ def main():
 
         eigvals = entry.get_energylevel(runtype, itr)
         if verbose:
-            print('output: %s' % (output_path))
+            if output_path:
+                print('output: %s' % (output_path))
+            if yaml_path:
+                print('yaml: %s' % (yaml_path))
             print('HOMO: %d' % (HOMO_level))
-        elevel2dat(itr, eigvals, data_path)
-        plot_elevel_single(data_path, itr, HOMO_level, output_path)
+        if yaml_path:
+            plot_data = make_elevel_plot_data(
+                args.db, itr, HOMO_level, eigvals, run_type=runtype
+            )
+            save_elevel_yaml(plot_data, yaml_path)
+        if output_path:
+            elevel2dat(itr, eigvals, data_path)
+            plot_elevel_single(data_path, itr, HOMO_level, output_path)
 
 
 def elevel2dat(itr, eigvals, data_path):

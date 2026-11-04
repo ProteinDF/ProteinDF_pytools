@@ -5,10 +5,125 @@ import argparse
 import logging
 import os
 import sys
+import yaml
 
 import proteindf_tools as pdf
 
 AU2EV = 27.2116
+
+
+class _FlowMapping(dict):
+    """Mapping serialized in YAML inline flow style."""
+
+    pass
+
+
+yaml.add_representer(
+    _FlowMapping,
+    lambda dumper, data: dumper.represent_mapping(
+        "tag:yaml.org,2002:map", data, flow_style=True
+    ),
+    Dumper=yaml.SafeDumper,
+)
+
+
+def _prepare_plot_data_for_yaml(plot_data):
+    if not isinstance(plot_data, dict) or "series" not in plot_data:
+        return plot_data
+    series_list = plot_data.get("series")
+    if not isinstance(series_list, list):
+        return plot_data
+    need_copy = False
+    for s in series_list:
+        if isinstance(s, dict) and "points" in s:
+            pts = s.get("points")
+            if isinstance(pts, list) and any(not isinstance(p, _FlowMapping) for p in pts):
+                need_copy = True
+                break
+    if not need_copy:
+        return plot_data
+    new_data = dict(plot_data)
+    new_series = []
+    for s in series_list:
+        if isinstance(s, dict) and "points" in s:
+            new_s = dict(s)
+            new_s["points"] = [
+                p if isinstance(p, _FlowMapping) else _FlowMapping(p)
+                for p in s.get("points", [])
+            ]
+            new_series.append(new_s)
+        else:
+            new_series.append(s)
+    new_data["series"] = new_series
+    return new_data
+
+
+def make_mo_tracer_plot_data(
+    path1,
+    path2,
+    db_path1,
+    db_path2,
+    csc_path,
+    runtype,
+    itr1,
+    itr2,
+    pickup_ratio,
+    elevel1_list,
+    elevel2_list,
+    pairs,
+):
+    return {
+        "schema": "pdf-plot/1",
+        "kind": "mo-tracer",
+        "title": "",
+        "source": {
+            "tool": "pdf-plot-mo-tracer.py",
+            "path1": path1,
+            "path2": path2,
+            "result1": db_path1,
+            "result2": db_path2,
+            "csc_path": csc_path,
+            "run_type": runtype,
+            "iteration1": int(itr1),
+            "iteration2": int(itr2),
+            "pickup_ratio": float(pickup_ratio),
+        },
+        "axes": {
+            "x": {
+                "label": "",
+                "unit": None,
+            },
+            "y": {
+                "label": "energy / eV",
+                "unit": "eV",
+            },
+        },
+        "series": [
+            {
+                "name": "elevel1",
+                "values": [float(v) for v in elevel1_list],
+            },
+            {
+                "name": "elevel2",
+                "values": [float(v) for v in elevel2_list],
+            },
+            {
+                "name": "pairs",
+                "points": [
+                    _FlowMapping({"mo1": int(r), "mo2": int(idx), "overlap": float(val)})
+                    for r, idx, val in pairs
+                ],
+            },
+        ],
+    }
+
+
+def save_mo_tracer_yaml(plot_data, output_path):
+    data = _prepare_plot_data_for_yaml(plot_data)
+    content = yaml.safe_dump(data, sort_keys=False, allow_unicode=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(content)
+
 
 
 def find_pdfparam_path(pdf_path, pdfparam_filename="pdfparam.mpac"):
@@ -131,7 +246,8 @@ def main():
 
     parser.add_argument("--pickup-ratio", default=0.1, type=float)
 
-    parser.add_argument("-o", "--output", default="mo-tracer.png", type=str)
+    parser.add_argument("-o", "--output", default=None, type=str)
+    parser.add_argument("--yaml", default=None, type=str, help="output yaml path")
 
     parser.add_argument("--ymin", default=-20, type=float)  # for graph setting (ymin)
     parser.add_argument("--ymax", default=10, type=float)  # for graph setting (ymax)
@@ -147,6 +263,8 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
 
     pickup_ratio = args.pickup_ratio
+    yaml_path = args.yaml
+    output_path = args.output if args.output else (None if yaml_path else "mo-tracer.png")
 
     path1 = args.pdf_path1
     path2 = args.pdf_path2
@@ -215,19 +333,41 @@ def main():
         print(">>>> check MO pairs")
     pairs = make_pair(CSC_mat, pickup_ratio, verbose)
 
-    # graph
-    if verbose:
-        print(">>>> make graph")
-    graph = pdf.DfEnergyLevelTraceGraph()
-    graph.ymin = ymin
-    graph.ymax = ymax
-    graph.xticks = []
-    graph.set_data(elevel1.to_list(), elevel2.to_list(), pairs)
+    elevel1_list = elevel1.to_list()
+    elevel2_list = elevel2.to_list()
 
-    output_path = args.output
-    if verbose:
-        print("output: {}".format(output_path))
-    graph.save(output_path)
+    if yaml_path:
+        if verbose:
+            print("yaml: {}".format(yaml_path))
+        plot_data = make_mo_tracer_plot_data(
+            path1,
+            path2,
+            db_path1,
+            db_path2,
+            csc_path,
+            runtype,
+            itr1,
+            itr2,
+            pickup_ratio,
+            elevel1_list,
+            elevel2_list,
+            pairs,
+        )
+        save_mo_tracer_yaml(plot_data, yaml_path)
+
+    # graph
+    if output_path:
+        if verbose:
+            print(">>>> make graph")
+        graph = pdf.DfEnergyLevelTraceGraph()
+        graph.ymin = ymin
+        graph.ymax = ymax
+        graph.xticks = []
+        graph.set_data(elevel1_list, elevel2_list, pairs)
+
+        if verbose:
+            print("output: {}".format(output_path))
+        graph.save(output_path)
 
 
 if __name__ == "__main__":
