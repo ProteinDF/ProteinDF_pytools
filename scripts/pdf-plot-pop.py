@@ -9,6 +9,7 @@ import tempfile
 import warnings
 
 import h5py
+import yaml
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
 from proteindf_tools.poputils import (
@@ -60,6 +61,21 @@ def get_atom_elements(pdfparam):
     raise ValueError("Molecule geometry / atom list not found in results file")
 
 
+class _FlowMapping(dict):
+    """Mapping serialized in YAML inline flow style."""
+
+    pass
+
+
+yaml.add_representer(
+    _FlowMapping,
+    lambda dumper, data: dumper.represent_mapping(
+        "tag:yaml.org,2002:map", data, flow_style=True
+    ),
+    Dumper=yaml.SafeDumper,
+)
+
+
 def make_pop_diff_plot_data(
     h5_path,
     last_iteration,
@@ -100,11 +116,13 @@ def make_pop_diff_plot_data(
             }
         )
         points.append(
-            {
-                "x": atom_idx,
-                "y": diff,
-                "atom": atom_idx,
-            }
+            _FlowMapping(
+                {
+                    "x": atom_idx,
+                    "y": diff,
+                    "atom": atom_idx,
+                }
+            )
         )
 
     return {
@@ -144,6 +162,44 @@ def save_pop_diff_json(plot_data, output_path):
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(plot_data, f, indent=2, ensure_ascii=False)
         f.write("\n")
+
+
+def _prepare_plot_data_for_yaml(plot_data):
+    if not isinstance(plot_data, dict) or "series" not in plot_data:
+        return plot_data
+    series_list = plot_data.get("series")
+    if not isinstance(series_list, list):
+        return plot_data
+    need_copy = False
+    for s in series_list:
+        if isinstance(s, dict) and "points" in s:
+            pts = s.get("points")
+            if isinstance(pts, list) and any(not isinstance(p, _FlowMapping) for p in pts):
+                need_copy = True
+                break
+    if not need_copy:
+        return plot_data
+    new_data = dict(plot_data)
+    new_series = []
+    for s in series_list:
+        if isinstance(s, dict) and "points" in s:
+            new_s = dict(s)
+            new_s["points"] = [
+                p if isinstance(p, _FlowMapping) else _FlowMapping(p)
+                for p in s.get("points", [])
+            ]
+            new_series.append(new_s)
+        else:
+            new_series.append(s)
+    new_data["series"] = new_series
+    return new_data
+
+
+def save_pop_diff_yaml(plot_data, output_path):
+    data = _prepare_plot_data_for_yaml(plot_data)
+    content = yaml.safe_dump(data, sort_keys=False, allow_unicode=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(content)
 
 
 def open_pdfparam_h5(filepath):
@@ -283,6 +339,10 @@ def main():
                         nargs=1,
                         default=None,
                         help='output json path')
+    parser.add_argument('--yaml',
+                        nargs=1,
+                        default=None,
+                        help='output yaml path')
     parser.add_argument('-v', '--verbose',
                         action='store_true',
                         default=False)
@@ -293,6 +353,7 @@ def main():
     pdfparam_h5_path = args.h5
     output_path = args.output[0]
     json_path = args.json[0] if args.json else None
+    yaml_path = args.yaml[0] if args.yaml else None
 
     #
     if verbose:
@@ -300,6 +361,8 @@ def main():
         print("output path: {}".format(output_path))
         if json_path:
             print("json path: {}".format(json_path))
+        if yaml_path:
+            print("yaml path: {}".format(yaml_path))
 
     #
     pdfparam, is_writable = open_pdfparam_h5(pdfparam_h5_path)
@@ -343,7 +406,7 @@ def main():
     if need_save_1:
         save_pop_to_h5(pdfparam, run_type, 1, pop_vtr2, is_writable)
 
-    if json_path:
+    if json_path or yaml_path:
         elements = get_atom_elements(pdfparam)
         plot_data = make_pop_diff_plot_data(
             pdfparam_h5_path,
@@ -354,7 +417,10 @@ def main():
             run_type=run_type,
             reference_iteration=1,
         )
-        save_pop_diff_json(plot_data, json_path)
+        if json_path:
+            save_pop_diff_json(plot_data, json_path)
+        if yaml_path:
+            save_pop_diff_yaml(plot_data, yaml_path)
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as tmp:
             tmp_path = tmp.name
