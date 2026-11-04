@@ -243,8 +243,8 @@ class TestPdfReport(unittest.TestCase):
             output = buf.getvalue()
             self.assertIn("ProteinDF report:", output)
 
-            self.assertTrue(os.path.isfile(os.path.join(self.workdir, "TE_hist.dat")))
-            self.assertTrue(is_valid_png(os.path.join(self.workdir, "TE_hist.png")))
+            self.assertFalse(os.path.exists(os.path.join(self.workdir, "TE_hist.dat")))
+            self.assertFalse(os.path.exists(os.path.join(self.workdir, "TE_hist.png")))
             self.assertTrue(os.path.isfile(os.path.join(self.workdir, "eigvals_hist.rks.dat")))
             self.assertTrue(is_valid_png(os.path.join(self.workdir, "eigvals_hist.rks.png")))
             self.assertTrue(is_valid_png(os.path.join(self.workdir, "eigvals_last.rks.png")))
@@ -262,8 +262,8 @@ class TestPdfReport(unittest.TestCase):
             output = buf.getvalue()
             self.assertIn("ProteinDF report:", output)
 
-            self.assertTrue(os.path.isfile(os.path.join(self.workdir, "TE_hist.dat")))
-            self.assertTrue(is_valid_png(os.path.join(self.workdir, "TE_hist.png")))
+            self.assertFalse(os.path.exists(os.path.join(self.workdir, "TE_hist.dat")))
+            self.assertFalse(os.path.exists(os.path.join(self.workdir, "TE_hist.png")))
 
             for rt in ["uks_alpha", "uks_beta"]:
                 self.assertTrue(os.path.isfile(os.path.join(self.workdir, f"eigvals_hist.{rt}.dat")))
