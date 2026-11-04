@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from unittest import mock
+import yaml
 
 os.environ.setdefault("MPLBACKEND", "Agg")
 import matplotlib.pyplot as plt
@@ -231,6 +232,94 @@ class TestPdfPlotElevel(unittest.TestCase):
             os.chdir(orig_cwd)
 
         self.assertTrue(os.path.isfile(out_png))
+
+    def test_plot_elevel_yaml_e_mode(self):
+        raw_vals = [-10.0, -5.5, -1.2, 0.3, 2.5]
+        v = vec.Vector(len(raw_vals))
+        for i, val in enumerate(raw_vals):
+            v.set(i, val)
+        vec_path = os.path.join(self.temp_dir, "test_yaml.vec")
+        v.save(vec_path)
+
+        out_yaml = os.path.join(self.temp_dir, "elevel_e.yaml")
+        out_png = os.path.join(self.temp_dir, "elevel_e.png")
+
+        orig_cwd = os.getcwd()
+        try:
+            os.chdir(self.temp_dir)
+            with mock.patch.object(
+                sys,
+                "argv",
+                [
+                    "pdf-plot-elevel.py",
+                    "-e",
+                    vec_path,
+                    "--yaml",
+                    out_yaml,
+                    "-o",
+                    out_png,
+                    "-l",
+                    "2",
+                ],
+            ):
+                pdf_plot_elevel.main()
+        finally:
+            os.chdir(orig_cwd)
+
+        self.assertTrue(os.path.isfile(out_yaml))
+        self.assertTrue(os.path.isfile(out_png))
+        with open(out_yaml, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+
+        self.assertEqual(data["schema"], "pdf-plot/1")
+        self.assertEqual(data["kind"], "elevel")
+        self.assertEqual(data["source"]["homo_level"], 2)
+        self.assertEqual(len(data["series"]), 1)
+        series_vals = data["series"][0]["values"]
+        expected_vals = [val * 27.2116 for val in raw_vals]
+        self.assertEqual(len(series_vals), len(expected_vals))
+        for actual, expected in zip(series_vals, expected_vals):
+            self.assertAlmostEqual(actual, expected, places=7)
+
+        # Also compare with tmp.dat loaded by DfEnergyLevelHistoryGraphV
+        dat_path = os.path.join(self.temp_dir, "tmp.dat")
+        with open(dat_path, "r", encoding="utf-8") as f:
+            dat_vals = [float(line.split(",")[2]) for line in f if line.strip()]
+        for actual, dat_v in zip(series_vals, dat_vals):
+            self.assertAlmostEqual(actual, dat_v, places=7)
+
+    def test_plot_elevel_yaml_d_mode(self):
+        h5_path = os.path.join(self.temp_dir, "synth_yaml.h5")
+        self._create_synth_h5(h5_path, iterations=3, runtypes=["rks"])
+        out_yaml = os.path.join(self.temp_dir, "elevel_d.yaml")
+
+        orig_cwd = os.getcwd()
+        try:
+            os.chdir(self.temp_dir)
+            with mock.patch.object(
+                sys,
+                "argv",
+                ["pdf-plot-elevel.py", "-d", h5_path, "--yaml", out_yaml],
+            ):
+                pdf_plot_elevel.main()
+        finally:
+            os.chdir(orig_cwd)
+
+        self.assertTrue(os.path.isfile(out_yaml))
+        self.assertFalse(os.path.isfile(os.path.join(self.temp_dir, "elevel.png")))
+        with open(out_yaml, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+
+        self.assertEqual(data["schema"], "pdf-plot/1")
+        self.assertEqual(data["kind"], "elevel")
+        self.assertEqual(data["source"]["run_type"], "rks")
+        self.assertEqual(data["source"]["iteration"], 3)
+        self.assertEqual(data["source"]["homo_level"], 1)
+        series_vals = data["series"][0]["values"]
+        expected_vals = [(-10.0 + i) * 27.2116 for i in range(4)]
+        self.assertEqual(len(series_vals), len(expected_vals))
+        for actual, expected in zip(series_vals, expected_vals):
+            self.assertAlmostEqual(actual, expected, places=7)
 
 
 if __name__ == "__main__":

@@ -919,6 +919,249 @@ class TestPlotScripts(unittest.TestCase):
         self.assertTrue(os.path.exists(out_png))
         self.assertGreater(os.path.getsize(out_png), 0)
 
+    def test_plot_vector_yaml(self):
+        """pdf-plot-vector.py --yaml outputs vector values matching plotted values."""
+        vct_path = os.path.join(self.tmpdir.name, "test_yaml.vct")
+        out_yaml = os.path.join(self.tmpdir.name, "vct.yaml")
+        out_abs_yaml = os.path.join(self.tmpdir.name, "vct_abs.yaml")
+        out_png = os.path.join(self.tmpdir.name, "vct.png")
+
+        raw_vals = [-1.5, 2.0, -3.5, 4.0]
+        vct = Vector(raw_vals)
+        vct.save(vct_path)
+
+        mod = _load_script("pdf-plot-vector.py")
+        sys.argv = ["pdf-plot-vector.py", vct_path, "--yaml", out_yaml]
+        mod.main()
+
+        self.assertTrue(os.path.exists(out_yaml))
+        self.assertFalse(os.path.exists(out_png))
+
+        with open(out_yaml, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+
+        self.assertEqual(data["schema"], "pdf-plot/1")
+        self.assertEqual(data["kind"], "vector")
+        self.assertFalse(data["source"]["abs"])
+        self.assertEqual(data["series"][0]["values"], raw_vals)
+
+        # Also check with --abs and -o
+        sys.argv = ["pdf-plot-vector.py", vct_path, "--abs", "--yaml", out_abs_yaml, "-o", out_png]
+        mod.main()
+
+        self.assertTrue(os.path.exists(out_abs_yaml))
+        self.assertTrue(os.path.exists(out_png))
+        with open(out_abs_yaml, "r", encoding="utf-8") as f:
+            data_abs = yaml.safe_load(f)
+
+        self.assertEqual(data_abs["schema"], "pdf-plot/1")
+        self.assertEqual(data_abs["kind"], "vector")
+        self.assertTrue(data_abs["source"]["abs"])
+        self.assertEqual(data_abs["series"][0]["values"], [abs(x) for x in raw_vals])
+
+    def test_plot_dos_yaml(self):
+        """pdf-plot-dos.py --yaml outputs DOS points matching CSV/plotted values."""
+        import csv
+
+        h5_path = os.path.join(self.tmpdir.name, "pdfresults_dos.h5")
+        out_png = os.path.join(self.tmpdir.name, "dos.png")
+        csv_path = os.path.join(self.tmpdir.name, "dos.csv")
+        out_yaml = os.path.join(self.tmpdir.name, "dos.yaml")
+
+        p = PdfParam_H5()
+        p.open(h5_path)
+        p.method = "rks"
+        p.iterations = 1
+        p.num_of_atoms = 1
+        p.num_of_AOs = 5
+        p.num_of_MOs = 5
+        p.save_model()
+        occ = Vector([2.0, 2.0, 1.0, 0.0, 0.0])
+        p.save_occ("rks", occ)
+        ene = Vector([-0.5, -0.3, -0.1, 0.05, 0.1])
+        p.save_energy_level("rks", 1, ene)
+        p.save_TEs(Vector([-100.0]))
+        p._close()
+
+        mod = _load_script("pdf-plot-dos.py")
+        sys.argv = [
+            "pdf-plot-dos.py",
+            "-d",
+            h5_path,
+            "-r",
+            "5.0",
+            "--yaml",
+            out_yaml,
+            "--csv",
+            csv_path,
+            "-o",
+            out_png,
+        ]
+        mod.main()
+
+        self.assertTrue(os.path.exists(out_yaml))
+        self.assertTrue(os.path.exists(csv_path))
+        self.assertTrue(os.path.exists(out_png))
+
+        with open(out_yaml, "r", encoding="utf-8") as f:
+            yaml_content = f.read()
+            data = yaml.safe_load(yaml_content)
+
+        self.assertEqual(data["schema"], "pdf-plot/1")
+        self.assertEqual(data["kind"], "dos")
+        self.assertEqual(len(data["series"]), 1)
+        self.assertEqual(data["series"][0]["name"], "y_0")
+
+        with open(csv_path, "r", encoding="utf-8", newline="") as f:
+            csv_rows = [[float(v) for v in row] for row in csv.reader(f) if row]
+
+        pts = data["series"][0]["points"]
+        self.assertEqual(len(pts), len(csv_rows))
+        for pt, row in zip(pts, csv_rows):
+            self.assertAlmostEqual(pt["x"], row[0], places=12)
+            self.assertAlmostEqual(pt["y"], row[1], places=12)
+
+    def test_plot_gvalues_yaml(self):
+        """pdf-plot-gvalues.py --yaml outputs occ and vir points matching plotted data."""
+        h5_path = os.path.join(self.tmpdir.name, "pdfresults_gval.h5")
+        out_png = os.path.join(self.tmpdir.name, "g-values.png")
+        out_yaml = os.path.join(self.tmpdir.name, "g-values.yaml")
+
+        raw_ene = [-10.5, -1.2, -0.5, 0.2, 0.8]
+        raw_g = [0.1, 0.2, 0.3, 0.4, 0.5]
+
+        p = PdfParam_H5()
+        p.open(h5_path)
+        p.method = "rks"
+        p.iterations = 1
+        p.num_of_atoms = 1
+        p.num_of_AOs = 5
+        p.num_of_MOs = 5
+        p.save_model()
+        occ = Vector([2.0, 2.0, 1.0, 0.0, 0.0])  # HOMO_level = 2
+        p.save_occ("rks", occ)
+        p.save_energy_level("rks", 1, Vector(raw_ene))
+        p.save_TEs(Vector([-100.0]))
+        p._close()
+
+        def fake_run_pdf(args):
+            vtr = Vector(raw_g)
+            vtr.save("g-values.vtr")
+
+        mod = _load_script("pdf-plot-gvalues.py")
+        sys.argv = ["pdf-plot-gvalues.py", "-d", h5_path, "--yaml", out_yaml, "-o", out_png]
+        with mock.patch("proteindf_tools.run_pdf", side_effect=fake_run_pdf):
+            mod.main()
+
+        self.assertTrue(os.path.exists(out_yaml))
+        self.assertTrue(os.path.exists(out_png))
+
+        with open(out_yaml, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+
+        self.assertEqual(data["schema"], "pdf-plot/1")
+        self.assertEqual(data["kind"], "gvalues")
+        self.assertEqual(len(data["series"]), 2)
+        self.assertEqual(data["series"][0]["name"], "occ")
+        self.assertEqual(data["series"][1]["name"], "vir")
+
+        occ_pts = data["series"][0]["points"]
+        vir_pts = data["series"][1]["points"]
+        self.assertEqual(len(occ_pts), 3)
+        self.assertEqual(len(vir_pts), 2)
+        for i in range(3):
+            self.assertAlmostEqual(occ_pts[i]["x"], raw_ene[i] * 27.2116, places=7)
+            self.assertAlmostEqual(occ_pts[i]["y"], raw_g[i], places=7)
+        for j, i in enumerate(range(3, 5)):
+            self.assertAlmostEqual(vir_pts[j]["x"], raw_ene[i] * 27.2116, places=7)
+            self.assertAlmostEqual(vir_pts[j]["y"], raw_g[i], places=7)
+
+    def test_plot_mo_tracer_yaml(self):
+        """pdf-plot-mo-tracer.py --yaml outputs elevel1, elevel2, and pairs matching plot."""
+        dir1 = os.path.join(self.tmpdir.name, "calc1")
+        dir2 = os.path.join(self.tmpdir.name, "calc2")
+        os.makedirs(dir1)
+        os.makedirs(dir2)
+
+        ene1_raw = [-1.0, -0.5, 0.2]
+        ene2_raw = [-1.1, -0.4, 0.3]
+
+        for d, ene_vals in ((dir1, ene1_raw), (dir2, ene2_raw)):
+            h5_path = os.path.join(d, "pdfresults.h5")
+            p = PdfParam_H5()
+            p.open(h5_path)
+            p.method = "rks"
+            p.iterations = 1
+            p.guess = "none"
+            p.num_of_atoms = 1
+            p.num_of_AOs = 3
+            p.num_of_MOs = 3
+            p._data.setdefault("control", {})["file_base_name"] = {
+                "C_matrix": "c.%s.mat",
+            }
+            p.save_model()
+            p.save_occ("rks", Vector([2.0, 2.0, 0.0]))
+            p.save_energy_level("rks", 1, Vector(ene_vals))
+            p.save_TEs(Vector([-75.0]))
+            p.export_pdfparam_mpac(os.path.join(d, "pdfparam.mpac"))
+            p._close()
+
+        def mock_run_pdf(args):
+            out_idx = args.index("-o") + 1
+            target_csc = args[out_idx]
+            m = Matrix(3, 3)
+            m.set(0, 0, 0.95)
+            m.set(1, 1, 0.90)
+            m.set(2, 2, 0.85)
+            m.save(target_csc)
+
+        out_yaml = os.path.join(self.tmpdir.name, "mo-tracer.yaml")
+        out_png = os.path.join(self.tmpdir.name, "mo-tracer.png")
+        csc_mat = os.path.join(self.tmpdir.name, "CSC.mat")
+
+        mod = _load_script("pdf-plot-mo-tracer.py")
+        sys.argv = [
+            "pdf-plot-mo-tracer.py",
+            dir1,
+            dir2,
+            "-m",
+            csc_mat,
+            "--yaml",
+            out_yaml,
+            "-o",
+            out_png,
+        ]
+        with mock.patch("proteindf_tools.run_pdf", side_effect=mock_run_pdf):
+            mod.main()
+
+        self.assertTrue(os.path.exists(out_yaml))
+        self.assertTrue(os.path.exists(out_png))
+
+        with open(out_yaml, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+
+        self.assertEqual(data["schema"], "pdf-plot/1")
+        self.assertEqual(data["kind"], "mo-tracer")
+        self.assertEqual(len(data["series"]), 3)
+        self.assertEqual(data["series"][0]["name"], "elevel1")
+        self.assertEqual(data["series"][1]["name"], "elevel2")
+        self.assertEqual(data["series"][2]["name"], "pairs")
+
+        for a, b in zip(data["series"][0]["values"], [v * 27.2116 for v in ene1_raw]):
+            self.assertAlmostEqual(a, b, places=7)
+        for a, b in zip(data["series"][1]["values"], [v * 27.2116 for v in ene2_raw]):
+            self.assertAlmostEqual(a, b, places=7)
+
+        csc = Matrix()
+        csc.load(csc_mat)
+        expected_pairs = mod.make_pair(csc, 0.1, False)
+        actual_pairs = data["series"][2]["points"]
+        self.assertEqual(len(actual_pairs), len(expected_pairs))
+        for p_dict, p_exp in zip(actual_pairs, expected_pairs):
+            self.assertEqual(p_dict["mo1"], p_exp[0])
+            self.assertEqual(p_dict["mo2"], p_exp[1])
+            self.assertAlmostEqual(p_dict["overlap"], p_exp[2], places=7)
+
 
 if __name__ == "__main__":
     unittest.main()
