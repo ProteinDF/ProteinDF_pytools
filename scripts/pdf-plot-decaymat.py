@@ -3,13 +3,115 @@
 
 import os
 import sys
+import math
 from types import *
 import argparse
+import yaml
 
 import proteindf_bridge as bridge
 import proteindf_tools as pdf
 
 import logging
+
+
+class _FlowMapping(dict):
+    """Mapping serialized in YAML inline flow style."""
+
+    pass
+
+
+yaml.add_representer(
+    _FlowMapping,
+    lambda dumper, data: dumper.represent_mapping(
+        "tag:yaml.org,2002:map", data, flow_style=True
+    ),
+    Dumper=yaml.SafeDumper,
+)
+
+
+def _prepare_plot_data_for_yaml(plot_data):
+    if not isinstance(plot_data, dict) or "series" not in plot_data:
+        return plot_data
+    series_list = plot_data.get("series")
+    if not isinstance(series_list, list):
+        return plot_data
+    need_copy = False
+    for s in series_list:
+        if isinstance(s, dict) and "points" in s:
+            pts = s.get("points")
+            if isinstance(pts, list) and any(not isinstance(p, _FlowMapping) for p in pts):
+                need_copy = True
+                break
+    if not need_copy:
+        return plot_data
+    new_data = dict(plot_data)
+    new_series = []
+    for s in series_list:
+        if isinstance(s, dict) and "points" in s:
+            new_s = dict(s)
+            new_s["points"] = [
+                p if isinstance(p, _FlowMapping) else _FlowMapping(p)
+                for p in s.get("points", [])
+            ]
+            new_series.append(new_s)
+        else:
+            new_series.append(s)
+    new_data["series"] = new_series
+    return new_data
+
+
+def make_decaymat_plot_data(
+    orb_info, distance_mat, mat, mat_path, db_path=None, param_path=None
+):
+    points = []
+    for i in range(mat.rows):
+        atom_i = orb_info.get_atom_id(i)
+        for j in range(i):
+            atom_j = orb_info.get_atom_id(j)
+            d = float(distance_mat.get(atom_i, atom_j))
+            v = float(mat.get(i, j))
+            points.append(_FlowMapping({"x": d, "y": math.fabs(v)}))
+
+    source = {
+        "tool": "pdf-plot-decaymat.py",
+        "matrix": mat_path,
+        "rows": int(mat.rows),
+        "cols": int(mat.cols),
+    }
+    if db_path is not None:
+        source["result"] = db_path
+    if param_path is not None:
+        source["param"] = param_path
+
+    return {
+        "schema": "pdf-plot/1",
+        "kind": "decaymat",
+        "title": "",
+        "source": source,
+        "axes": {
+            "x": {
+                "label": "distance",
+                "unit": None,
+            },
+            "y": {
+                "label": "magnitude",
+                "unit": None,
+            },
+        },
+        "series": [
+            {
+                "name": "decaymat",
+                "points": points,
+            }
+        ],
+    }
+
+
+def save_decaymat_yaml(plot_data, output_path):
+    data = _prepare_plot_data_for_yaml(plot_data)
+    content = yaml.safe_dump(data, sort_keys=False, allow_unicode=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(content)
 
 
 def main():
@@ -34,8 +136,12 @@ def main():
                         help='matrix path')
     parser.add_argument('-o', '--output',
                         nargs=1,
-                        default=['mat.png'],
+                        default=None,
                         help='output graph path')
+    parser.add_argument('--yaml',
+                        nargs=1,
+                        default=None,
+                        help='output yaml path')
     parser.add_argument("-v", "--verbose",
                         action="store_true",
                         default=False)
@@ -49,7 +155,8 @@ def main():
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
     mat_path = args.matrix[0]
-    output_path = args.output[0]
+    yaml_path = args.yaml[0] if args.yaml else None
+    output_path = args.output[0] if args.output else (None if yaml_path else 'mat.png')
 
     # setup orbinfo
     if verbose:
@@ -76,11 +183,23 @@ def main():
         logging.critical("cannnot load")
         abort()
 
+    if yaml_path:
+        plot_data = make_decaymat_plot_data(
+            orb_info,
+            distance_mat,
+            mat,
+            mat_path,
+            db_path=args.db,
+            param_path=args.param,
+        )
+        save_decaymat_yaml(plot_data, yaml_path)
+
     # distance v.s. matrix elements
-    dist_vs_matvalue(orb_info, distance_mat, mat, 'mat.dat')
-    distgraph = pdf.DfDistanceVsElementGraph()
-    distgraph.load('mat.dat')
-    distgraph.save(output_path)
+    if output_path:
+        dist_vs_matvalue(orb_info, distance_mat, mat, 'mat.dat')
+        distgraph = pdf.DfDistanceVsElementGraph()
+        distgraph.load('mat.dat')
+        distgraph.save(output_path)
 
 
 def get_matrix(path, verbose=False):

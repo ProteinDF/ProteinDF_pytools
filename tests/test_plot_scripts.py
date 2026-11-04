@@ -1162,6 +1162,207 @@ class TestPlotScripts(unittest.TestCase):
             self.assertEqual(p_dict["mo2"], p_exp[1])
             self.assertAlmostEqual(p_dict["overlap"], p_exp[2], places=7)
 
+    def test_plot_mat_yaml_cli(self):
+        """pdf-plot-mat.py --yaml writes 1 row per line in YAML and matches matrix values."""
+        mat_path = os.path.join(self.tmpdir.name, "test_yaml.mat")
+        out_yaml = os.path.join(self.tmpdir.name, "mat.yaml")
+        default_png = os.path.join(self.tmpdir.name, "mat.png")
+
+        expected = [
+            [1.0, -0.5, 0.25],
+            [0.5, 2.0, -1.5],
+            [-0.25, 1.5, 3.0],
+        ]
+        mat = Matrix(3, 3)
+        for i in range(3):
+            for j in range(3):
+                mat.set(i, j, expected[i][j])
+        mat.save(mat_path)
+
+        mod = _load_script("pdf-plot-mat.py")
+        sys.argv = ["pdf-plot-mat.py", mat_path, "--yaml", out_yaml]
+        mod.main()
+
+        self.assertTrue(os.path.exists(out_yaml))
+        self.assertFalse(os.path.exists(default_png))
+
+        with open(out_yaml, "r", encoding="utf-8") as f:
+            yaml_content = f.read()
+            data = yaml.safe_load(yaml_content)
+
+        self.assertEqual(data["schema"], "pdf-plot/1")
+        self.assertEqual(data["kind"], "mat")
+        self.assertEqual(data["title"], "matrix value")
+        self.assertEqual(len(data["series"]), 1)
+        series0 = data["series"][0]
+        self.assertEqual(series0["rows"], 3)
+        self.assertEqual(series0["cols"], 3)
+        self.assertEqual(series0["values"], expected)
+
+        # Verify 1 matrix row per YAML line under values:
+        lines = yaml_content.splitlines()
+        values_idx = lines.index("  values:")
+        value_lines = lines[values_idx + 1 :]
+        self.assertEqual(len(value_lines), 3)
+        for line in value_lines:
+            self.assertTrue(line.strip().startswith("- ["))
+            self.assertTrue(line.strip().endswith("]"))
+
+    def test_plot_decaymat_yaml_cli(self):
+        """pdf-plot-decaymat.py --yaml writes lower-triangle (distance, magnitude) points matching plot data."""
+        mat_path = os.path.join(self.tmpdir.name, "decay.mat")
+        h5_path = os.path.join(self.tmpdir.name, "decay.h5")
+        out_yaml = os.path.join(self.tmpdir.name, "decaymat.yaml")
+        default_png = os.path.join(self.tmpdir.name, "mat.png")
+
+        param = PdfParam()
+        param.comment = "H3 synthetic system"
+        param.num_of_atoms = 3
+        param.num_of_AOs = 3
+        param.num_of_MOs = 3
+        param.method = "rks"
+        param.iterations = 1
+        param._set_scf_converged(True)
+
+        mol = bridge.AtomGroup()
+        a1 = bridge.Atom(
+            symbol="H", position=bridge.Position([0.0, 0.0, 0.0]), charge=1.0, name="H1"
+        )
+        a2 = bridge.Atom(
+            symbol="H", position=bridge.Position([0.0, 0.0, 0.74]), charge=1.0, name="H2"
+        )
+        a3 = bridge.Atom(
+            symbol="H", position=bridge.Position([0.0, 0.0, 1.50]), charge=1.0, name="H3"
+        )
+        mol.set_atom("0", a1)
+        mol.set_atom("1", a2)
+        mol.set_atom("2", a3)
+        param.molecule = mol
+
+        bs = BasisSet()
+        bs.name = "sto-3g-H"
+        cgto = ContractedGTO("s", 1)
+        cgto[0] = PrimitiveGTO(3.42525, 0.15433)
+        bs.append(cgto)
+        param.set_basisset("H", bs)
+        param.set_basisset("H@H1", bs)
+        param.set_basisset("H@H2", bs)
+        param.set_basisset("H@H3", bs)
+        param.set_total_energy(1, -1.50)
+
+        h = PdfParam_H5(param)
+        h.open(h5_path)
+        h.save_model()
+        h.save_TEs(Vector([-1.50]))
+        h._close()
+
+        mat = Matrix(3, 3)
+        mat.set(0, 0, 1.0)
+        mat.set(1, 0, -0.5)
+        mat.set(0, 1, -0.5)
+        mat.set(2, 0, 0.125)
+        mat.set(0, 2, 0.125)
+        mat.set(2, 1, -0.25)
+        mat.set(1, 2, -0.25)
+        mat.set(1, 1, 1.0)
+        mat.set(2, 2, 1.0)
+        mat.save(mat_path)
+
+        mod = _load_script("pdf-plot-decaymat.py")
+        sys.argv = ["pdf-plot-decaymat.py", "-d", h5_path, mat_path, "--yaml", out_yaml]
+        mod.main()
+
+        self.assertTrue(os.path.exists(out_yaml))
+        self.assertFalse(os.path.exists(default_png))
+        self.assertFalse(os.path.exists(os.path.join(self.tmpdir.name, "mat.dat")))
+
+        with open(out_yaml, "r", encoding="utf-8") as f:
+            yaml_content = f.read()
+            data = yaml.safe_load(yaml_content)
+
+        self.assertEqual(data["schema"], "pdf-plot/1")
+        self.assertEqual(data["kind"], "decaymat")
+        self.assertEqual(len(data["series"]), 1)
+        points = data["series"][0]["points"]
+
+        # Compare with DfDistanceVsElementGraph data loaded from dist_vs_matvalue
+        entry = pdf.open_archive(h5_path)
+        orb_info = pdf.OrbInfo(entry)
+        dist_mat = mod.distance_matrix(entry.get_molecule())
+        dat_path = os.path.join(self.tmpdir.name, "ref_mat.dat")
+        mod.dist_vs_matvalue(orb_info, dist_mat, mat, dat_path)
+        graph = pdf.DfDistanceVsElementGraph()
+        graph.load(dat_path)
+
+        self.assertEqual(len(points), len(graph._data_x))
+        for pt, gx, gy in zip(points, graph._data_x, graph._data_y):
+            self.assertAlmostEqual(pt["x"], float(gx), places=12)
+            self.assertAlmostEqual(pt["y"], float(gy), places=12)
+
+        # Verify 1 point per YAML line
+        lines = yaml_content.splitlines()
+        points_idx = lines.index("  points:")
+        point_lines = lines[points_idx + 1 :]
+        self.assertEqual(len(point_lines), 3)
+        for line in point_lines:
+            self.assertTrue(line.strip().startswith("- {"))
+            self.assertTrue(line.strip().endswith("}"))
+
+    def test_plot_basisset_yaml_cli(self):
+        """pdf-plot-basisset.py --yaml writes CGTO curves without needing PDF_HOME."""
+        import numpy
+
+        out_yaml = os.path.join(self.tmpdir.name, "basisset.yaml")
+        default_png = os.path.join(self.tmpdir.name, "basis_O-SYNTH.H.png")
+
+        bs = BasisSet("O-SYNTH.H", 2)
+        cgto_s = ContractedGTO("s", 2)
+        cgto_s[0] = PrimitiveGTO(3.42525, 0.15433)
+        cgto_s[1] = PrimitiveGTO(0.62391, 0.53533)
+        bs[0] = cgto_s
+
+        cgto_p = ContractedGTO("p", 1)
+        cgto_p[0] = PrimitiveGTO(1.10, 1.0)
+        bs[1] = cgto_p
+
+        mod = _load_script("pdf-plot-basisset.py")
+        fake_basis2 = mock.MagicMock()
+        fake_basis2.get_basisset.return_value = bs
+
+        sys.argv = ["pdf-plot-basisset.py", "O-SYNTH.H", "--yaml", out_yaml]
+        with mock.patch("proteindf_tools.Basis2", return_value=fake_basis2):
+            mod.main()
+
+        self.assertTrue(os.path.exists(out_yaml))
+        self.assertFalse(os.path.exists(default_png))
+
+        with open(out_yaml, "r", encoding="utf-8") as f:
+            yaml_content = f.read()
+            data = yaml.safe_load(yaml_content)
+
+        self.assertEqual(data["schema"], "pdf-plot/1")
+        self.assertEqual(data["kind"], "basisset")
+        self.assertEqual(data["title"], "O-SYNTH.H")
+        self.assertEqual(len(data["series"]), 2)
+
+        X = numpy.linspace(0, 10, 100, endpoint=True)
+        for cgto_id in range(2):
+            expected_y = mod.func(bs[cgto_id], X)
+            s = data["series"][cgto_id]
+            self.assertEqual(s["name"], str(cgto_id))
+            self.assertEqual(s["shell_type"], str(bs[cgto_id].shell_type))
+            pts = s["points"]
+            self.assertEqual(len(pts), 100)
+            for pt, x_val, y_val in zip(pts, X, expected_y):
+                self.assertAlmostEqual(pt["x"], float(x_val), places=12)
+                self.assertAlmostEqual(pt["y"], float(y_val), places=12)
+
+        # Verify flow style points
+        flow_lines = [
+            line for line in yaml_content.splitlines() if line.strip().startswith("- {")
+        ]
+        self.assertEqual(len(flow_lines), 200)
+
 
 if __name__ == "__main__":
     unittest.main()
