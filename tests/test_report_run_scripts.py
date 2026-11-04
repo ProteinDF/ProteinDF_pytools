@@ -345,8 +345,6 @@ class TestPdfReportH5(BaseScriptTestCase):
             self.mod.main()
 
         expected_files = [
-            "TE_hist.dat",
-            "TE_hist.png",
             "eigvals_hist.rks.dat",
             "eigvals_hist.rks.png",
             "eigvals_last.rks.png",
@@ -356,6 +354,8 @@ class TestPdfReportH5(BaseScriptTestCase):
                 os.path.exists(os.path.join(out_dir, f)),
                 f"Expected file {f} was not generated",
             )
+        self.assertFalse(os.path.exists(os.path.join(out_dir, "TE_hist.dat")))
+        self.assertFalse(os.path.exists(os.path.join(out_dir, "TE_hist.png")))
         self.assertIn("ProteinDF report:", buf.getvalue())
 
     def test_iteration_option(self):
@@ -366,7 +366,8 @@ class TestPdfReportH5(BaseScriptTestCase):
         with redirect_stdout(buf):
             self.mod.main()
 
-        self.assertTrue(os.path.exists(os.path.join(out_dir, "TE_hist.png")))
+        self.assertTrue(os.path.exists(os.path.join(out_dir, "eigvals_hist.rks.png")))
+        self.assertFalse(os.path.exists(os.path.join(out_dir, "TE_hist.png")))
 
     def test_yaml_option(self):
         """pdf-report-h5.py with --yaml generates YAML report matching .dat files and raw data."""
@@ -377,16 +378,16 @@ class TestPdfReportH5(BaseScriptTestCase):
         with redirect_stdout(buf):
             self.mod.main()
 
-        # Existing outputs still generated
+        # Existing outputs still generated (except TE_hist)
         expected_files = [
-            "TE_hist.dat",
-            "TE_hist.png",
             "eigvals_hist.rks.dat",
             "eigvals_hist.rks.png",
             "eigvals_last.rks.png",
         ]
         for f in expected_files:
             self.assertTrue(os.path.exists(os.path.join(out_dir, f)))
+        self.assertFalse(os.path.exists(os.path.join(out_dir, "TE_hist.dat")))
+        self.assertFalse(os.path.exists(os.path.join(out_dir, "TE_hist.png")))
         self.assertIn("ProteinDF report:", buf.getvalue())
 
         # YAML exists and can be loaded
@@ -409,22 +410,15 @@ class TestPdfReportH5(BaseScriptTestCase):
         self.assertEqual(len(data["total_energy_history"]), 2)
         self.assertEqual(len(data["energy_levels"]), 1)
 
-        # 2. total_energy_history matches TE_hist.dat values (tolerance 1e-10)
-        te_dat_path = os.path.join(out_dir, "TE_hist.dat")
-        with open(te_dat_path, "r") as f:
-            dat_lines = [line.strip() for line in f if line.strip()]
-        self.assertEqual(len(dat_lines), len(data["total_energy_history"]))
-        for dat_line, yaml_pt in zip(dat_lines, data["total_energy_history"]):
-            parts = [p.strip() for p in dat_line.split(",")]
-            itr = int(parts[0])
-            te = float(parts[1])
-            self.assertEqual(itr, yaml_pt["iteration"])
-            self.assertAlmostEqual(te, yaml_pt["energy"], delta=1e-10)
-
-        # 3. last matches eigvals_last source (get_energy_level * 27.2116)
+        # 2. total_energy_history matches raw data (tolerance 1e-10)
         p_loaded = pdf.PdfParam_H5()
         p_loaded.open(self.h5)
         try:
+            for itr in range(1, 3):
+                expected_te = p_loaded.get_total_energy(itr)
+                yaml_pt = data["total_energy_history"][itr - 1]
+                self.assertEqual(itr, yaml_pt["iteration"])
+                self.assertAlmostEqual(expected_te, yaml_pt["energy"], delta=1e-10)
             expected_last = [
                 float(e) * 27.2116 for e in p_loaded.get_energy_level("rks", 2)
             ]
