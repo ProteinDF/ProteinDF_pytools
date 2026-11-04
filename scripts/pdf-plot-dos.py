@@ -7,6 +7,7 @@ import math
 from types import *
 import argparse
 import csv
+import yaml
 
 from matplotlib import use
 import numpy
@@ -16,6 +17,109 @@ import proteindf_tools as pdf
 
 import logging
 logger = logging.getLogger(__name__)
+
+
+class _FlowMapping(dict):
+    """Mapping serialized in YAML inline flow style."""
+
+    pass
+
+
+yaml.add_representer(
+    _FlowMapping,
+    lambda dumper, data: dumper.represent_mapping(
+        "tag:yaml.org,2002:map", data, flow_style=True
+    ),
+    Dumper=yaml.SafeDumper,
+)
+
+
+def _prepare_plot_data_for_yaml(plot_data):
+    if not isinstance(plot_data, dict) or "series" not in plot_data:
+        return plot_data
+    series_list = plot_data.get("series")
+    if not isinstance(series_list, list):
+        return plot_data
+    need_copy = False
+    for s in series_list:
+        if isinstance(s, dict) and "points" in s:
+            pts = s.get("points")
+            if isinstance(pts, list) and any(not isinstance(p, _FlowMapping) for p in pts):
+                need_copy = True
+                break
+    if not need_copy:
+        return plot_data
+    new_data = dict(plot_data)
+    new_series = []
+    for s in series_list:
+        if isinstance(s, dict) and "points" in s:
+            new_s = dict(s)
+            new_s["points"] = [
+                p if isinstance(p, _FlowMapping) else _FlowMapping(p)
+                for p in s.get("points", [])
+            ]
+            new_series.append(new_s)
+        else:
+            new_series.append(s)
+    new_data["series"] = new_series
+    return new_data
+
+
+def make_dos_plot_data(
+    h5_path,
+    method,
+    iteration,
+    use_func,
+    resolution,
+    occ_only,
+    output_data,
+    num_of_groups,
+):
+    series = []
+    for i in range(num_of_groups):
+        points = [
+            _FlowMapping({"x": float(row[0]), "y": float(row[i + 1])})
+            for row in output_data
+        ]
+        series.append(
+            {
+                "name": "y_{}".format(i),
+                "points": points,
+            }
+        )
+    return {
+        "schema": "pdf-plot/1",
+        "kind": "dos",
+        "title": "Density of State",
+        "source": {
+            "tool": "pdf-plot-dos.py",
+            "result": h5_path,
+            "method": method,
+            "iteration": int(iteration),
+            "function": use_func,
+            "resolution": float(resolution),
+            "occ_only": bool(occ_only),
+        },
+        "axes": {
+            "x": {
+                "label": "energy level / eV",
+                "unit": "eV",
+            },
+            "y": {
+                "label": "DOS",
+                "unit": None,
+            },
+        },
+        "series": series,
+    }
+
+
+def save_dos_yaml(plot_data, output_path):
+    data = _prepare_plot_data_for_yaml(plot_data)
+    content = yaml.safe_dump(data, sort_keys=False, allow_unicode=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(content)
+
 
 def dos(func, eps, omega=0.005, eLevels=[], mo_groups=[]):
     answer = [0.0] * (len(mo_groups) + 1)
@@ -127,12 +231,16 @@ def main():
 
     parser.add_argument('-o', '--output',
                         nargs=1,
-                        default=['dos.png'],
+                        default=None,
                         help='output graph path')
     parser.add_argument('--csv',
                         nargs=1,
-                        default=['dos.csv'],
+                        default=None,
                         help='output csv path')
+    parser.add_argument('--yaml',
+                        nargs=1,
+                        default=None,
+                        help='output yaml path')
 
     parser.add_argument("-v", "--verbose",
                         action="store_true",
@@ -159,8 +267,9 @@ def main():
 
     resolution = float(args.resolution[0])
     occ_only = args.occ
-    output_path = args.output[0]
-    csv_path = args.csv[0]
+    yaml_path = args.yaml[0] if args.yaml else None
+    output_path = args.output[0] if args.output else (None if yaml_path else 'dos.png')
+    csv_path = args.csv[0] if args.csv else (None if (yaml_path and not output_path) else 'dos.csv')
 
     AU2EV = 27.2116
 
@@ -217,28 +326,43 @@ def main():
         row.extend(intensities)
         output_data.append(row)
 
+    num_of_groups = len(mo_groups) + 1  # `+1` means `all`
+    if yaml_path:
+        plot_data = make_dos_plot_data(
+            pdfresults_db,
+            method,
+            iteration,
+            use_func,
+            resolution,
+            occ_only,
+            output_data,
+            num_of_groups,
+        )
+        save_dos_yaml(plot_data, yaml_path)
+
     # output data as csv
-    with open(csv_path, 'w') as f:
-        writer = csv.writer(f)
-        writer.writerows(output_data)
+    if csv_path:
+        with open(csv_path, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerows(output_data)
 
     # plot data
-    graph = pdf.DfDosGraph()
-    graph.load_data(csv_path)
+    if output_path:
+        graph = pdf.DfDosGraph()
+        graph.load_data(csv_path)
 
-    num_of_groups = len(mo_groups) +1 # `+1`` means `all``
-    print("# groups: ", num_of_groups)
-    for i in range(num_of_groups):
-        graph.add_draw_series(i)
+        print("# groups: ", num_of_groups)
+        for i in range(num_of_groups):
+            graph.add_draw_series(i)
 
-    graph.title = "Density of State"
-    graph.xmax = maxLevel
-    graph.xmin = minLevel
-    graph.xlabel = "energy level / eV"
-    graph.ylabel = "DOS"
-    if verbose:
-        print("output graph: {}".format(output_path))
-    graph.save(output_path)
+        graph.title = "Density of State"
+        graph.xmax = maxLevel
+        graph.xmin = minLevel
+        graph.xlabel = "energy level / eV"
+        graph.ylabel = "DOS"
+        if verbose:
+            print("output graph: {}".format(output_path))
+        graph.save(output_path)
 
 
 if __name__ == '__main__':
