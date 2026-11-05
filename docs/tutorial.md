@@ -67,8 +67,8 @@ Create an input file named `fl_Userinput` in your working directory:
 	method/rks/electron-number	= 10
 	method/rks/occlevel	= [ 1 - 5 ]
 	convergence/type	= density
-	convergence/threshold	= 1e-5
-	convergence/threshold-energy	= 1e-6
+	convergence/threshold	= 1e-3
+	convergence/threshold-energy	= 1e-4
 	scf-acceleration	= damping
 	scf-acceleration/damping/damping-factor	= 0.67
 	scf-acceleration/damping/damping-type = density_matrix
@@ -103,14 +103,14 @@ Create an input file named `fl_Userinput` in your working directory:
 	}end
 ```
 
-### Why loosen convergence criteria?
+### Convergence criteria
 
-ProteinDF calculations often use stricter convergence criteria than the values used here. In this tutorial, we loosen the criteria to:
+This tutorial explicitly specifies ProteinDF's default convergence criteria:
 
-- `convergence/threshold = 1e-5`
-- `convergence/threshold-energy = 1e-6`
+- `convergence/threshold = 1e-3`
+- `convergence/threshold-energy = 1e-4`
 
-This allows the calculation for a small test molecule to reach convergence quickly in tens of iterations and a few seconds, while demonstrating the entire workflow.
+These values match the defaults defined in ProteinDF (`data/pdfkwd.yaml`). Using the default criteria allows the calculation for a small test molecule to reach convergence reliably in a few tens of iterations and seconds while demonstrating the standard workflow. (Omitting these two lines in `fl_Userinput` also uses the same default values.)
 
 ### Run ProteinDF
 
@@ -123,14 +123,14 @@ PDF.x > pdf.out 2>&1
 Check the end of `pdf.out` to confirm convergence:
 
 ```text
-  32 th TE = -75.8918989028469895
+  21 th TE = -75.8920376510484544
  *** Convergence conditions are satisfied: (1st) ***
-  33 th TE = -75.8918984362407940
+  22 th TE = -75.8919893344220782
  *** Convergence conditions are satisfied: (2nd) ***
 *** SCF is well converged ***
 ```
 
-The SCF converged in 33 iterations with a final total energy of `-75.89189844` a.u.
+The SCF converged in 22 iterations with a final total energy of `-75.89198933` a.u.
 
 ## Archive the results
 
@@ -204,8 +204,8 @@ item                     number
 ======================== ================
 the number of AOs                      24
 the number of MOs                      24
-the number of iterations               33
-Total energy                 -75.89189844
+the number of iterations               22
+Total energy                 -75.89198933
 ======================== ================
 ```
 
@@ -252,13 +252,13 @@ print(grad)
 Example output:
 
 ```text
-Total energy: -75.89189844 a.u.
+Total energy: -75.89198933 a.u.
 Gradient matrix (-dE/dR):
               1 th       2 th       3 th
   ---- ---------------------------------
-     1   -0.755754  -0.755754  -0.000000
-     2    0.818068  -0.062314   0.000000
-     3   -0.062314   0.818068   0.000000
+     1   -0.035529  -0.035529  -0.000000
+     2    0.013237   0.022292   0.000000
+     3    0.022292   0.013237   0.000000
 ```
 
 `get_total_energy(iteration)` returns the total energy in atomic units (hartree) for the specified iteration. `get_gradient()` returns the nuclear gradients as a matrix, where the sign corresponds to $-dE/dR$ (force).
