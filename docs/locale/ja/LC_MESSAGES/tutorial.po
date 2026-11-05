@@ -1,0 +1,474 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2014, The ProteinDF development team
+# This file is distributed under the same license as the ProteinDF_pytools
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ProteinDF_pytools 2026.10.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-05 13:37+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../tutorial.md:1 36922d9b6b0f433ea26bfc6cac805517
+msgid "Tutorial"
+msgstr "チュートリアル"
+
+#: ../../tutorial.md:3 180dcee64ca1428295a6be1a675f2509
+msgid ""
+"This tutorial guides you through your first ProteinDF calculation and "
+"post-processing with `ProteinDF_pytools`."
+msgstr "このチュートリアルでは、ProteinDF の最初の計算と `ProteinDF_pytools` による後処理の手順を案内します。"
+
+#: ../../tutorial.md:5 2d9b34bba1ad42849c89fbf06252e769
+msgid "Introduction"
+msgstr "はじめに"
+
+#: ../../tutorial.md:7 ccc87127bcd24b46b879f7b25dbe6761
+msgid "In this tutorial, you will:"
+msgstr "このチュートリアルでできること:"
+
+#: ../../tutorial.md:9 1332faff97e94dd1b1d9650746b3dfae
+msgid ""
+"Run a single-point SCF calculation of a water molecule ($H_2O$) with "
+"ProteinDF."
+msgstr "ProteinDF を用いた水分子 ($H_2O$) の 1 点 SCF 計算の実行。"
+
+#: ../../tutorial.md:10 958ab2e6eedf4f6cb9d58f6595f52d01
+msgid "Archive the calculation results into an HDF5 file (`pdfresults.h5`)."
+msgstr "計算結果の HDF5 ファイル (`pdfresults.h5`) へのアーカイブ。"
+
+#: ../../tutorial.md:11 6ceb4910f155425b87f6b2c721842b54
+msgid "Generate plots of total energy, orbital energy levels, and atomic charges."
+msgstr "全エネルギー、軌道エネルギー準位、原子電荷のプロット作成。"
+
+#: ../../tutorial.md:12 b1a61538709a4f698804bc21b16e2eb0
+msgid "Read calculation results from Python using `PdfParam_H5`."
+msgstr "`PdfParam_H5` を使った Python からの計算結果の読み込み。"
+
+#: ../../tutorial.md:14 a431e3f27d2643ac96c3e8484d42bd3b
+msgid "Prerequisites"
+msgstr "前提条件"
+
+#: ../../tutorial.md:16 4988877e11244b9c883fd7fa7051cc71
+msgid ""
+"ProteinDF is installed on your system (providing `PDF.x` and `pdf-"
+"setup.sh`)."
+msgstr "システムに ProteinDF がインストールされていること (`PDF.x` および `pdf-setup.sh` が利用可能であること)。"
+
+#: ../../tutorial.md:17 050f1c6f7827464b989d74ab6996ab5d
+msgid ""
+"`ProteinDF_pytools` installed in your Python environment (see "
+"[Installation](installation.md))."
+msgstr ""
+"Python 環境に `ProteinDF_pytools` がインストールされていること ([インストール](installation.md) "
+"を参照)。"
+
+#: ../../tutorial.md:19 ab3e291e6f3349399c1f3a2338f9846d
+msgid "Setup"
+msgstr "セットアップ"
+
+#: ../../tutorial.md:21 dbf383c913334124897bab275961deda
+msgid "Set environment variables"
+msgstr "環境変数の設定"
+
+#: ../../tutorial.md:23 0e312dd9bdc642958b394ac4fc3c8317
+msgid ""
+"ProteinDF requires the `PDF_HOME` environment variable pointing to the "
+"ProteinDF installation directory. Add the binary directory to your "
+"`PATH`:"
+msgstr ""
+"ProteinDF は、インストールディレクトリを指す環境変数 `PDF_HOME` を必要とします。バイナリディレクトリを `PATH` "
+"に追加してください:"
+
+#: ../../tutorial.md:30 fc477ca7ecd9411f964eb2c93902861d
+msgid "Prepare the working directory"
+msgstr "作業ディレクトリの準備"
+
+#: ../../tutorial.md:32 d71e7b986f0348fb91b68a2c55d5e48f
+msgid ""
+"ProteinDF uses a scratch directory named `fl_Work` to store intermediate "
+"matrices and vectors during execution. Run `pdf-setup.sh` to create this "
+"directory in your working directory:"
+msgstr ""
+"ProteinDF は実行中、中間行列やベクトルを保存するために `fl_Work` "
+"という名前のスクラッチディレクトリを使用します。作業ディレクトリで `pdf-setup.sh` を実行してこのディレクトリを作成します:"
+
+#: ../../tutorial.md:38 f7150a705ff949bd82cf025a08c5f92b
+msgid "Install pytools"
+msgstr "pytools のインストール"
+
+#: ../../tutorial.md:40 4ab14683b4cc4d0394c6289e4b5669ac
+msgid ""
+"Ensure that `ProteinDF_pytools` is installed in your Python environment "
+"according to [Installation](installation.md). After installation, the "
+"`pdf-*` command-line tools are available."
+msgstr ""
+"[インストール](installation.md) に従って、お使いの Python 環境に `ProteinDF_pytools` "
+"がインストールされていることを確認してください。インストール後、`pdf-*` コマンドラインツールが使用できるようになります。"
+
+#: ../../tutorial.md:42 b77874d5153c463fb2eb1e06f1a1c720
+msgid "First calculation (H2O)"
+msgstr "最初の計算 (H2O)"
+
+#: ../../tutorial.md:44 f2d1267f46f94ba8979262b381906af0
+msgid "Prepare the input file"
+msgstr "入力ファイルの準備"
+
+#: ../../tutorial.md:46 fa76468b90cd436686406a252b020d45
+msgid "Create an input file named `fl_Userinput` in your working directory:"
+msgstr "作業ディレクトリに `fl_Userinput` という名前の入力ファイルを作成します:"
+
+#: ../../tutorial.md:106 3580e5d1fccc4d39af26509201aeac3c
+msgid "Convergence criteria"
+msgstr "収束判定条件"
+
+#: ../../tutorial.md:108 6c5c6adfe5b147d8b56e5d718c4e3e6f
+msgid ""
+"This tutorial explicitly specifies ProteinDF's default convergence "
+"criteria:"
+msgstr "このチュートリアルでは、ProteinDF の既定の収束判定条件を明示的に指定しています:"
+
+#: ../../tutorial.md:110 1e44978ce1bc42c8812b2e492d3559bc
+msgid "`convergence/threshold = 1e-3`"
+msgstr "`convergence/threshold = 1e-3`"
+
+#: ../../tutorial.md:111 bebe34ccd6254c56a50f24090589bd44
+msgid "`convergence/threshold-energy = 1e-4`"
+msgstr "`convergence/threshold-energy = 1e-4`"
+
+#: ../../tutorial.md:113 4e793a37a96c43b7a8acdc7ebfc13f8f
+msgid ""
+"These values match the defaults defined in ProteinDF "
+"(`data/pdfkwd.yaml`). Using the default criteria allows the calculation "
+"for a small test molecule to reach convergence reliably in a few tens of "
+"iterations and seconds while demonstrating the standard workflow. "
+"(Omitting these two lines in `fl_Userinput` also uses the same default "
+"values.)"
+msgstr ""
+"これらの値は ProteinDF の定義 (`data/pdfkwd.yaml`) における既定値と一致しています。既定の判定条件を使用することで、一連の標準的なワークフローを体験しながら、小さなテスト分子の計算を数十反復・数秒程度で確実に収束させることができます (`fl_Userinput` でこれら 2 行を省略した場合も同じ既定値が使用されます)。"
+
+#: ../../tutorial.md:115 4aac25cac5f34296a95cd37f9cb63790
+msgid "Run ProteinDF"
+msgstr "ProteinDF の実行"
+
+#: ../../tutorial.md:117 1a92c40efef54de19686639954fd56b7
+msgid "Execute `PDF.x` and redirect output to a log file:"
+msgstr "`PDF.x` を実行し、出力をログファイルにリダイレクトします:"
+
+#: ../../tutorial.md:123 35d8cbf4ea06473ebfc51cb6db0cc63d
+msgid "Check the end of `pdf.out` to confirm convergence:"
+msgstr "`pdf.out` の末尾を確認して収束を確かめます:"
+
+#: ../../tutorial.md:133 101a67917d06478ca9c8849b5de84f3e
+msgid ""
+"The SCF converged in 22 iterations with a final total energy of "
+"`-75.89198933` a.u."
+msgstr "SCF は 22 反復で収束し、最終全エネルギーは `-75.89198933` a.u. となりました。"
+
+#: ../../tutorial.md:135 6dc67fb5693d4faa9d543a3c17ceb7df
+msgid "Archive the results"
+msgstr "結果のアーカイブ"
+
+#: ../../tutorial.md:137 c1cdd2c0f1394b748350eeb6abd957d9
+msgid ""
+"ProteinDF writes intermediate binary files into `fl_Work`. Use `pdf-"
+"archive-h5.py` to collect these files into a single HDF5 archive "
+"(`pdfresults.h5`)."
+msgstr ""
+"ProteinDF は中間バイナリファイルを `fl_Work` に書き出します。`pdf-archive-h5.py` "
+"を使って、これらのファイルを単一の HDF5 アーカイブ (`pdfresults.h5`) にまとめます。"
+
+#: ../../tutorial.md:139 6bcd9da9e57f49dfa67442318e89ffef
+msgid "Pass the scratch directory with `-w fl_Work`:"
+msgstr "スクラッチディレクトリを `-w fl_Work` で指定します:"
+
+#: ../../tutorial.md:145 2a5377bafc5e45c4bd3f4b4f6974d817
+msgid "Archiving levels"
+msgstr "保存レベル"
+
+#: ../../tutorial.md:147 4e9fe611594541f5baa624129003c0dd
+msgid ""
+"Use `-l <level>` to select which data to store. The default is "
+"`standard`. Each higher level includes all data from lower levels:"
+msgstr "`-l <level>` で保存するデータの範囲を選択します。既定は `standard` です。上位のレベルは下位レベルのデータをすべて含みます:"
+
+#: ../../tutorial.md 3b2ce12a008648088272c07abf213cb6
+msgid "Level"
+msgstr "レベル"
+
+#: ../../tutorial.md 0d5944b248494d8db9342eba1a499f24
+msgid "Included data"
+msgstr "含むもの"
+
+#: ../../tutorial.md 66a62e76fb82418f847bd45e1f38d649
+msgid "`basic`"
+msgstr "`basic`"
+
+#: ../../tutorial.md a70944a6b14c46129917881f1aa8700d
+msgid ""
+"Molecule, basis sets, control parameters, total energies across all "
+"iterations, orbital occupations, overlap matrix S, core Hamiltonian h, "
+"dummy atom term h2, converged P, C, and eigenvalues"
+msgstr "分子・基底・制御、全反復の全エネルギー、占有数、重なり行列 S、コア Hamiltonian h、ダミー原子の項 h2、収束解の P・C・固有値"
+
+#: ../../tutorial.md 6b45fe9dc69d4ab093b8295a217bb725
+msgid "`standard` (default)"
+msgstr "`standard` (既定)"
+
+#: ../../tutorial.md c80e4b7388764498893b4596a1fa82c4
+msgid "`basic` plus input density matrix P_in of iteration 1, energy gradient"
+msgstr "`basic` に加えて、反復 1 の入力密度 P_in、エネルギー勾配"
+
+#: ../../tutorial.md e0e4118c55b64659bf0a170d97e96281
+msgid "`full`"
+msgstr "`full`"
+
+#: ../../tutorial.md 478cb747d0f44713ac170a8171b374af
+msgid "`standard` plus P, C, Fock matrix F, and eigenvalues for all iterations"
+msgstr "`standard` に加えて、全反復の P・C・Fock 行列 F・固有値"
+
+#: ../../tutorial.md c6193ec2ae52492f84fd4aedb47b5128
+msgid "`debug`"
+msgstr "`debug`"
+
+#: ../../tutorial.md e24ce6afa2b0420aaadecf733cec851e
+msgid "`full` plus Mulliken charges for all iterations"
+msgstr "`full` に加えて、全反復の Mulliken 電荷"
+
+#: ../../tutorial.md:156 3a1ba4001df649dfb9437007ece72a2a
+msgid ""
+"Mulliken charges for the converged solution are saved in `basic`, "
+"`standard`, and `full` only when `--pop` is specified. Under `debug`, "
+"Mulliken charges for all iterations are saved whether `--pop` is given or"
+" not."
+msgstr ""
+"Mulliken 電荷は、`--pop` を付けたときだけ収束解 1 本を保存します "
+"(`basic`・`standard`・`full`)。`debug` では `--pop` の有無にかかわらず全反復を保存します。"
+
+#: ../../tutorial.md:157 2580d3974e164c64bd0009e0eb0f0084
+msgid ""
+"To plot eigenvalue history across iterations, archive with `-l full` or "
+"`-l debug` so that eigenvalues of all iterations are stored."
+msgstr ""
+"全反復にわたる固有値の推移をプロットするには、全反復の固有値が保存されるよう `-l full` または `-l debug` "
+"でアーカイブしてください。"
+
+#: ../../tutorial.md:159 d1d63484d04f46afb3ee7a73d8f64197
+msgid "Plot the results"
+msgstr "結果のプロット"
+
+#: ../../tutorial.md:161 5bd35ca5a5f94e47ad053ada03171733
+msgid "Use the plotting scripts to visualize the archived results."
+msgstr "プロットスクリプトを使用して、アーカイブされた結果を可視化します。"
+
+#: ../../tutorial.md:163 4277d74145644373a59bc1d332679b76
+msgid "Total energy history"
+msgstr "全エネルギーの変遷"
+
+#: ../../tutorial.md:165 e12d59456c47419a810b263109f1590a
+msgid "Plot the total energy across SCF iterations:"
+msgstr "SCF 反復ごとの全エネルギーの変遷をプロットします:"
+
+#: ../../tutorial.md:171 c27afbf2b6ce4a4caf8146428a187334
+msgid "You can also pass `--yaml` to print the energy values in YAML format."
+msgstr "`--yaml` を渡してエネルギー値を YAML 形式で出力することもできます。"
+
+#: ../../tutorial.md:173 e59e943581fb4491b0db173e902af952
+msgid ""
+"*How to read the plot*: The horizontal axis represents the SCF iteration "
+"count, and the vertical axis represents the total energy in atomic units "
+"(hartree). The energy decreases rapidly in early iterations and flattens "
+"out as the SCF reaches convergence."
+msgstr ""
+"*図の見方*: 横軸は SCF 反復回数、縦軸は原子単位 (hartree) "
+"での全エネルギーを表します。初期の反復でエネルギーが急速に低下し、SCF が収束に達するにつれて平坦になります。"
+
+#: ../../tutorial.md:175 249423cbe0f04145b4a1d075d5113404
+msgid "Orbital energy level history"
+msgstr "準位の推移"
+
+#: ../../tutorial.md:177 7f8e49d2d64a4618a9e095a3822bef10
+msgid "Plot how molecular orbital eigenvalues change across iterations:"
+msgstr "分子軌道の固有値が反復に伴ってどう変化するかをプロットします:"
+
+#: ../../tutorial.md:183 32a6a8747204473690decd0785a59470
+msgid ""
+"This command outputs `eigvals_hist.rks.png` by default. Note that this "
+"requires archiving with `-l full` or `-l debug`."
+msgstr ""
+"このコマンドは既定で `eigvals_hist.rks.png` を出力します。全反復の固有値が必要となるため、`-l full` または "
+"`-l debug` でアーカイブしておく必要がある点に注意してください。"
+
+#: ../../tutorial.md:185 f2f02c96f6af4d7295015b7c347833b2
+msgid ""
+"*How to read the plot*: The horizontal axis shows iterations, and the "
+"vertical axis shows orbital energies in eV. Energy levels are plotted as "
+"horizontal lines at each iteration, with the HOMO level highlighted in "
+"red and other levels shown in black. You can see orbital levels stabilize"
+" as the self-consistent field converges."
+msgstr ""
+"*図の見方*: 横軸は反復回数、縦軸は軌道エネルギー (eV) を示します。エネルギー準位は各反復において水平線としてプロットされ、HOMO "
+"準位が赤色、その他の準位が黒色で強調表示されます。SCF が収束するにつれて軌道準位が安定化していく様子が確認できます。"
+
+#: ../../tutorial.md:187 9ac572d57d93424a88a15a5f2cf6565b
+msgid "Final iteration energy levels"
+msgstr "最終反復の準位"
+
+#: ../../tutorial.md:189 c14fd4ed49ad43758ed6bf25ccb9dac0
+msgid ""
+"Generate an inspection report and an energy level diagram for the "
+"converged iteration:"
+msgstr "収束反復に対する確認レポートとエネルギー準位図を生成します:"
+
+#: ../../tutorial.md:195 c8c60217737f48ef896682f1a1c14823
+msgid ""
+"This generates `report/eigvals_last.rks.png` and prints a summary of "
+"calculation metadata:"
+msgstr "`report/eigvals_last.rks.png` が生成され、計算メタデータの要約が出力されます:"
+
+#: ../../tutorial.md:212 b38dca42bbed44aca2ff81500a7ee1c5
+msgid "You can also plot energy levels directly with `pdf-plot-elevel.py`:"
+msgstr "`pdf-plot-elevel.py` を使ってエネルギー準位を直接プロットすることもできます:"
+
+#: ../../tutorial.md:218 da77a54f7f4d44f9a552322c5130371e
+msgid ""
+"*How to read the plot*: Energy levels are drawn vertically. Occupied "
+"orbitals are drawn at the bottom and virtual orbitals at the top, showing"
+" the HOMO-LUMO gap clearly."
+msgstr "*図の見方*: エネルギー準位が垂直方向に描画されます。下部に占有軌道、上部に非占有軌道が描かれ、HOMO-LUMO ギャップを明瞭に把握できます。"
+
+#: ../../tutorial.md:220 478c2ca2e65f4b77815be89b18931f69
+msgid "Mulliken atomic charges"
+msgstr "Mulliken 電荷"
+
+#: ../../tutorial.md:222 d5d95751b3924788a98865008e596857
+msgid "Plot Mulliken atomic charges (when archived with `--pop`):"
+msgstr "Mulliken 原子電荷をプロットします (`--pop` 付きでアーカイブした場合):"
+
+#: ../../tutorial.md:228 54fd5c9ece024fa1b44f7ad8a21a38b8
+msgid ""
+"*How to read the plot*: The horizontal axis displays atom indices (1, 2, "
+"3...), and the vertical axis shows the change in Mulliken charge from the"
+" initial iteration to the final iteration. Each bar represents the charge"
+" difference for that atom."
+msgstr ""
+"*図の見方*: 横軸は原子インデックス (1, 2, 3...)、縦軸は初期反復から最終反復にかけての Mulliken "
+"電荷の変化量を表します。各棒グラフはその原子における電荷の差分を示します。"
+
+#: ../../tutorial.md:230 8a997025663c4999b9ad7e0dd37a554e
+msgid "Read the results from Python"
+msgstr "Python から結果を読む"
+
+#: ../../tutorial.md:232 e17ddd8a375340eb9c8644fcb81aaa20
+msgid ""
+"You can read data directly from `pdfresults.h5` in Python using "
+"`PdfParam_H5`."
+msgstr "Python から `PdfParam_H5` を使って `pdfresults.h5` から直接データを読み込むことができます。"
+
+#: ../../tutorial.md:252 6055f1e55d3449c38ff90f9f3386022b
+msgid "Example output:"
+msgstr "出力例:"
+
+#: ../../tutorial.md:264 b5907220ad0346498384ff5560ccb36a
+msgid ""
+"`get_total_energy(iteration)` returns the total energy in atomic units "
+"(hartree) for the specified iteration. `get_gradient()` returns the "
+"nuclear gradients as a matrix, where the sign corresponds to $-dE/dR$ "
+"(force)."
+msgstr ""
+"`get_total_energy(iteration)` は指定した反復における原子単位 (hartree) "
+"の全エネルギーを返します。`get_gradient()` は原子核の勾配を行列として返します (符号は力 $-dE/dR$ に対応します)。"
+
+#: ../../tutorial.md:266 985b63577f874b70912de8a9c203cef6
+msgid "Troubleshooting"
+msgstr "トラブルシューティング"
+
+#: ../../tutorial.md:268 2090d7f4fa80478d9b3a06adc8f543dd
+msgid "SCF does not converge"
+msgstr "収束しない"
+
+#: ../../tutorial.md:270 c47a2547423d4169ad47b136e629f31a
+msgid "Increase `max-iteration` in `fl_Userinput`."
+msgstr "`fl_Userinput` の `max-iteration` を増やしてみてください。"
+
+#: ../../tutorial.md:271 7a4a0fae405440b98fdc6e1b42b2398e
+msgid ""
+"Check if looser convergence thresholds (`convergence/threshold`, "
+"`convergence/threshold-energy`) help for initial tests."
+msgstr ""
+"初期テストでは収束閾値 (`convergence/threshold`、`convergence/threshold-energy`) "
+"を緩めることで収束するか確認してください。"
+
+#: ../../tutorial.md:272 35a56ac6f6d64346ad96b882dc234638
+msgid ""
+"Adjust the SCF damping factor (`scf-acceleration/damping/damping-factor ="
+" 0.67`)."
+msgstr "SCF のダンピング係数 (`scf-acceleration/damping/damping-factor = 0.67`) を調整してください。"
+
+#: ../../tutorial.md:274 b3101ca8ad4d47969a913499fa6b9bd5
+msgid "Missing fl_Work directory"
+msgstr "fl_Work が無い"
+
+#: ../../tutorial.md:276 988607d9abbe47e3bf1721b34da7169e
+msgid ""
+"ProteinDF fails if `fl_Work` does not exist before execution. Always run "
+"`pdf-setup.sh` before running `PDF.x`."
+msgstr ""
+"ProteinDF は実行前に `fl_Work` が存在しないと失敗します。`PDF.x` を実行する前に必ず `pdf-setup.sh` "
+"を実行してください。"
+
+#: ../../tutorial.md:277 0edcf962579e492785be633df68ff8a2
+msgid ""
+"When running `pdf-archive-h5.py`, ensure `-w fl_Work` points to the "
+"correct scratch directory."
+msgstr "`pdf-archive-h5.py` を実行する際は、`-w fl_Work` が正しいスクラッチディレクトリを指していることを確認してください。"
+
+#: ../../tutorial.md:279 7582fbc4d00d497a969afcd578e421f4
+msgid "Cannot open old SQLite .db files"
+msgstr "古い SQLite の .db は使えない"
+
+#: ../../tutorial.md:281 8cec506678de467598288e81ee5737e0
+msgid ""
+"Older versions of pytools archived results into SQLite databases "
+"(`pdfresults.db`)."
+msgstr "古いバージョンの pytools は計算結果を SQLite データベース (`pdfresults.db`) にアーカイブしていました。"
+
+#: ../../tutorial.md:282 1b4019e39ae4416d9afbdfb7456e4298
+msgid ""
+"Recent tools (`pdf-*-h5.py`, `PdfParam_H5`) use the HDF5 format "
+"(`pdfresults.h5`)."
+msgstr "現在のツール群 (`pdf-*-h5.py`、`PdfParam_H5`) は HDF5 形式 (`pdfresults.h5`) を使用します。"
+
+#: ../../tutorial.md:283 785d0fb28a3c431c8dc9f23015575d82
+msgid ""
+"If you have an existing calculation with its `fl_Work` directory intact, "
+"re-run `pdf-archive-h5.py` to create a new `pdfresults.h5`."
+msgstr ""
+"`fl_Work` ディレクトリがそのまま残っている過去の計算があれば、`pdf-archive-h5.py` を再実行して新しい "
+"`pdfresults.h5` を作成し直してください。"
+
+#~ msgid ""
+#~ "ProteinDF calculations often use stricter "
+#~ "convergence criteria than the values "
+#~ "used here. In this tutorial, we "
+#~ "loosen the criteria to:"
+#~ msgstr ""
+#~ "通常の ProteinDF "
+#~ "計算ではここで使用する値よりも厳しい収束判定値が使用されます。このチュートリアルでは判定値を次のように緩めています:"
+
+#~ msgid ""
+#~ "This allows the calculation for a "
+#~ "small test molecule to reach convergence"
+#~ " quickly in tens of iterations and"
+#~ " a few seconds, while demonstrating "
+#~ "the entire workflow."
+#~ msgstr "これにより、一連のワークフローを体験しながら、小さなテスト分子の計算を数十反復・数秒程度で素早く収束させることができます。"

@@ -17,6 +17,7 @@ It provides:
 :caption: Contents
 
 installation
+tutorial
 usage
 api/modules
 ```
