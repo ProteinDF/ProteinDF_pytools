@@ -14,7 +14,7 @@ In this tutorial, you will:
 ### Prerequisites
 
 - ProteinDF is installed on your system (providing `PDF.x` and `pdf-setup.sh`).
-- Python 3.7 or later with `ProteinDF_pytools` installed (see [Installation](installation.md)).
+- `ProteinDF_pytools` installed in your Python environment (see [Installation](installation.md)).
 
 ## Setup
 
@@ -105,7 +105,7 @@ Create an input file named `fl_Userinput` in your working directory:
 
 ### Why loosen convergence criteria?
 
-Default ProteinDF calculations often use strict convergence criteria (for example, density threshold `1e-6` and energy threshold `1e-8`). In this tutorial, we loosen the criteria to:
+ProteinDF calculations often use stricter convergence criteria than the values used here. In this tutorial, we loosen the criteria to:
 
 - `convergence/threshold = 1e-5`
 - `convergence/threshold-energy = 1e-6`
@@ -182,7 +182,7 @@ pdf-plot-elevel-history.py pdfresults.h5
 
 This command outputs `eigvals_hist.rks.png` by default. Note that this requires archiving with `-l full` or `-l debug`.
 
-- *How to read the plot*: The horizontal axis shows iterations, and the vertical axis shows orbital eigenvalues (eV or a.u.). Solid and dashed lines show occupied and virtual orbitals. You can see orbital levels stabilize as the self-consistent field converges.
+- *How to read the plot*: The horizontal axis shows iterations, and the vertical axis shows orbital energies in eV. Energy levels are plotted as horizontal lines at each iteration, with the HOMO level highlighted in red and other levels shown in black. You can see orbital levels stabilize as the self-consistent field converges.
 
 ### Final iteration energy levels
 
@@ -225,7 +225,7 @@ Plot Mulliken atomic charges (when archived with `--pop`):
 pdf-plot-pop.py --h5 pdfresults.h5 -o pop.png
 ```
 
-- *How to read the plot*: The horizontal axis displays atom indices or labels (O1, H2, H3), and the vertical axis shows net atomic charges. Oxygen exhibits a negative charge, while each hydrogen carries a positive charge.
+- *How to read the plot*: The horizontal axis displays atom indices (1, 2, 3...), and the vertical axis shows the change in Mulliken charge from the initial iteration to the final iteration. Each bar represents the charge difference for that atom.
 
 ## Read the results from Python
 

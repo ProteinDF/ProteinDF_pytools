@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ProteinDF_pytools 2026.10.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-05 09:13+0900\n"
+"POT-Creation-Date: 2026-11-05 12:01+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -66,10 +66,10 @@ msgstr "システムに ProteinDF がインストールされていること (`P
 
 #: ../../tutorial.md:17 064f54fef7c94293969fada2664828e2
 msgid ""
-"Python 3.7 or later with `ProteinDF_pytools` installed (see "
+"`ProteinDF_pytools` installed in your Python environment (see "
 "[Installation](installation.md))."
 msgstr ""
-"Python 3.7 以降と `ProteinDF_pytools` がインストールされていること "
+"Python 環境に `ProteinDF_pytools` がインストールされていること "
 "([インストール](installation.md) を参照)。"
 
 #: ../../tutorial.md:19 2f918c7e80ba4482a2b0852a02484ef6
@@ -133,12 +133,10 @@ msgstr "なぜ収束判定値を緩めるのか？"
 
 #: ../../tutorial.md:108 4278fef44d0b47edb904b5a99e3ae141
 msgid ""
-"Default ProteinDF calculations often use strict convergence criteria (for"
-" example, density threshold `1e-6` and energy threshold `1e-8`). In this "
-"tutorial, we loosen the criteria to:"
+"ProteinDF calculations often use stricter convergence criteria than the "
+"values used here. In this tutorial, we loosen the criteria to:"
 msgstr ""
-"通常の ProteinDF 計算では厳密な収束判定値 (例えば密度閾値 `1e-6`、エネルギー閾値 `1e-8`) "
-"が使用されます。このチュートリアルでは判定値を次のように緩めています:"
+"通常の ProteinDF 計算ではここで使用する値よりも厳しい収束判定値が使用されます。このチュートリアルでは判定値を次のように緩めています:"
 
 #: ../../tutorial.md:110 a6da5377b25643238b8cd69b0cc43073
 msgid "`convergence/threshold = 1e-5`"
@@ -310,12 +308,13 @@ msgstr ""
 #: ../../tutorial.md:185 950f938098b44a75a5658aedece4e42e
 msgid ""
 "*How to read the plot*: The horizontal axis shows iterations, and the "
-"vertical axis shows orbital eigenvalues (eV or a.u.). Solid and dashed "
-"lines show occupied and virtual orbitals. You can see orbital levels "
-"stabilize as the self-consistent field converges."
+"vertical axis shows orbital energies in eV. Energy levels are plotted as "
+"horizontal lines at each iteration, with the HOMO level highlighted in "
+"red and other levels shown in black. You can see orbital levels stabilize"
+" as the self-consistent field converges."
 msgstr ""
-"*図の見方*: 横軸は反復回数、縦軸は軌道固有値 (eV または a.u.) "
-"を示します。実線と破線はそれぞれ占有軌道と非占有軌道を表します。SCF が収束するにつれて軌道準位が安定化していく様子が確認できます。"
+"*図の見方*: 横軸は反復回数、縦軸は軌道エネルギー (eV) "
+"を示します。エネルギー準位は各反復において水平線としてプロットされ、HOMO 準位が赤色、その他の準位が黒色で強調表示されます。SCF が収束するにつれて軌道準位が安定化していく様子が確認できます。"
 
 #: ../../tutorial.md:187 1015d00e799e474284b160699871e175
 msgid "Final iteration energy levels"
@@ -354,13 +353,12 @@ msgstr "Mulliken 原子電荷をプロットします (`--pop` 付きでアー�
 
 #: ../../tutorial.md:228 bacb118508244fc0b444016cc4f1d3d6
 msgid ""
-"*How to read the plot*: The horizontal axis displays atom indices or "
-"labels (O1, H2, H3), and the vertical axis shows net atomic charges. "
-"Oxygen exhibits a negative charge, while each hydrogen carries a positive"
-" charge."
+"*How to read the plot*: The horizontal axis displays atom indices (1, 2, "
+"3...), and the vertical axis shows the change in Mulliken charge from the"
+" initial iteration to the final iteration. Each bar represents the charge"
+" difference for that atom."
 msgstr ""
-"*図の見方*: 横軸は原子のインデックスまたはラベル (O1, H2, "
-"H3)、縦軸は正味の原子電荷を示します。酸素原子は負の電荷、2つの水素原子はそれぞれ正の電荷を示します。"
+"*図の見方*: 横軸は原子インデックス (1, 2, 3...)、縦軸は初期反復から最終反復にかけての Mulliken 電荷の変化量を表します。各棒グラフはその原子における電荷の差分を示します。"
 
 #: ../../tutorial.md:230 5167b15e748e4e93bd037bdb6cbb3b8a
 msgid "Read the results from Python"
