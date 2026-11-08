@@ -1,0 +1,68 @@
+>>>>MAIN
+	step-control	= [create integral guess scf force]
+
+>>>>INTEGRAL
+	cut-value	= 1.0e-10
+
+>>>>GUESS
+
+>>>>SCF
+	charge-extrapolate-number	= 0
+	scf-start-guess	= harris
+	orbital_independence_threshold  = 0.00
+	orbital_independence_threshold/canonical = 0.00
+	orbital_independence_threshold/lowdin = 0.00
+	orbital-overlap-correspondence	= off
+	orbital-overlap-correspondence-first	= off
+	max-iteration	= 100
+	method	= rks
+	method/rks/electron-number	= 24
+	method/rks/occlevel	= [ 1 - 12 ]
+	convergence/type	= density
+	convergence/threshold	= 1e-7
+	convergence/threshold-energy	= 1e-8
+	scf-acceleration	= damping
+	scf-acceleration/damping/damping-factor	= 0.67
+	scf-acceleration/damping/damping-type = density_matrix
+	xc-potential	= B3LYP
+	J_engine = CD
+	K_engine = CD
+	XC_engine = grid
+	CDAM_tau = 1.0E-12
+	CD_epsilon = 1.0E-10
+
+        CD/intermediate_file_format = array_mmap
+
+>>>>MOLECULE
+	geometry/cartesian/unit	= angstrom
+	geometry/cartesian/input	= {
+C          -0.74568         1.40750        -0.25705
+O           0.33568         1.60562         0.34344
+H          -1.22469         2.15434        -0.88034
+C          -1.34147         0.04194        -0.17906
+H          -1.20345        -0.48291        -1.13045
+H          -2.41843         0.12164         0.00433
+H          -0.91553        -0.57658         0.61961
+	}end
+
+	basis-set/orbital	= {
+		H = "O-DZVP2.H"
+		O = "O-DZVP2.O"
+		C = "O-DZVP2.C"
+		N = "O-DZVP2.N"
+	}end
+
+	basis-set/density-auxiliary	= {
+		H = "A-DZVP2.H"
+		O = "A-DZVP2.O"
+		C = "A-DZVP2.C"
+		N = "A-DZVP2.N"
+	}end
+
+	basis-set/exchange-auxiliary	= {
+		H = "A-DZVP2.H"
+		O = "A-DZVP2.O"
+		C = "A-DZVP2.C"
+		N = "A-DZVP2.N"
+	}end
+
